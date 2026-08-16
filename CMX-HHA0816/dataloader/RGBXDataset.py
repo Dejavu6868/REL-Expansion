@@ -19,7 +19,6 @@ class RGBXDataset(data.Dataset):
         self._x_path = setting['x_root']
         self._x_format = setting['x_format']
         self._x_single_channel = setting['x_single_channel']
-        self._x_mode = setting.get('x_mode', 'standard')
         self._train_source = setting['train_source']
         self._eval_source = setting['eval_source']
         self.class_names = setting['class_names']
@@ -48,11 +47,7 @@ class RGBXDataset(data.Dataset):
         if self._transform_gt:
             gt = self._gt_transform(gt) 
 
-        if self._x_mode == 'rel_original':
-            x = self._open_image(x_path, cv2.IMREAD_UNCHANGED)
-            if x.ndim != 3 or x.shape[2] != 3:
-                raise ValueError('REL must be a three-channel image: {}'.format(x_path))
-        elif self._x_single_channel:
+        if self._x_single_channel:
             x = self._open_image(x_path, cv2.IMREAD_GRAYSCALE)
             x = cv2.merge([x, x, x])
         else:
@@ -103,10 +98,8 @@ class RGBXDataset(data.Dataset):
 
     @staticmethod
     def _open_image(filepath, mode=cv2.IMREAD_COLOR, dtype=None):
-        img = cv2.imread(filepath, mode)
-        if img is None:
-            raise FileNotFoundError(filepath)
-        return np.asarray(img, dtype=dtype)
+        img = np.array(cv2.imread(filepath, mode), dtype=dtype)
+        return img
 
     @staticmethod
     def _gt_transform(gt):

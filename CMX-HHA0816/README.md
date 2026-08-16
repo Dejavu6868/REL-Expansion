@@ -1,16 +1,5 @@
 # RGBX_Semantic_Segmentation
 
-## CMX-REL integration in this copy
-
-This working copy adds the original three-channel panoramic REL representation
-as the X modality of unchanged Original CMX. REL is generated offline from a
-complete ERP depth image and loaded with channel indices
-`[EGVIA, LOA, ReD]`. Gate, SMMF, DyMM and REL+ are not included.
-
-Start with `docs/rel_integration/CMX_REL_INTEGRATION_REPORT.md`. Runtime smoke
-artifacts are stored outside the source tree at
-`/data/zhuzhaoziao/RELPlus/outputs/cmx_rel_integration`.
-
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/cmx-cross-modal-fusion-for-rgb-x-semantic/semantic-segmentation-on-nyu-depth-v2)](https://paperswithcode.com/sota/semantic-segmentation-on-nyu-depth-v2?p=cmx-cross-modal-fusion-for-rgb-x-semantic)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/cmx-cross-modal-fusion-for-rgb-x-semantic/semantic-segmentation-on-sun-rgbd)](https://paperswithcode.com/sota/semantic-segmentation-on-sun-rgbd?p=cmx-cross-modal-fusion-for-rgb-x-semantic)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/cmx-cross-modal-fusion-for-rgb-x-semantic/semantic-segmentation-on-stanford2d3d-rgbd)](https://paperswithcode.com/sota/semantic-segmentation-on-stanford2d3d-rgbd?p=cmx-cross-modal-fusion-for-rgb-x-semantic)
@@ -191,3 +180,4 @@ If you find this repo useful, please consider referencing the following paper:
 ## Acknowledgement
 
 Our code is heavily based on [TorchSeg](https://github.com/ycszen/TorchSeg) and [SA-Gate](https://github.com/charlesCXK/RGBD_Semantic_Segmentation_PyTorch), thanks for their excellent work!
+

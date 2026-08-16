@@ -62,7 +62,6 @@ def get_train_loader(engine, dataset):
                     'x_root':config.x_root_folder,
                     'x_format': config.x_format,
                     'x_single_channel': config.x_is_single_channel,
-                    'x_mode': getattr(config, 'x_mode', 'standard'),
                     'class_names': config.class_names,
                     'train_source': config.train_source,
                     'eval_source': config.eval_source,
