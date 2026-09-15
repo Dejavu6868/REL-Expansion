@@ -1,0 +1,61 @@
+{
+  "status": "PASS_FORMAL_STARTUP_RUNNING",
+  "verified_at": "2026-09-08T19:45:44.886654+08:00",
+  "last_runtime_snapshot_at": "2026-09-08T19:44:39.880529+08:00",
+  "code_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-ThreeArm-v1",
+  "launch_id": "CMX_HHA_S2D_seed12345_20260908_194328",
+  "wrapper_pid": 1686907,
+  "launcher_pid": 1686908,
+  "rank_pids": {
+    "0": 1686999,
+    "1": 1687000,
+    "2": 1687001,
+    "3": 1687002,
+    "4": 1687005,
+    "5": 1687007,
+    "6": 1687009,
+    "7": 1687011
+  },
+  "snapshots": [
+    "2026-09-08T19:44:16.300023+08:00",
+    "2026-09-08T19:44:39.880529+08:00"
+  ],
+  "global_iterations": [
+    60,
+    120
+  ],
+  "latest_runtime_status": {
+    "status": "RUNNING",
+    "epoch": 1,
+    "iteration_in_epoch": 120,
+    "global_iteration": 120,
+    "loss": 2.065516948699951,
+    "learning_rate": 1.0796915167095117e-07,
+    "optimizer_step_executed": true,
+    "author_nan_replacement_count": 0,
+    "world_size": 8
+  },
+  "rank_count": 8,
+  "gpu_process_count": 8,
+  "one_rank_per_physical_gpu": true,
+  "persistent_session_verified": true,
+  "frozen_resolved_config_matches": true,
+  "source_file_count": 174,
+  "source_files_changed": [],
+  "formal_training_started": true,
+  "training_completed": false,
+  "scientific_epoch200_checkpoint_produced_at_startup": false,
+  "existing_scientific_checkpoint_replaced": false,
+  "backward_executed": true,
+  "optimizer_update_executed": true,
+  "run_exitcode_at_startup": null,
+  "run_exitcode_note": "Not yet produced because training is still running",
+  "full_log_prefix_scanned_bytes": 233280,
+  "full_log_prefix_sha256": "040d153d987dd4dc6e8d540125335a79786719c4e7eb5d49815f77916f569013",
+  "error_terms_found": [],
+  "existing_service_modified": false,
+  "automation_created": false,
+  "git_executed": false,
+  "scientific_result_status": "PENDING_EPOCH200_AND_FULL_EVALUATION",
+  "endpoint": "fixed epoch200; same seed12345,8GPU,globalbatch8,200epochs"
+}

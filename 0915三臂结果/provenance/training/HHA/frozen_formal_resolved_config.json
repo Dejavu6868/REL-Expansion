@@ -1,0 +1,106 @@
+{
+  "status": "PASS",
+  "resolved_at": "2026-09-08T19:43:28.063888+08:00",
+  "launch_id": "CMX_HHA_S2D_seed12345_20260908_194328",
+  "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+  "comparison_protocol_id": "S2D_THREE_ARM_SEED12345_NO_FLIP_V1",
+  "comparison_arm": "hha",
+  "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+  "runtime_overrides": {
+    "training_authorized": true,
+    "source_compatible_invalid_accepted": false,
+    "input_audit_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/reports/three_arm_data_contract.json",
+    "x_root_folder": "/data/zhuzhaoziao/cmx/datasets/Stanford2D3D_480/HHA",
+    "full_manifest": "/data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv",
+    "resolved_manifest_path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/audit/cache_manifest_resolved.csv",
+    "train_source": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/train.txt",
+    "eval_source": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/test.txt",
+    "class_mapping": "/data/zhuzhaoziao/cmx/datasets/Stanford2D3D_480/class_mapping.json",
+    "training_data_preflight_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/preflight/cmx_training_data_preflight_summary.json",
+    "ddp_smoke_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/ddp_smoke/hha_attempt1/ddp_optimizer_smoke_summary.json",
+    "output_dir": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345",
+    "log_dir": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/logs",
+    "tb_dir": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/tensorboard",
+    "log_dir_link": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/latest_cmx_hha_seed12345_logs",
+    "checkpoint_dir": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/checkpoints",
+    "log_file": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/logs/train.log",
+    "link_log_file": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/logs/train_last.log",
+    "val_log_file": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/logs/val.log",
+    "link_val_log_file": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/logs/val_last.log",
+    "launch_id": "CMX_HHA_S2D_seed12345_20260908_194328"
+  },
+  "seed": 12345,
+  "global_batch": 8,
+  "num_workers": 16,
+  "worker_seed_policy": "author_default_no_explicit_worker_init",
+  "epochs": 200,
+  "architecture": "Original CMX",
+  "backbone": "mit_b2",
+  "decoder": "MLPDecoder",
+  "loss": {
+    "name": "Focal",
+    "gamma": 2,
+    "reduction": "none_then_mean"
+  },
+  "optimizer": {
+    "name": "AdamW",
+    "learning_rate": 6e-05,
+    "weight_decay": 0.01
+  },
+  "scheduler": {
+    "name": "WarmUpPolyLR",
+    "warm_up_epoch": 10,
+    "iteration_wise": true
+  },
+  "augmentation_profile": "S2D_RELPLUS_COMPARISON_NO_FLIP",
+  "checkpoint_endpoint": {
+    "primary": "epoch_200",
+    "secondary": "test_selected_best",
+    "epochs": [
+      100,
+      105,
+      110,
+      115,
+      120,
+      125,
+      130,
+      135,
+      140,
+      145,
+      150,
+      155,
+      160,
+      165,
+      170,
+      175,
+      180,
+      185,
+      190,
+      195,
+      200
+    ]
+  },
+  "recovery": {
+    "step": 5,
+    "before_epoch": 100,
+    "slots": [
+      "recovery_epoch_odd.pth",
+      "recovery_epoch_even.pth"
+    ],
+    "atomic_replace": true,
+    "rank_rng_and_sampler_state": true
+  },
+  "prerequisite_reports": {
+    "training_code_equivalence": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/training_code_equivalence/TRAINING_CODE_EQUIVALENCE_AUDIT.json",
+    "model_initialization": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/initialization/THREE_ARM_MODEL_INITIALIZATION_AUDIT.json",
+    "sampler_sequence": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/sampler/OLD_VS_NEW_SAMPLER_SEQUENCE_AUDIT.json",
+    "dataloader_trajectory": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/dataloader/THREE_ARM_DATALOADER_CROSS_EPOCH_TRACE.json",
+    "evaluator_equivalence": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/evaluator/RELPLUS_EPOCH200_EVALUATOR_EQUIVALENCE.json",
+    "evaluator_rank_consistency": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/evaluator/RELPLUS_EPOCH200_1GPU_VS_8GPU_CONFUSION_AUDIT.json"
+  },
+  "nproc_per_node": 8,
+  "distributed_launcher": "torch.distributed.launch",
+  "amp": false,
+  "sync_bn": true,
+  "file_hash_written": false
+}

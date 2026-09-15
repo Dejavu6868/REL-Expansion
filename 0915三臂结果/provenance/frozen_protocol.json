@@ -1,0 +1,153 @@
+{
+  "status": "FROZEN_FIXED_EPOCH200_SINGLE_SEED",
+  "freeze_date": "2026-09-15",
+  "dataset": {
+    "name": "Stanford2D3D_S2D",
+    "train_areas": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "6"
+    ],
+    "test_areas": [
+      "5a",
+      "5b"
+    ],
+    "train_count": 52903,
+    "test_count": 17593,
+    "image_size": [
+      480,
+      480
+    ],
+    "classes": [
+      "beam",
+      "board",
+      "bookcase",
+      "ceiling",
+      "chair",
+      "clutter",
+      "column",
+      "door",
+      "floor",
+      "sofa",
+      "table",
+      "wall",
+      "window"
+    ],
+    "ignore_index": 255,
+    "train_list_sha256": "96788184f2a1b318a05395a2c6b3867759526e0adb612a90eb6af59b1491b011",
+    "test_list_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a"
+  },
+  "model": {
+    "architecture": "Original CMX-derived",
+    "backbone": "dual_mit_b2",
+    "decoder": "MLPDecoder",
+    "decoder_embed_dim": 512,
+    "gate": false,
+    "smmf": false,
+    "dymm": false,
+    "sga": false,
+    "pretrained_path": "/data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth",
+    "pretrained_sha256": "ced22617efb7bae3c34ad0a80f20a9b8afb4d27368cb0835a23456baa9d0e092"
+  },
+  "training": {
+    "seed": 12345,
+    "epoch_rank_seed": "12345 + epoch + local_rank * 1000",
+    "world_size": 8,
+    "global_batch": 8,
+    "local_batch": 1,
+    "epochs": 200,
+    "updates_per_epoch": 6613,
+    "total_updates": 1322600,
+    "logical_samples_per_epoch": 52904,
+    "sampler": "FixedLengthDistributedSampler",
+    "padding_per_epoch": 1,
+    "num_workers_per_rank": 16,
+    "worker_init": "author_default_no_explicit_worker_init",
+    "amp": false,
+    "sync_bn": true,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": false,
+    "loss": {
+      "name": "FocalLoss2d",
+      "gamma": 2,
+      "reduction": "none_then_mean",
+      "ignore_index": 255
+    },
+    "optimizer": {
+      "name": "AdamW",
+      "lr": 6e-05,
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "weight_decay": 0.01,
+      "no_decay_group_weight_decay": 0.0
+    },
+    "scheduler": {
+      "name": "WarmUpPolyLR",
+      "power": 0.9,
+      "warmup_epochs": 10,
+      "warmup_updates": 66130,
+      "total_updates": 1322600
+    },
+    "augmentation": {
+      "profile": "S2D_RELPLUS_COMPARISON_NO_FLIP",
+      "scales": [
+        0.5,
+        0.75,
+        1,
+        1.25,
+        1.5,
+        1.75
+      ],
+      "crop": [
+        480,
+        480
+      ],
+      "horizontal_flip": false,
+      "vertical_flip": false,
+      "arbitrary_rotation": false,
+      "perspective_warp": false
+    },
+    "norm_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "norm_std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "evaluation": {
+    "checkpoint_epoch": 200,
+    "scales": [
+      1
+    ],
+    "flip": false,
+    "crop": [
+      480,
+      480
+    ],
+    "stride_rate": 1.0,
+    "align_corners": false,
+    "local_batch": 1,
+    "world_size": 8,
+    "sampler": "DistributedEvalSamplerNoPad",
+    "rank_sample_counts": [
+      2200,
+      2199,
+      2199,
+      2199,
+      2199,
+      2199,
+      2199,
+      2199
+    ],
+    "valid_pixels": 3973620198
+  },
+  "scope": "One-seed descriptive comparison; not evidence of stable gains or statistical significance"
+}

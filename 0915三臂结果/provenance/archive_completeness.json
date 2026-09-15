@@ -1,0 +1,21 @@
+{
+  "status": "FROZEN_CODE_PARAMETERS_AND_RESULTS",
+  "included": [
+    "RELPlus post-recovery source snapshot from 2026-09-01, matching local working copy",
+    "RGBD/HHA shared source snapshot with 174 Python files matching the 2026-09-15 remote hash audit",
+    "All three arm configuration modules and common frozen parameter summary",
+    "All three original epoch200 metrics, per-class IoU and confusion matrices",
+    "HHA actual resolved runtime configuration and launch report",
+    "Checkpoint and dataset-list identity hashes",
+    "Historical prerequisite audit paths, status and hashes"
+  ],
+  "not_bundled": [
+    "Datasets and modality caches",
+    "Model checkpoints and pretrained weights",
+    "Complete environment image or dependency lock",
+    "Original RGBD and RELPlus resolved runtime configuration JSON files",
+    "Full text of referenced code/initialization/sampler/trajectory/evaluator equivalence reports"
+  ],
+  "remote_refresh_during_packaging": "Shared SSH control socket unavailable; current ordinary SSH session cannot be reused. Archive uses existing verified local source snapshots and 2026-09-14/15 audit evidence.",
+  "scientific_scope": "Fixed epoch200, seed12345 descriptive comparison; no new training, evaluation, batch change or scientific claim."
+}

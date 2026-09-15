@@ -1,0 +1,18 @@
+{
+  "original_directory": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_evaluation/CMX_RELPlus_v2_3_seed12345_sweep_attempt2/checkpoint_evaluations/epoch_200",
+  "artifact_hashes": {
+    "rank_07_evaluation.json": "3ce541302e2e1f5f77eb8f0a54e025d96836fac2e8e021934b6614775754cad7",
+    "metrics.json": "1a316e75c0516cae8be00203f0c686df495659628083033a65ebf30f85f425eb",
+    "rank_03_evaluation.json": "9f2e382beea4dd442f75881ffb95d71780626ef9a563d32dffc74aff907baeff",
+    "rank_01_evaluation.json": "8e124b65f809481ae492d856db210f44b172ce853ee554c5199d1ccfb217420d",
+    "rank_02_evaluation.json": "97a9e9c1559e1353da206a61250651d0f42bc71ee9f69ecc7d765dac63ec50bc",
+    "rank_04_evaluation.json": "81d663a0c8ea6f59a8ff12d36d9214a99f7b0610eef28d900ea1a68666f7f47c",
+    "evaluation_manifest.csv": "ed59e1ebdb27827d71987c1de5449d8b7f7bc079b84e840d208ce1b8c8203b9d",
+    "confusion_matrix.csv": "5fcaa3a10944af810ed9619f8b74b05e058d7268c261c6688d01a039ae43bb38",
+    "rank_00_evaluation.json": "6d53d1f8e76cc78062a122bf6414f90077eef6f073685c0c0201e4500a033662",
+    "rank_05_evaluation.json": "3cabec4c2b8c9a72835dfe476113fbd902274c2e2896f4abfdfd1a9978376244",
+    "rank_06_evaluation.json": "fb3dd38b0d757e4b338c8fe34e868845a068f323ac13f2e7374e000e241e5554",
+    "per_class_iou.csv": "5645c364ed9316d8c097473d4e42e0b5f88bb75a7f4a16d0e5c85e1fddb221d1"
+  },
+  "retrieval": "Read-only existing baseline results; no rerun"
+}

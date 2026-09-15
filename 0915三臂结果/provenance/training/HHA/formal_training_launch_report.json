@@ -1,0 +1,33 @@
+{
+  "status": "FORMAL_TRAINING_LAUNCHING",
+  "launch_id": "CMX_HHA_S2D_seed12345_20260908_194328",
+  "comparison_arm": "hha",
+  "command": [
+    "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+    "-m",
+    "torch.distributed.launch",
+    "--nproc_per_node",
+    "8",
+    "/home/zhuzhaoziao/RELPlus/CMX-S2D-ThreeArm-v1/tools/run_with_config.py",
+    "--config-module",
+    "configs.stanford2d3d_s2d.cmx_mit_b2_hha_three_arm_v1",
+    "--resolved-config",
+    "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/shared_configs/hha_resolved_formal_config.json",
+    "train.py"
+  ],
+  "pid": 1686908,
+  "resolved_config": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/shared_configs/hha_resolved_formal_config.json",
+  "output_dir": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345",
+  "log_path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/logs/train.log",
+  "gpu_count": 8,
+  "input_audit": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/reports/three_arm_data_contract.json",
+  "ddp_smoke": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/ddp_smoke/hha_attempt1/ddp_optimizer_smoke_summary.json",
+  "ddp_smoke_checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/ddp_smoke/hha_attempt1/runtime/checkpoints/recovery_epoch_odd.pth",
+  "training_code_equivalence": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/training_code_equivalence/TRAINING_CODE_EQUIVALENCE_AUDIT.json",
+  "model_initialization": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/initialization/THREE_ARM_MODEL_INITIALIZATION_AUDIT.json",
+  "sampler_sequence": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/sampler/OLD_VS_NEW_SAMPLER_SEQUENCE_AUDIT.json",
+  "dataloader_trajectory": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/dataloader/THREE_ARM_DATALOADER_CROSS_EPOCH_TRACE.json",
+  "evaluator_equivalence": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/evaluator/RELPLUS_EPOCH200_EVALUATOR_EQUIVALENCE.json",
+  "evaluator_rank_consistency": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/evaluator/RELPLUS_EPOCH200_1GPU_VS_8GPU_CONFUSION_AUDIT.json",
+  "file_hash_written": false
+}

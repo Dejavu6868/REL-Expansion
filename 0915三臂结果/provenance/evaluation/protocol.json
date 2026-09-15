@@ -1,0 +1,31 @@
+{
+  "stage": "Fixed epoch-200 S2D three-arm comparison closure",
+  "scientific_question": "How does the frozen HHA arm compare with existing REL+ and RGBD at fixed epoch 200?",
+  "changed_factor": "Only the already-trained X representation arm is HHA; no new training or hyperparameter changes",
+  "frozen_controls": "Original CMX dual MiT-B2 and MLPDecoder; seed 12345; existing epoch-200 checkpoint; same ordered 17593-image test set, 480x480, 13 classes, ignore255, scale1, flipfalse, align_cornersfalse, batch1 per rank, 8-rank no-pad sampler",
+  "endpoint": "Full-test mIoU, pixel accuracy, mean accuracy and per-class IoU at epoch200",
+  "pass": "Exit0; 8 exact ordered no-pad shards; 17593 unique IDs equal frozen test; summed rank confusion equals CSV; recomputed metrics match; checkpoint and source hashes unchanged",
+  "fail": "Runtime, numerical or integrity failure; preserve attempt and diagnose",
+  "blocked": "Required data, checkpoint, SSH or GPU capacity unavailable",
+  "stop": "After integrity audit and fixed-200 descriptive three-arm report; no automatic additional experiments",
+  "evidence_outputs": [
+    "precheck",
+    "checkpoint and source hashes",
+    "forward smoke",
+    "exact launch argv and PIDs",
+    "log and exit code",
+    "metrics",
+    "per-class CSV",
+    "confusion CSV",
+    "evaluation manifest",
+    "8 rank reports",
+    "integrity audit",
+    "three-arm summary"
+  ],
+  "pass_unlocks": "Single-seed descriptive comparison; cross-seed stability remains untested",
+  "prerequisites": {
+    "scientific": "Frozen protocol and completed HHA training",
+    "data_access": "SSH, checkpoint, frozen data and free storage verified",
+    "control_tooling": "Source/adapter integrity and runtime dataset gate PASS; real checkpoint forward smoke required before full evaluation"
+  }
+}

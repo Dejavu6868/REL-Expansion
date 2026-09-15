@@ -1,0 +1,28 @@
+{
+  "RGBD": {
+    "exitcodes": {
+      "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/formal_evaluation/CMX_RGBD_S2D_three_arm_v1_seed12345_epoch200_attempt2/rgbd_epoch200_full_evaluation.exitcode": "0"
+    }
+  },
+  "RELPlus": {
+    "exitcodes": {},
+    "sweep_report.json": {
+      "status": "PASS",
+      "keys": [
+        "status",
+        "checkpoint_count",
+        "primary_epoch",
+        "secondary_epoch",
+        "secondary_endpoint",
+        "selection_bias_disclosed",
+        "nproc_per_node",
+        "launcher",
+        "sequential_checkpoint_launch",
+        "commands",
+        "precomputed_plumbing_smoke",
+        "scientific_metric_reported",
+        "file_hash_written"
+      ]
+    }
+  }
+}

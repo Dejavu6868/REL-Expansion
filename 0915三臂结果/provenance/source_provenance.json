@@ -1,0 +1,21 @@
+{
+  "freeze_date": "2026-09-15",
+  "source_policy": "Preserve source bytes; no performance or batch-size changes",
+  "RELPlus": {
+    "archive_folder": "code/RELPlusv2.3",
+    "remote_code_root": "/home/zhuzhaoziao/RELPlus/RELPlusv2.3",
+    "snapshot": "RELPlusv2.3-code-20260901.zip",
+    "snapshot_sha256": "95001dc6caadedb1c036cfcfa0cc27d2def10ee9275066adb4a1f48dd4d89550",
+    "files": 210,
+    "local_mirror_matches_archive": true,
+    "notes": "Includes training recovery and evaluator launcher repairs after original 0821 GitHub snapshot"
+  },
+  "RGBD_HHA": {
+    "archive_folder": "code/CMX-S2D-ThreeArm-v1",
+    "remote_code_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-ThreeArm-v1",
+    "files": 224,
+    "python_source_hashes_verified_against_20260915_remote_audit": 174
+  },
+  "original_github_snapshot_commit": "f88eb1922508896ebd412cf00bf445fa44b20ded",
+  "adapter_sha256": "374b244a4c2ed3d8e77384dae5721616920e757feb7979b08c89bfac36e09445"
+}

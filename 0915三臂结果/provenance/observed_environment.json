@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-09-06T01:43:26.612789+08:00",
+  "environment": {
+    "python": "3.8.16 | packaged by conda-forge | (default, Feb  1 2023, 16:01:55) \n[GCC 11.3.0]",
+    "torch": "1.8.2",
+    "cuda": "11.1",
+    "cudnn": 8005,
+    "numpy": "1.21.6",
+    "opencv": "4.5.5",
+    "scipy": "1.7.3"
+  }
+}

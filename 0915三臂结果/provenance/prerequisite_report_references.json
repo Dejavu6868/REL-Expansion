@@ -1,0 +1,42 @@
+{
+  "input_audit_report": {
+    "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/reports/three_arm_data_contract.json",
+    "sha256": "e038020647be49b5b7e6c9cbb92ecb9b5f61e4ff07bb9fd878604fa0b7c48f41",
+    "status": "PASS"
+  },
+  "training_code_equivalence_report": {
+    "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/training_code_equivalence/TRAINING_CODE_EQUIVALENCE_AUDIT.json",
+    "sha256": "a8fa9a83f5d2e9f3d80a72bdfff33b52bb629e03948e4ec5609bfd3908cfeb61",
+    "status": "PASS"
+  },
+  "model_initialization_report": {
+    "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/initialization/THREE_ARM_MODEL_INITIALIZATION_AUDIT.json",
+    "sha256": "a8876644e15d379ee2ea7a548410fca4804a86b2cba06ee9a7c67e5211e80f99",
+    "status": "PASS"
+  },
+  "sampler_sequence_report": {
+    "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/sampler/OLD_VS_NEW_SAMPLER_SEQUENCE_AUDIT.json",
+    "sha256": "1d4f314a8aa7b1691359b47678109c9271777a507a642ee1d9acb1d0568f6606",
+    "status": "PASS"
+  },
+  "dataloader_trace_report": {
+    "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/dataloader/THREE_ARM_DATALOADER_CROSS_EPOCH_TRACE.json",
+    "sha256": "c8d54804c6b8bdcbb172987d5d3c6a161248edc75f2050b29a80447bac6726df",
+    "status": "PASS"
+  },
+  "evaluator_equivalence_report": {
+    "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/evaluator/RELPLUS_EPOCH200_EVALUATOR_EQUIVALENCE.json",
+    "sha256": "04a05acd097ed05da279c0961b1e295c037930bc4f2603b83d467b2f6d0e46df",
+    "status": "PASS"
+  },
+  "evaluator_rank_consistency_report": {
+    "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/evaluator/RELPLUS_EPOCH200_1GPU_VS_8GPU_CONFUSION_AUDIT.json",
+    "sha256": "b514e33a4beedc16ed771b48c3955f15b9f92753c02b435814a26bbabc0b01d2",
+    "status": "PASS"
+  },
+  "training_data_preflight_report": {
+    "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/preflight/cmx_training_data_preflight_summary.json",
+    "sha256": "c9db3da8153133ede89d252f21630b003d1098ccaccee26a02c08c322b0bff84",
+    "status": "PASS"
+  }
+}

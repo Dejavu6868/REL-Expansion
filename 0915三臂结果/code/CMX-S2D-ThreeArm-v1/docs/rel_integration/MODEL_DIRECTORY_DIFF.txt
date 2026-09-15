@@ -1,0 +1,5 @@
+No differences were found between:
+/home/zhuzhaoziao/RELPlus/CMX/models
+/home/zhuzhaoziao/RELPlus/CMX-REL/models
+
+The comparison excluded only __pycache__ directories and compiled Python files.
