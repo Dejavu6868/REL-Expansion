@@ -1,0 +1,60 @@
+{
+  "metric_unit": "fraction_0_to_1",
+  "mIoU": 0.5483578043070518,
+  "pixel_accuracy": 0.7935569832736189,
+  "mean_accuracy": 0.6295056843937326,
+  "mIoU_percent": 54.835780430705185,
+  "pixel_accuracy_percent": 79.35569832736189,
+  "mean_accuracy_percent": 62.95056843937326,
+  "per_class_iou": [
+    0.00931167283131046,
+    0.712721405668206,
+    0.6346608337234534,
+    0.9038277582983966,
+    0.7519291766561667,
+    0.4703866766872107,
+    0.12568083052811185,
+    0.31561160071874206,
+    0.9477184469166919,
+    0.20629993548796569,
+    0.7100323145139785,
+    0.7315737623664602,
+    0.6088970415949808
+  ],
+  "per_class_iou_percent": [
+    0.931167283131046,
+    71.2721405668206,
+    63.46608337234534,
+    90.38277582983966,
+    75.19291766561666,
+    47.03866766872107,
+    12.568083052811186,
+    31.561160071874205,
+    94.77184469166919,
+    20.62999354879657,
+    71.00323145139785,
+    73.15737623664602,
+    60.88970415949808
+  ],
+  "valid_pixel_count": 3973620198,
+  "status": "PASS",
+  "scientific_metric_reported": true,
+  "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+  "representation_protocol_id": "RGBD_UINT8_REPEAT3_SOURCECOMPAT",
+  "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_rgbd_seed12345/checkpoints/epoch-200.pth",
+  "checkpoint_epoch": 200,
+  "evaluation_sample_count": 17593,
+  "class_count": 13,
+  "ignore_index": 255,
+  "eval_scale_array": [
+    1
+  ],
+  "eval_flip": false,
+  "eval_crop_size": [
+    480,
+    480
+  ],
+  "eval_align_corners": false,
+  "world_size": 8,
+  "file_hash_written": false
+}

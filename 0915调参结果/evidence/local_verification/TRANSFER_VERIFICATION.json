@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "checked_at": "2026-09-20T18:55:26.878047+08:00",
+  "file_count": 102,
+  "all_file_sha256_match": true,
+  "no_missing_or_extra_files": true,
+  "manifest_sha256": "d99e204bb090f588e6f85985202be533252e0d8359009698bbdd488e27f58e65"
+}

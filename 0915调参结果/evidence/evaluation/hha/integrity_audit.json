@@ -1,0 +1,103 @@
+{
+  "status": "PASS",
+  "metrics": {
+    "metric_unit": "fraction_0_to_1",
+    "mIoU": 0.6098827182233775,
+    "pixel_accuracy": 0.8242028293615997,
+    "mean_accuracy": 0.6920157179544748,
+    "mIoU_percent": 60.98827182233775,
+    "pixel_accuracy_percent": 82.42028293615998,
+    "mean_accuracy_percent": 69.20157179544748,
+    "per_class_iou": [
+      0.038182512307947176,
+      0.7559062232523455,
+      0.6657794533605581,
+      0.9163491099059533,
+      0.8317789291434282,
+      0.5118025207266308,
+      0.2121965531699249,
+      0.4306422575158279,
+      0.9661883142873182,
+      0.40636902614560333,
+      0.7751243185453686,
+      0.7730091397905555,
+      0.6451469787524445
+    ],
+    "per_class_iou_percent": [
+      3.8182512307947176,
+      75.59062232523455,
+      66.5779453360558,
+      91.63491099059533,
+      83.17789291434282,
+      51.18025207266308,
+      21.21965531699249,
+      43.06422575158279,
+      96.61883142873182,
+      40.636902614560334,
+      77.51243185453686,
+      77.30091397905555,
+      64.51469787524445
+    ],
+    "valid_pixel_count": 3973620198,
+    "status": "PASS",
+    "scientific_metric_reported": true,
+    "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+    "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+    "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/runs/hha/checkpoints/epoch-200.pth",
+    "checkpoint_epoch": 200,
+    "evaluation_sample_count": 17593,
+    "class_count": 13,
+    "ignore_index": 255,
+    "eval_scale_array": [
+      1
+    ],
+    "eval_flip": false,
+    "eval_crop_size": [
+      480,
+      480
+    ],
+    "eval_align_corners": false,
+    "world_size": 8,
+    "file_hash_written": false
+  },
+  "gt_histogram": [
+    1847860,
+    119677520,
+    490228389,
+    305645486,
+    62043298,
+    410165825,
+    75956637,
+    389388075,
+    322981046,
+    8229986,
+    147588579,
+    1466019722,
+    173847775
+  ],
+  "rank_counts": [
+    2200,
+    2199,
+    2199,
+    2199,
+    2199,
+    2199,
+    2199,
+    2199
+  ],
+  "checkpoint_sha256": "c5cf78b12d2458a48fe5505a4b7099ef84308dd4790f8283c02a605ba05ccd03",
+  "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+  "checks": {
+    "exitcode_zero": true,
+    "fixed_epoch_200": true,
+    "ordered_rank_shards_match": true,
+    "unique_test_samples": 17593,
+    "manifest_matches_rank_shards": true,
+    "rank_confusions_match_csv": true,
+    "nonnegative_integer_confusions": true,
+    "metrics_independently_recomputed": true,
+    "valid_pixel_count": 3973620198,
+    "class_order_matches": true,
+    "checkpoint_path_size_mtime_sha256_unchanged": true
+  }
+}

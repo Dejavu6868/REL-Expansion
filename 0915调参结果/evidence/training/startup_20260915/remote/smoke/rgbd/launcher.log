@@ -1,0 +1,109 @@
+[32m15 23:49:09 [0mPyTorch Version 1.8.2
+[32m15 23:49:10 [0mPyTorch Version 1.8.2
+[32m15 23:49:10 [0mPyTorch Version 1.8.2
+[32m15 23:49:10 [0mPyTorch Version 1.8.2
+[32m15 23:49:10 [0mPyTorch Version 1.8.2
+[32m15 23:49:10 [0mPyTorch Version 1.8.2
+[32m15 23:49:10 [0mPyTorch Version 1.8.2
+[32m15 23:49:10 [0mAdded key: store_based_barrier_key:1 to store for rank: 4
+[32m15 23:49:10 [0mPyTorch Version 1.8.2
+[32m15 23:49:10 [0mAdded key: store_based_barrier_key:1 to store for rank: 5
+[32m15 23:49:10 [0mAdded key: store_based_barrier_key:1 to store for rank: 7
+[32m15 23:49:11 [0mAdded key: store_based_barrier_key:1 to store for rank: 3
+[32m15 23:49:11 [0mAdded key: store_based_barrier_key:1 to store for rank: 6
+[32m15 23:49:11 [0mAdded key: store_based_barrier_key:1 to store for rank: 2
+[32m15 23:49:11 [0mAdded key: store_based_barrier_key:1 to store for rank: 1
+[32m15 23:49:11 [0mAdded key: store_based_barrier_key:1 to store for rank: 0
+[15 23:49:13 38@builder.py:root] Using backbone: Segformer-B2
+[15 23:49:13 38@builder.py:root] Using backbone: Segformer-B2
+[15 23:49:13 38@builder.py:root] Using backbone: Segformer-B2
+[15 23:49:13 38@builder.py:root] Using backbone: Segformer-B2
+[15 23:49:14 38@builder.py:root] Using backbone: Segformer-B2
+[15 23:49:14 38@builder.py:root] Using backbone: Segformer-B2
+[15 23:49:14 38@builder.py:root] Using backbone: Segformer-B2
+[15 23:49:14 58@builder.py:root] Using MLP Decoder
+[15 23:49:14 91@builder.py:root] Loading pretrained model: /data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth
+[15 23:49:15 467@dual_segformer.py:root] Load model, Time usage:
+	IO: 0.06079387664794922, initialize parameters: 0.07079792022705078
+[15 23:49:15 93@builder.py:root] Initing weights ...
+conflict !!!
+[15 23:49:15 38@builder.py:root] Using backbone: Segformer-B2
+[15 23:49:15 58@builder.py:root] Using MLP Decoder
+[15 23:49:15 91@builder.py:root] Loading pretrained model: /data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth
+[15 23:49:15 58@builder.py:root] Using MLP Decoder
+[15 23:49:15 91@builder.py:root] Loading pretrained model: /data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth
+[15 23:49:15 467@dual_segformer.py:root] Load model, Time usage:
+	IO: 0.059519290924072266, initialize parameters: 0.07093191146850586
+[15 23:49:15 93@builder.py:root] Initing weights ...
+[15 23:49:15 58@builder.py:root] Using MLP Decoder
+[15 23:49:15 91@builder.py:root] Loading pretrained model: /data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth
+[15 23:49:15 467@dual_segformer.py:root] Load model, Time usage:
+	IO: 0.05942368507385254, initialize parameters: 0.07137441635131836
+[15 23:49:15 93@builder.py:root] Initing weights ...
+[15 23:49:15 467@dual_segformer.py:root] Load model, Time usage:
+	IO: 0.07416319847106934, initialize parameters: 0.09872722625732422
+[15 23:49:15 93@builder.py:root] Initing weights ...
+[15 23:49:16 58@builder.py:root] Using MLP Decoder
+[15 23:49:16 91@builder.py:root] Loading pretrained model: /data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth
+[15 23:49:16 467@dual_segformer.py:root] Load model, Time usage:
+	IO: 0.05761528015136719, initialize parameters: 0.07164931297302246
+[15 23:49:16 93@builder.py:root] Initing weights ...
+[15 23:49:16 58@builder.py:root] Using MLP Decoder
+[15 23:49:16 91@builder.py:root] Loading pretrained model: /data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth
+[15 23:49:16 467@dual_segformer.py:root] Load model, Time usage:
+	IO: 0.05994534492492676, initialize parameters: 0.06957507133483887
+[15 23:49:16 93@builder.py:root] Initing weights ...
+[15 23:49:16 58@builder.py:root] Using MLP Decoder
+[15 23:49:16 91@builder.py:root] Loading pretrained model: /data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth
+[15 23:49:16 58@builder.py:root] Using MLP Decoder
+[15 23:49:17 91@builder.py:root] Loading pretrained model: /data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth
+[15 23:49:17 467@dual_segformer.py:root] Load model, Time usage:
+	IO: 0.059194326400756836, initialize parameters: 0.0698397159576416
+[15 23:49:17 93@builder.py:root] Initing weights ...
+[15 23:49:17 467@dual_segformer.py:root] Load model, Time usage:
+	IO: 0.07707786560058594, initialize parameters: 0.09531903266906738
+[15 23:49:17 93@builder.py:root] Initing weights ...
+[15 23:49:27 693@distributed.py:root] Reducer buckets have been rebuilt in this iteration.
+[15 23:49:27 693@distributed.py:root] Reducer buckets have been rebuilt in this iteration.
+[15 23:49:27 693@distributed.py:root] Reducer buckets have been rebuilt in this iteration.
+[15 23:49:27 693@distributed.py:root] Reducer buckets have been rebuilt in this iteration.
+[15 23:49:27 693@distributed.py:root] Reducer buckets have been rebuilt in this iteration.
+[15 23:49:27 693@distributed.py:root] Reducer buckets have been rebuilt in this iteration.
+[15 23:49:27 693@distributed.py:root] Reducer buckets have been rebuilt in this iteration.
+[15 23:49:27 693@distributed.py:root] Reducer buckets have been rebuilt in this iteration.
+[15 23:49:43 94@engine.py:root] Saving checkpoint to file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth
+[15 23:49:44 120@engine.py:root] Save checkpoint to file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth, Time usage:
+	prepare checkpoint: 0.012441873550415039, IO: 1.011871337890625
+[15 23:49:45 188@pyt_utils.py:root] Load model, Time usage:
+	IO: 3.5762786865234375e-06, initialize parameters: 0.11868667602539062
+[15 23:49:45 188@pyt_utils.py:root] Load model, Time usage:
+	IO: 5.245208740234375e-06, initialize parameters: 0.12171268463134766
+[15 23:49:45 188@pyt_utils.py:root] Load model, Time usage:
+	IO: 2.1457672119140625e-06, initialize parameters: 0.122039794921875
+[15 23:49:45 188@pyt_utils.py:root] Load model, Time usage:
+	IO: 1.430511474609375e-06, initialize parameters: 0.12751173973083496
+[15 23:49:45 188@pyt_utils.py:root] Load model, Time usage:
+	IO: 1.9073486328125e-06, initialize parameters: 0.12903523445129395
+[15 23:49:45 188@pyt_utils.py:root] Load model, Time usage:
+	IO: 2.86102294921875e-06, initialize parameters: 0.13045907020568848
+[15 23:49:45 188@pyt_utils.py:root] Load model, Time usage:
+	IO: 2.1457672119140625e-06, initialize parameters: 0.13071441650390625
+[15 23:49:45 188@pyt_utils.py:root] Load model, Time usage:
+	IO: 2.1457672119140625e-06, initialize parameters: 0.15821123123168945
+[15 23:49:46 238@engine.py:root] Load checkpoint from file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth, Time usage:
+	IO: 0.20635128021240234, restore checkpoint: 0.5674083232879639
+[15 23:49:46 238@engine.py:root] Load checkpoint from file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth, Time usage:
+	IO: 0.20614075660705566, restore checkpoint: 0.5779438018798828
+[15 23:49:46 238@engine.py:root] Load checkpoint from file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth, Time usage:
+	IO: 0.2062549591064453, restore checkpoint: 0.5869400501251221
+[15 23:49:46 238@engine.py:root] Load checkpoint from file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth, Time usage:
+	IO: 0.21541261672973633, restore checkpoint: 0.6117374897003174
+[15 23:49:46 238@engine.py:root] Load checkpoint from file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth, Time usage:
+	IO: 0.21524739265441895, restore checkpoint: 0.6176249980926514
+[15 23:49:46 238@engine.py:root] Load checkpoint from file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth, Time usage:
+	IO: 0.21552634239196777, restore checkpoint: 0.6172659397125244
+[15 23:49:46 238@engine.py:root] Load checkpoint from file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth, Time usage:
+	IO: 0.21488738059997559, restore checkpoint: 0.6242809295654297
+[15 23:49:46 238@engine.py:root] Load checkpoint from file /data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth, Time usage:
+	IO: 0.28427791595458984, restore checkpoint: 0.6593475341796875
+{"status": "PASS", "integration_protocol_id": "CMX_S2D_THREE_ARM_V1", "representation_protocol_id": "RGBD_UINT8_REPEAT3_SOURCECOMPAT", "comparison_arm": "rgbd", "gpu_count": 8, "rank_count": 8, "iterations": 20, "resume_iterations": 2, "optimizer_step_executed": true, "checkpoint_saved": true, "checkpoint_resumed": true, "checkpoint_restore_path": "Engine.restore_checkpoint", "rank_runtime_state_restored": true, "sampler_epoch_restored": true, "parameters_match_after_restore": true, "parameter_groups_changed": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "parameter_groups_changed_after_resume": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "loss_finite": true, "logits_finite": true, "gradients_finite": true, "lr_continuous_across_restore": true, "lr_updated_after_resume": true, "pretrained_model_loaded": true, "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth", "checkpoint_epoch": 5, "checkpoint_iteration": 20, "checkpoint_kind": "DISPOSABLE_DDP_SMOKE_REAL_ENGINE_RECOVERY", "pretrained_model": "/data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth", "input_audit_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/reports/three_arm_data_contract.json", "cache_generation_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/cache_generation_summary.json", "cache_audit_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/audit/cache_audit_summary.json", "training_data_preflight_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/preflight/cmx_training_data_preflight_summary.json", "ranks": [{"status": "PASS", "rank": 0, "world_size": 8, "iterations_before_checkpoint": 20, "iterations_after_resume": 2, "optimizer_step_executed": true, "checkpoint_saved": true, "checkpoint_resumed": true, "checkpoint_restore_path": "Engine.restore_checkpoint", "rank_runtime_state_restored": true, "sampler_epoch_restored": 5, "parameters_match_after_restore": true, "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth", "checkpoint_epoch": 5, "checkpoint_iteration": 20, "restored_state_epoch": 6, "parameter_groups_changed": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "parameter_groups_changed_after_resume": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "loss_finite": true, "logits_finite": true, "gradients_finite": true, "lr_before_restore": 2.4126984126984124e-07, "lr_after_restore": 2.4126984126984124e-07, "lr_after_resume": 2.6666666666666667e-07, "lr_continuous_across_restore": true, "lr_updated_after_resume": true, "pretrained_model_loaded": true, "author_nan_replacement_count": 0, "pid": 810854}, {"status": "PASS", "rank": 1, "world_size": 8, "iterations_before_checkpoint": 20, "iterations_after_resume": 2, "optimizer_step_executed": true, "checkpoint_saved": true, "checkpoint_resumed": true, "checkpoint_restore_path": "Engine.restore_checkpoint", "rank_runtime_state_restored": true, "sampler_epoch_restored": 5, "parameters_match_after_restore": true, "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth", "checkpoint_epoch": 5, "checkpoint_iteration": 20, "restored_state_epoch": 6, "parameter_groups_changed": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "parameter_groups_changed_after_resume": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "loss_finite": true, "logits_finite": true, "gradients_finite": true, "lr_before_restore": 2.4126984126984124e-07, "lr_after_restore": 2.4126984126984124e-07, "lr_after_resume": 2.6666666666666667e-07, "lr_continuous_across_restore": true, "lr_updated_after_resume": true, "pretrained_model_loaded": true, "author_nan_replacement_count": 0, "pid": 810855}, {"status": "PASS", "rank": 2, "world_size": 8, "iterations_before_checkpoint": 20, "iterations_after_resume": 2, "optimizer_step_executed": true, "checkpoint_saved": true, "checkpoint_resumed": true, "checkpoint_restore_path": "Engine.restore_checkpoint", "rank_runtime_state_restored": true, "sampler_epoch_restored": 5, "parameters_match_after_restore": true, "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth", "checkpoint_epoch": 5, "checkpoint_iteration": 20, "restored_state_epoch": 6, "parameter_groups_changed": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "parameter_groups_changed_after_resume": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "loss_finite": true, "logits_finite": true, "gradients_finite": true, "lr_before_restore": 2.4126984126984124e-07, "lr_after_restore": 2.4126984126984124e-07, "lr_after_resume": 2.6666666666666667e-07, "lr_continuous_across_restore": true, "lr_updated_after_resume": true, "pretrained_model_loaded": true, "author_nan_replacement_count": 0, "pid": 810856}, {"status": "PASS", "rank": 3, "world_size": 8, "iterations_before_checkpoint": 20, "iterations_after_resume": 2, "optimizer_step_executed": true, "checkpoint_saved": true, "checkpoint_resumed": true, "checkpoint_restore_path": "Engine.restore_checkpoint", "rank_runtime_state_restored": true, "sampler_epoch_restored": 5, "parameters_match_after_restore": true, "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth", "checkpoint_epoch": 5, "checkpoint_iteration": 20, "restored_state_epoch": 6, "parameter_groups_changed": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "parameter_groups_changed_after_resume": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "loss_finite": true, "logits_finite": true, "gradients_finite": true, "lr_before_restore": 2.4126984126984124e-07, "lr_after_restore": 2.4126984126984124e-07, "lr_after_resume": 2.6666666666666667e-07, "lr_continuous_across_restore": true, "lr_updated_after_resume": true, "pretrained_model_loaded": true, "author_nan_replacement_count": 0, "pid": 810857}, {"status": "PASS", "rank": 4, "world_size": 8, "iterations_before_checkpoint": 20, "iterations_after_resume": 2, "optimizer_step_executed": true, "checkpoint_saved": true, "checkpoint_resumed": true, "checkpoint_restore_path": "Engine.restore_checkpoint", "rank_runtime_state_restored": true, "sampler_epoch_restored": 5, "parameters_match_after_restore": true, "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth", "checkpoint_epoch": 5, "checkpoint_iteration": 20, "restored_state_epoch": 6, "parameter_groups_changed": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "parameter_groups_changed_after_resume": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "loss_finite": true, "logits_finite": true, "gradients_finite": true, "lr_before_restore": 2.4126984126984124e-07, "lr_after_restore": 2.4126984126984124e-07, "lr_after_resume": 2.6666666666666667e-07, "lr_continuous_across_restore": true, "lr_updated_after_resume": true, "pretrained_model_loaded": true, "author_nan_replacement_count": 0, "pid": 810859}, {"status": "PASS", "rank": 5, "world_size": 8, "iterations_before_checkpoint": 20, "iterations_after_resume": 2, "optimizer_step_executed": true, "checkpoint_saved": true, "checkpoint_resumed": true, "checkpoint_restore_path": "Engine.restore_checkpoint", "rank_runtime_state_restored": true, "sampler_epoch_restored": 5, "parameters_match_after_restore": true, "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth", "checkpoint_epoch": 5, "checkpoint_iteration": 20, "restored_state_epoch": 6, "parameter_groups_changed": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "parameter_groups_changed_after_resume": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "loss_finite": true, "logits_finite": true, "gradients_finite": true, "lr_before_restore": 2.4126984126984124e-07, "lr_after_restore": 2.4126984126984124e-07, "lr_after_resume": 2.6666666666666667e-07, "lr_continuous_across_restore": true, "lr_updated_after_resume": true, "pretrained_model_loaded": true, "author_nan_replacement_count": 0, "pid": 810861}, {"status": "PASS", "rank": 6, "world_size": 8, "iterations_before_checkpoint": 20, "iterations_after_resume": 2, "optimizer_step_executed": true, "checkpoint_saved": true, "checkpoint_resumed": true, "checkpoint_restore_path": "Engine.restore_checkpoint", "rank_runtime_state_restored": true, "sampler_epoch_restored": 5, "parameters_match_after_restore": true, "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth", "checkpoint_epoch": 5, "checkpoint_iteration": 20, "restored_state_epoch": 6, "parameter_groups_changed": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "parameter_groups_changed_after_resume": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "loss_finite": true, "logits_finite": true, "gradients_finite": true, "lr_before_restore": 2.4126984126984124e-07, "lr_after_restore": 2.4126984126984124e-07, "lr_after_resume": 2.6666666666666667e-07, "lr_continuous_across_restore": true, "lr_updated_after_resume": true, "pretrained_model_loaded": true, "author_nan_replacement_count": 0, "pid": 810862}, {"status": "PASS", "rank": 7, "world_size": 8, "iterations_before_checkpoint": 20, "iterations_after_resume": 2, "optimizer_step_executed": true, "checkpoint_saved": true, "checkpoint_resumed": true, "checkpoint_restore_path": "Engine.restore_checkpoint", "rank_runtime_state_restored": true, "sampler_epoch_restored": 5, "parameters_match_after_restore": true, "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth", "checkpoint_epoch": 5, "checkpoint_iteration": 20, "restored_state_epoch": 6, "parameter_groups_changed": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "parameter_groups_changed_after_resume": {"rgb_encoder": true, "x_encoder": true, "fusion": true, "decoder": true}, "loss_finite": true, "logits_finite": true, "gradients_finite": true, "lr_before_restore": 2.4126984126984124e-07, "lr_after_restore": 2.4126984126984124e-07, "lr_after_resume": 2.6666666666666667e-07, "lr_continuous_across_restore": true, "lr_updated_after_resume": true, "pretrained_model_loaded": true, "author_nan_replacement_count": 0, "pid": 810864}], "file_hash_written": false}

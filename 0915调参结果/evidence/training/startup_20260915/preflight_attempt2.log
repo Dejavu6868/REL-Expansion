@@ -1,0 +1,3 @@
+[32m15 23:45:33 [0mUsing backbone: Segformer-B2
+[32m15 23:45:35 [0mUsing MLP Decoder
+{"status": "PASS", "report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/preflight.json"}

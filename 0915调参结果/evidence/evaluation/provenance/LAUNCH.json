@@ -1,0 +1,14 @@
+{
+  "status": "DISPATCHED",
+  "argv": [
+    "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+    "-B",
+    "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-EVAL-20260920/run_evaluation.py"
+  ],
+  "pid": 1551534,
+  "starttime": "1056526287",
+  "started_at": 1789901012.9015374,
+  "output": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/evaluation_epoch200_20260920_attempt1",
+  "authorized_request": "\u8fdb\u884c\u8bc4\u4f30",
+  "evaluation_only": true
+}

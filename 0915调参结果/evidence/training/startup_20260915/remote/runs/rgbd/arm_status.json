@@ -1,0 +1,7 @@
+{
+  "status": "RUNNING",
+  "arm": "rgbd",
+  "phase": "train",
+  "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+  "started_at": 1789487634.0907924
+}

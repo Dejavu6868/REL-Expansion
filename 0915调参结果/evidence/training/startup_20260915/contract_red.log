@@ -1,0 +1,65 @@
+EEEEE
+======================================================================
+ERROR: test_batch_change_without_recomputed_sampling_rejected (test_contract.ContractTests.test_batch_change_without_recomputed_sampling_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/tests/test_contract.py", line 29, in test_batch_change_without_recomputed_sampling_rejected
+    validate_shared({'batch_size': 56, 'lr': 0.00012,
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     'niters_per_epoch': 6613, 'logical_samples_per_epoch': 52904})
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/suite_common.py", line 13, in validate_shared
+    raise NotImplementedError
+NotImplementedError
+
+======================================================================
+ERROR: test_full_epoch_covers_every_image_with_minimal_padding (test_contract.ContractTests.test_full_epoch_covers_every_image_with_minimal_padding)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/tests/test_contract.py", line 11, in test_full_epoch_covers_every_image_with_minimal_padding
+    values = budget(52903, 56)
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/suite_common.py", line 5, in budget
+    raise NotImplementedError
+NotImplementedError
+
+======================================================================
+ERROR: test_invalid_batch_rejected (test_contract.ContractTests.test_invalid_batch_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/tests/test_contract.py", line 34, in test_invalid_batch_rejected
+    budget(52903, 0)
+    ~~~~~~^^^^^^^^^^
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/suite_common.py", line 5, in budget
+    raise NotImplementedError
+NotImplementedError
+
+======================================================================
+ERROR: test_original_output_cannot_be_reused (test_contract.ContractTests.test_original_output_cannot_be_reused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/tests/test_contract.py", line 19, in test_original_output_cannot_be_reused
+    validate_paths({'remote_source_root': '/home/zhuzhaoziao/RELPlus/CMX-S2D-ThreeArm-v1',
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    'output_root': '/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1'})
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/suite_common.py", line 9, in validate_paths
+    raise NotImplementedError
+NotImplementedError
+
+======================================================================
+ERROR: test_relative_output_cannot_be_used (test_contract.ContractTests.test_relative_output_cannot_be_used)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/tests/test_contract.py", line 24, in test_relative_output_cannot_be_used
+    validate_paths({'remote_source_root': '/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915',
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    'output_root': 'runs'})
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915/suite_common.py", line 9, in validate_paths
+    raise NotImplementedError
+NotImplementedError
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.001s
+
+FAILED (errors=5)

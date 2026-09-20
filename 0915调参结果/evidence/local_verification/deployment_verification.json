@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "verified_remote_python_sha256": {
+    "run_evaluation.py": "d011c5ed88af0b6b3b7648a87f7caa4a486041e624b646ea9b66f38f33400a72",
+    "audit_eval.py": "2c59e75f999ecd9e350dd1a75d19448f316d7dcf5f263d6cb94a8d125dfd6c07",
+    "input_adapter.py": "0f802339b3b002782ed8fc02869cb21fb99a7ff612cb9e501e909b5386fba452",
+    "eval_rank.py": "336eb18f9b891905aa175dc33ea37464af714c58c6e93bbb7ce9c34610c049c6"
+  }
+}

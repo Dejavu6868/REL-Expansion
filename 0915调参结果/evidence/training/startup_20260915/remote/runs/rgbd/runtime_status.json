@@ -1,0 +1,11 @@
+{
+  "status": "RUNNING",
+  "epoch": 1,
+  "iteration_in_epoch": 120,
+  "global_iteration": 120,
+  "loss": 1.3316056728363037,
+  "learning_rate": 1.5111111111111112e-06,
+  "optimizer_step_executed": true,
+  "author_nan_replacement_count": 0,
+  "world_size": 8
+}

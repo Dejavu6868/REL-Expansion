@@ -1,0 +1,107 @@
+{
+  "status": "FAIL",
+  "started_at_unix": 1789487059.755189,
+  "suite_path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915/suite.json",
+  "optimizer_steps_executed": 0,
+  "old_scientific_checkpoint_rehashed": false,
+  "suite_sha256": "a8f323e48d8b70fc2bb6f429a0450bbf47eaff1dfbb308edbfc2a458a2282090",
+  "authorization": {
+    "approved": true,
+    "recorded_at": "2026-09-15T23:41:50.291066+08:00",
+    "request": "以这组参数把CMX三臂进行训练",
+    "split_reply": "沿用原划分，做三臂正式训练（推荐）"
+  },
+  "output_disk_before": {
+    "queried_path": "/data/zhuzhaoziao/RELPlus/outputs",
+    "free_bytes": 2896691052544,
+    "total_bytes": 7937303777280,
+    "required_free_bytes": 268435456000
+  },
+  "resources_before": {
+    "time": 1789487060.0654757,
+    "gpus": [
+      {
+        "index": 0,
+        "uuid": "GPU-6a7af88a-6d3e-1d07-68c6-571fb73f3f59",
+        "total_bytes": 25769803776,
+        "used_bytes": 1048576,
+        "free_bytes": 25297944576,
+        "utilization_percent": 0.0,
+        "temperature_c": 24.0
+      },
+      {
+        "index": 1,
+        "uuid": "GPU-0a803e08-e61d-f246-205d-886ee56c1c31",
+        "total_bytes": 25769803776,
+        "used_bytes": 1048576,
+        "free_bytes": 25297944576,
+        "utilization_percent": 0.0,
+        "temperature_c": 25.0
+      },
+      {
+        "index": 2,
+        "uuid": "GPU-4c8a924f-7b9f-fd54-4436-3922b74f0782",
+        "total_bytes": 25769803776,
+        "used_bytes": 1048576,
+        "free_bytes": 25297944576,
+        "utilization_percent": 0.0,
+        "temperature_c": 24.0
+      },
+      {
+        "index": 3,
+        "uuid": "GPU-f97abe69-2fcd-892e-f367-965af99896cd",
+        "total_bytes": 25769803776,
+        "used_bytes": 1048576,
+        "free_bytes": 25297944576,
+        "utilization_percent": 0.0,
+        "temperature_c": 26.0
+      },
+      {
+        "index": 4,
+        "uuid": "GPU-c7b09dfa-8ef8-16be-45a5-e87f8363fe1e",
+        "total_bytes": 25769803776,
+        "used_bytes": 1048576,
+        "free_bytes": 25297944576,
+        "utilization_percent": 0.0,
+        "temperature_c": 24.0
+      },
+      {
+        "index": 5,
+        "uuid": "GPU-f90f621b-af43-88ec-22ce-dda039ce6583",
+        "total_bytes": 25769803776,
+        "used_bytes": 1048576,
+        "free_bytes": 25297944576,
+        "utilization_percent": 0.0,
+        "temperature_c": 24.0
+      },
+      {
+        "index": 6,
+        "uuid": "GPU-7dcb4087-db7b-3f1a-6e4a-b90b4d99cdf9",
+        "total_bytes": 25769803776,
+        "used_bytes": 1048576,
+        "free_bytes": 25297944576,
+        "utilization_percent": 0.0,
+        "temperature_c": 24.0
+      },
+      {
+        "index": 7,
+        "uuid": "GPU-27fcbcc5-1bfd-8b2a-667e-b556b71781e8",
+        "total_bytes": 25769803776,
+        "used_bytes": 1048576,
+        "free_bytes": 25297944576,
+        "utilization_percent": 0.0,
+        "temperature_c": 24.0
+      }
+    ],
+    "compute_processes": [],
+    "host": {
+      "available_bytes": 526590214144
+    },
+    "shm_available_bytes": 268467355648
+  },
+  "frozen_integrity_sha256": "14b836875a060dd7283998345f9d3c8307b32d00043a3825e572fcbf055ced35",
+  "completed_at_unix": 1789487060.085662,
+  "error_type": "RuntimeError",
+  "error": "Source integrity mismatch at /home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915/source: {'missing': ['tests/__init__.py', 'tests/conftest.py', 'tests/helpers.py', 'tests/run_rel_integration_smoke.py', 'tests/test_augmentation_contract.py', 'tests/test_camera_resolution_contract.py', 'tests/test_canonical_geometry.py', 'tests/test_channel_sentinel.py', 'tests/test_cmx_data_contract.py', 'tests/test_cmx_eval_contract.py', 'tests/test_cmx_training_protocol.py', 'tests/test_comparison_transform_profile.py', 'tests/test_encoding_units.py', 'tests/test_end_to_end_planes.py', 'tests/test_formal_configs_and_guards.py', 'tests/test_generator_byte_invariant_integration.py', 'tests/test_generator_contract.py', 'tests/test_gravity_singularity.py', 'tests/test_invalid_input_contract.py', 'tests/test_invalid_label_diagnostics.py', 'tests/test_live_source_integration.py', 'tests/test_normal_policy.py', 'tests/test_pilot_selection.py', 'tests/test_pose_physics.py', 'tests/test_preflight_dataset.py', 'tests/test_review_batch_failure.py', 'tests/test_source_encoder_regression.py', 'tests/test_source_normal_regression.py', 'tests/test_source_rotation_regression.py', 'tests/test_three_arm_v1.py', 'tests/test_v1_v2_diff.py', 'tests/test_v2_1_camera_profile.py', 'tests/test_v2_2_infrastructure.py', 'tests/test_v2_3_infrastructure.py', 'tests/validate_rel_plus_v2_1_loader.py'], 'unexpected': [], 'changed': []}",
+  "traceback": "Traceback (most recent call last):\n  File \"preflight.py\", line 257, in main\n    \"bundle\": source_integrity(bundle / \"source\", expected[\"source_hashes\"]),\n  File \"preflight.py\", line 78, in source_integrity\n    raise RuntimeError(\"Source integrity mismatch at {}: {}\".format(root, {\nRuntimeError: Source integrity mismatch at /home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915/source: {'missing': ['tests/__init__.py', 'tests/conftest.py', 'tests/helpers.py', 'tests/run_rel_integration_smoke.py', 'tests/test_augmentation_contract.py', 'tests/test_camera_resolution_contract.py', 'tests/test_canonical_geometry.py', 'tests/test_channel_sentinel.py', 'tests/test_cmx_data_contract.py', 'tests/test_cmx_eval_contract.py', 'tests/test_cmx_training_protocol.py', 'tests/test_comparison_transform_profile.py', 'tests/test_encoding_units.py', 'tests/test_end_to_end_planes.py', 'tests/test_formal_configs_and_guards.py', 'tests/test_generator_byte_invariant_integration.py', 'tests/test_generator_contract.py', 'tests/test_gravity_singularity.py', 'tests/test_invalid_input_contract.py', 'tests/test_invalid_label_diagnostics.py', 'tests/test_live_source_integration.py', 'tests/test_normal_policy.py', 'tests/test_pilot_selection.py', 'tests/test_pose_physics.py', 'tests/test_preflight_dataset.py', 'tests/test_review_batch_failure.py', 'tests/test_source_encoder_regression.py', 'tests/test_source_normal_regression.py', 'tests/test_source_rotation_regression.py', 'tests/test_three_arm_v1.py', 'tests/test_v1_v2_diff.py', 'tests/test_v2_1_camera_profile.py', 'tests/test_v2_2_infrastructure.py', 'tests/test_v2_3_infrastructure.py', 'tests/validate_rel_plus_v2_1_loader.py'], 'unexpected': [], 'changed': []}\n"
+}

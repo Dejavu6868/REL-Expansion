@@ -1,0 +1,25 @@
+[32m20 18:43:57 [0mAdded key: store_based_barrier_key:1 to store for rank: 6
+[32m20 18:43:57 [0mAdded key: store_based_barrier_key:1 to store for rank: 5
+[32m20 18:43:57 [0mAdded key: store_based_barrier_key:1 to store for rank: 3
+[32m20 18:43:58 [0mAdded key: store_based_barrier_key:1 to store for rank: 1
+[32m20 18:43:58 [0mAdded key: store_based_barrier_key:1 to store for rank: 2
+[32m20 18:43:58 [0mAdded key: store_based_barrier_key:1 to store for rank: 4
+[32m20 18:43:58 [0mAdded key: store_based_barrier_key:1 to store for rank: 7
+[32m20 18:43:58 [0mAdded key: store_based_barrier_key:1 to store for rank: 0
+[32m20 18:43:58 [0mUsing backbone: Segformer-B2
+[32m20 18:43:58 [0mUsing backbone: Segformer-B2
+[32m20 18:43:58 [0mUsing backbone: Segformer-B2
+[32m20 18:43:58 [0mUsing backbone: Segformer-B2
+[32m20 18:43:58 [0mUsing backbone: Segformer-B2
+[32m20 18:43:58 [0mUsing backbone: Segformer-B2
+[32m20 18:43:58 [0mUsing backbone: Segformer-B2
+[32m20 18:43:58 [0mUsing backbone: Segformer-B2
+[32m20 18:43:59 [0mUsing MLP Decoder
+[32m20 18:43:59 [0mUsing MLP Decoder
+[32m20 18:43:59 [0mUsing MLP Decoder
+[32m20 18:43:59 [0mUsing MLP Decoder
+[32m20 18:43:59 [0mUsing MLP Decoder
+[32m20 18:44:00 [0mUsing MLP Decoder
+[32m20 18:44:00 [0mUsing MLP Decoder
+[32m20 18:44:00 [0mUsing MLP Decoder
+{"metric_unit": "fraction_0_to_1", "mIoU": 0.5541120158998274, "pixel_accuracy": 0.7940777713451718, "mean_accuracy": 0.6345112232002759, "mIoU_percent": 55.41120158998274, "pixel_accuracy_percent": 79.40777713451718, "mean_accuracy_percent": 63.45112232002759, "per_class_iou": [0.004187965389930637, 0.7254400632549229, 0.6416585251017923, 0.9028570291546999, 0.7605794672690525, 0.44652085168584693, 0.14159874359953437, 0.32383844294911696, 0.949258905497615, 0.23858198122889085, 0.7160516855765275, 0.7408408748738333, 0.6120416711159936], "per_class_iou_percent": [0.41879653899306374, 72.54400632549229, 64.16585251017923, 90.28570291546998, 76.05794672690524, 44.65208516858469, 14.159874359953436, 32.3838442949117, 94.9258905497615, 23.858198122889085, 71.60516855765276, 74.08408748738333, 61.20416711159936], "valid_pixel_count": 3973620198, "status": "PASS", "scientific_metric_reported": true, "integration_protocol_id": "CMX_S2D_THREE_ARM_V1", "representation_protocol_id": "RGBD_UINT8_REPEAT3_SOURCECOMPAT", "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/runs/rgbd/checkpoints/epoch-200.pth", "checkpoint_epoch": 200, "evaluation_sample_count": 17593, "class_count": 13, "ignore_index": 255, "eval_scale_array": [1], "eval_flip": false, "eval_crop_size": [480, 480], "eval_align_corners": false, "world_size": 8, "file_hash_written": false}

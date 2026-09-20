@@ -1,0 +1,14 @@
+{
+  "status": "COMPLETED",
+  "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+  "arm": "rgbd",
+  "mode": "smoke",
+  "rank": 0,
+  "pid": 810854,
+  "started_at": 1789487340.7638445,
+  "ended_at": 1789487396.5730338,
+  "epoch": null,
+  "global_iteration": 22,
+  "max_memory_allocated": 15904067072,
+  "max_memory_reserved": 17184063488
+}

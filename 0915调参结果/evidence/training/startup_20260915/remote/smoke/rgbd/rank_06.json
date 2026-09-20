@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "rank": 6,
+  "world_size": 8,
+  "iterations_before_checkpoint": 20,
+  "iterations_after_resume": 2,
+  "optimizer_step_executed": true,
+  "checkpoint_saved": true,
+  "checkpoint_resumed": true,
+  "checkpoint_restore_path": "Engine.restore_checkpoint",
+  "rank_runtime_state_restored": true,
+  "sampler_epoch_restored": 5,
+  "parameters_match_after_restore": true,
+  "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/smoke/rgbd/runtime/checkpoints/recovery_epoch_odd.pth",
+  "checkpoint_epoch": 5,
+  "checkpoint_iteration": 20,
+  "restored_state_epoch": 6,
+  "parameter_groups_changed": {
+    "rgb_encoder": true,
+    "x_encoder": true,
+    "fusion": true,
+    "decoder": true
+  },
+  "parameter_groups_changed_after_resume": {
+    "rgb_encoder": true,
+    "x_encoder": true,
+    "fusion": true,
+    "decoder": true
+  },
+  "loss_finite": true,
+  "logits_finite": true,
+  "gradients_finite": true,
+  "lr_before_restore": 2.4126984126984124e-07,
+  "lr_after_restore": 2.4126984126984124e-07,
+  "lr_after_resume": 2.6666666666666667e-07,
+  "lr_continuous_across_restore": true,
+  "lr_updated_after_resume": true,
+  "pretrained_model_loaded": true,
+  "author_nan_replacement_count": 0,
+  "pid": 810862
+}

@@ -1,0 +1,321 @@
+{
+  "status": "PASS_FIXED_EPOCH200_DESCRIPTIVE_COMPARISON",
+  "checked_at": "2026-09-14T17:42:08+08:00",
+  "seed": 12345,
+  "endpoint": "fixed_epoch_200",
+  "test_source": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/test.txt",
+  "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+  "class_order": [
+    "beam",
+    "board",
+    "bookcase",
+    "ceiling",
+    "chair",
+    "clutter",
+    "column",
+    "door",
+    "floor",
+    "sofa",
+    "table",
+    "wall",
+    "window"
+  ],
+  "arms": {
+    "RGBD": {
+      "status": "PASS_INDEPENDENT_INTEGRITY",
+      "evaluation_directory": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/formal_evaluation/CMX_RGBD_S2D_three_arm_v1_seed12345_epoch200_attempt2/checkpoint_evaluation/epoch_200",
+      "metrics": {
+        "metric_unit": "fraction_0_to_1",
+        "mIoU": 0.5483578043070518,
+        "pixel_accuracy": 0.7935569832736189,
+        "mean_accuracy": 0.6295056843937326,
+        "mIoU_percent": 54.835780430705185,
+        "pixel_accuracy_percent": 79.35569832736189,
+        "mean_accuracy_percent": 62.95056843937326,
+        "per_class_iou": [
+          0.00931167283131046,
+          0.712721405668206,
+          0.6346608337234534,
+          0.9038277582983966,
+          0.7519291766561667,
+          0.4703866766872107,
+          0.12568083052811185,
+          0.31561160071874206,
+          0.9477184469166919,
+          0.20629993548796569,
+          0.7100323145139785,
+          0.7315737623664602,
+          0.6088970415949808
+        ],
+        "per_class_iou_percent": [
+          0.931167283131046,
+          71.2721405668206,
+          63.46608337234534,
+          90.38277582983966,
+          75.19291766561666,
+          47.03866766872107,
+          12.568083052811186,
+          31.561160071874205,
+          94.77184469166919,
+          20.62999354879657,
+          71.00323145139785,
+          73.15737623664602,
+          60.88970415949808
+        ],
+        "valid_pixel_count": 3973620198,
+        "status": "PASS",
+        "scientific_metric_reported": true,
+        "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+        "representation_protocol_id": "RGBD_UINT8_REPEAT3_SOURCECOMPAT",
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_rgbd_seed12345/checkpoints/epoch-200.pth",
+        "checkpoint_epoch": 200,
+        "evaluation_sample_count": 17593,
+        "class_count": 13,
+        "ignore_index": 255,
+        "eval_scale_array": [
+          1
+        ],
+        "eval_flip": false,
+        "eval_crop_size": [
+          480,
+          480
+        ],
+        "eval_align_corners": false,
+        "world_size": 8,
+        "file_hash_written": false
+      },
+      "checkpoint_sha256": "508bd8ab921050675dae4d316f68438a48f2cd2aa710fd8a0126b878e11fd7d2",
+      "checkpoint_size_bytes": 799760393,
+      "checkpoint_mtime_ns": 1788538253494603438,
+      "rank_sample_counts": [
+        2200,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199
+      ],
+      "evaluation_artifact_sha256": {
+        "rank_07_evaluation.json": "e22247e07d0c31423cdbed964d2e7a101dc34ffad136f1ee840fe6a77200f30d",
+        "metrics.json": "81279c490b23969072568e156c51fb9a6c365595a9d4e5098979c39bbe42c11e",
+        "rank_03_evaluation.json": "f7f38858418c995789b0220ca2ab1a8c75011faa3d10eb7a6e496b3fcedca3e6",
+        "rank_01_evaluation.json": "c01e364bad57527b83911dccd7cd33915cb416b89de4d0e6027c018573b4aea8",
+        "rank_02_evaluation.json": "78ddbaac9a78e02f61922e74ee4c5d04be515f0455690663913d9594c5afe0d1",
+        "rank_04_evaluation.json": "fb8b89476b22eed662f1a66bdce291284d0398557d49c4b4b3423ea4a265c4d8",
+        "evaluation_manifest.csv": "ed59e1ebdb27827d71987c1de5449d8b7f7bc079b84e840d208ce1b8c8203b9d",
+        "confusion_matrix.csv": "63ee9fad551554fde5abade9f951693bf180b2063ce04daede146a787805db6c",
+        "rank_00_evaluation.json": "44598e8320ad6fefab76387fbb806ef885251c3f7c5d9c204dc852a99f78227b",
+        "rank_05_evaluation.json": "0c55d13c4d3fb956452aa6d27c3f13230af2fc97e146c487549117848cc4f1ed",
+        "rank_06_evaluation.json": "253278aa247491ce77a3078dbae6a46364863501fecd3553b06216576422f55c",
+        "per_class_iou.csv": "9657972e729ec28961a721aa2fa679fc773f8fdb7badf677fbeb2aa8a91e1135"
+      }
+    },
+    "HHA": {
+      "status": "PASS_INDEPENDENT_INTEGRITY",
+      "evaluation_directory": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/formal_evaluation/CMX_HHA_S2D_three_arm_v1_seed12345_epoch200_attempt1/checkpoint_evaluation/epoch_200",
+      "metrics": {
+        "metric_unit": "fraction_0_to_1",
+        "mIoU": 0.5915578156232738,
+        "pixel_accuracy": 0.8190814566621548,
+        "mean_accuracy": 0.6728648158756732,
+        "mIoU_percent": 59.155781562327384,
+        "pixel_accuracy_percent": 81.90814566621547,
+        "mean_accuracy_percent": 67.28648158756731,
+        "per_class_iou": [
+          0.03609456008282304,
+          0.7448412300807773,
+          0.6527615189294136,
+          0.9112343193919682,
+          0.8235304242527333,
+          0.5004962088272213,
+          0.17200929491000785,
+          0.425419099794471,
+          0.9661832182516384,
+          0.29440999607993107,
+          0.7692316019516813,
+          0.7669807943360419,
+          0.6270593362138512
+        ],
+        "per_class_iou_percent": [
+          3.609456008282304,
+          74.48412300807773,
+          65.27615189294136,
+          91.12343193919682,
+          82.35304242527333,
+          50.04962088272214,
+          17.200929491000785,
+          42.5419099794471,
+          96.61832182516385,
+          29.440999607993106,
+          76.92316019516812,
+          76.69807943360419,
+          62.70593362138512
+        ],
+        "valid_pixel_count": 3973620198,
+        "status": "PASS",
+        "scientific_metric_reported": true,
+        "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+        "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/checkpoints/epoch-200.pth",
+        "checkpoint_epoch": 200,
+        "evaluation_sample_count": 17593,
+        "class_count": 13,
+        "ignore_index": 255,
+        "eval_scale_array": [
+          1
+        ],
+        "eval_flip": false,
+        "eval_crop_size": [
+          480,
+          480
+        ],
+        "eval_align_corners": false,
+        "world_size": 8,
+        "file_hash_written": false
+      },
+      "checkpoint_sha256": "3d1f85fb78b36ee06c65e586fd314cbd6df2762486639408d530dd429ca367db",
+      "checkpoint_size_bytes": 799760393,
+      "checkpoint_mtime_ns": 1789374945629256259,
+      "rank_sample_counts": [
+        2200,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199
+      ],
+      "evaluation_artifact_sha256": {
+        "rank_07_evaluation.json": "0a4b5ed93be41a504d7acd51b6e41d1f23a37f709e2782a1b64e5d4749a14d14",
+        "metrics.json": "e4be1b1b8a57412161f9893a7fad7103e610e6e155e19bd5a232150c847bc07b",
+        "rank_03_evaluation.json": "4210a50f9a7f3cffa2024d9e86979a895f4abbde7b0efcf2a7bb3e25bd8ca54b",
+        "rank_01_evaluation.json": "9ed7fc8a771faedd925ec73a8320437f27f60702600ffa9a1bd1359f8c949cb6",
+        "rank_02_evaluation.json": "fb4d2b566c35c9576e6d9877434a5783154ec08ce3ceef9fa4ed2717b4741d52",
+        "rank_04_evaluation.json": "9d6dda0eeb8c8519b117f60e3c882f441f421b75c190d0ef0d2aa655a6f8f38a",
+        "evaluation_manifest.csv": "ed59e1ebdb27827d71987c1de5449d8b7f7bc079b84e840d208ce1b8c8203b9d",
+        "confusion_matrix.csv": "158a587a0f93e6bfaa17df78363be2907cd404952cbafad740baa182de411a90",
+        "rank_00_evaluation.json": "e4f613133ee5f93a8d309535dbbb1be433685cc2261b9da714160f2553b10a78",
+        "rank_05_evaluation.json": "a60817cb0a5f84b64d72dd8f219f1b9438812eed5b43f6c968a14290c48db493",
+        "rank_06_evaluation.json": "6e1b752cbc6663c557a66a4add1cf67e724e486c7df3bd12b98dede10b3ffa7b",
+        "per_class_iou.csv": "00dd4ba480da798748dd6327770559acbc2365cf9ce98539fe1eb908f2ef7ac6"
+      }
+    },
+    "RELPlus": {
+      "status": "PASS_INDEPENDENT_INTEGRITY",
+      "evaluation_directory": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_evaluation/CMX_RELPlus_v2_3_seed12345_sweep_attempt2/checkpoint_evaluations/epoch_200",
+      "metrics": {
+        "metric_unit": "fraction_0_to_1",
+        "mIoU": 0.5958536567805433,
+        "pixel_accuracy": 0.8185393152664864,
+        "mean_accuracy": 0.6764220937148674,
+        "mIoU_percent": 59.58536567805432,
+        "pixel_accuracy_percent": 81.85393152664864,
+        "mean_accuracy_percent": 67.64220937148674,
+        "per_class_iou": [
+          0.018447008075827387,
+          0.7111787839474786,
+          0.6577490595153352,
+          0.9235294688167643,
+          0.8212800140123623,
+          0.4983851182477776,
+          0.2434967410751513,
+          0.39134658445593584,
+          0.9635558845772446,
+          0.3408766055682303,
+          0.7623332292036985,
+          0.7721039341255944,
+          0.641815106525661
+        ],
+        "per_class_iou_percent": [
+          1.8447008075827387,
+          71.11787839474786,
+          65.77490595153353,
+          92.35294688167643,
+          82.12800140123623,
+          49.83851182477776,
+          24.349674107515128,
+          39.13465844559359,
+          96.35558845772447,
+          34.08766055682303,
+          76.23332292036984,
+          77.21039341255944,
+          64.1815106525661
+        ],
+        "valid_pixel_count": 3973620198,
+        "status": "PASS",
+        "scientific_metric_reported": true,
+        "integration_protocol_id": "CMX_RELPLUS_V2_3",
+        "representation_protocol_id": "RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT",
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_training/CMX_RELPlus_v2_3_seed12345/checkpoints/epoch-200.pth",
+        "checkpoint_epoch": 200,
+        "evaluation_sample_count": 17593,
+        "class_count": 13,
+        "ignore_index": 255,
+        "eval_scale_array": [
+          1
+        ],
+        "eval_flip": false,
+        "eval_crop_size": [
+          480,
+          480
+        ],
+        "eval_align_corners": false,
+        "world_size": 8,
+        "file_hash_written": false
+      },
+      "checkpoint_sha256": "ed249f4365fa1f1bd31fcc9e50803b348f4e18c732e1bb5735cffa6de7ecdaa2",
+      "checkpoint_size_bytes": 799645801,
+      "checkpoint_mtime_ns": 1787900742412130344,
+      "rank_sample_counts": [
+        2200,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199
+      ],
+      "evaluation_artifact_sha256": {
+        "rank_07_evaluation.json": "3ce541302e2e1f5f77eb8f0a54e025d96836fac2e8e021934b6614775754cad7",
+        "metrics.json": "1a316e75c0516cae8be00203f0c686df495659628083033a65ebf30f85f425eb",
+        "rank_03_evaluation.json": "9f2e382beea4dd442f75881ffb95d71780626ef9a563d32dffc74aff907baeff",
+        "rank_01_evaluation.json": "8e124b65f809481ae492d856db210f44b172ce853ee554c5199d1ccfb217420d",
+        "rank_02_evaluation.json": "97a9e9c1559e1353da206a61250651d0f42bc71ee9f69ecc7d765dac63ec50bc",
+        "rank_04_evaluation.json": "81d663a0c8ea6f59a8ff12d36d9214a99f7b0610eef28d900ea1a68666f7f47c",
+        "evaluation_manifest.csv": "ed59e1ebdb27827d71987c1de5449d8b7f7bc079b84e840d208ce1b8c8203b9d",
+        "confusion_matrix.csv": "5fcaa3a10944af810ed9619f8b74b05e058d7268c261c6688d01a039ae43bb38",
+        "rank_00_evaluation.json": "6d53d1f8e76cc78062a122bf6414f90077eef6f073685c0c0201e4500a033662",
+        "rank_05_evaluation.json": "3cabec4c2b8c9a72835dfe476113fbd902274c2e2896f4abfdfd1a9978376244",
+        "rank_06_evaluation.json": "fb3dd38b0d757e4b338c8fe34e868845a068f323ac13f2e7374e000e241e5554",
+        "per_class_iou.csv": "5645c364ed9316d8c097473d4e42e0b5f88bb75a7f4a16d0e5c85e1fddb221d1"
+      }
+    }
+  },
+  "differences_percentage_points": {
+    "HHA-RGBD": {
+      "mIoU_percent": 4.320001131622199,
+      "pixel_accuracy_percent": 2.5524473388535824,
+      "mean_accuracy_percent": 4.335913148194052
+    },
+    "RELPlus-RGBD": {
+      "mIoU_percent": 4.749585247349138,
+      "pixel_accuracy_percent": 2.4982331992867444,
+      "mean_accuracy_percent": 4.691640932113486
+    },
+    "RELPlus-HHA": {
+      "mIoU_percent": 0.42958411572693933,
+      "pixel_accuracy_percent": -0.05421413956683807,
+      "mean_accuracy_percent": 0.35572778391943416
+    }
+  },
+  "scientific_scope": "One matched seed under a fixed protocol; not evidence of cross-seed stability, significance, or universal superiority",
+  "limitations": [
+    "HHA physical channel names and original K/gravity provenance remain unresolved; frozen executable array order retained",
+    "RGBD/HHA use a project input adapter over the frozen evaluator; not an untouched official whole-repository evaluator"
+  ],
+  "baselines_retrained_or_reevaluated": false
+}

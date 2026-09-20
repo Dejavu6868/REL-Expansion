@@ -1,0 +1,28 @@
+{
+  "weights_included": false,
+  "endpoint": "fixed_epoch_200",
+  "seed": 12345,
+  "hash_evidence": "evidence/evaluation/preflight.json and <arm>/integrity_audit.json",
+  "last_remote_evaluation_audit_date": "2026-09-20",
+  "arms": {
+    "rgbd": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/runs/rgbd/checkpoints/epoch-200.pth",
+      "size": 799760393,
+      "mtime_ns": "1789618628598914000",
+      "sha256": "8a9fe5f6509dfd068f00c06968d1eae15f97d2fc13c0056d57b03744cf57210b"
+    },
+    "hha": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/runs/hha/checkpoints/epoch-200.pth",
+      "size": 799760393,
+      "mtime_ns": "1789749725307515694",
+      "sha256": "c5cf78b12d2458a48fe5505a4b7099ef84308dd4790f8283c02a605ba05ccd03"
+    },
+    "relplus": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/runs/relplus/checkpoints/epoch-200.pth",
+      "size": 799755424,
+      "mtime_ns": "1789881013543257788",
+      "sha256": "bf17b065bbbedf01f78c698b039c384c9b220a2332b24b930ca685db552e1232"
+    }
+  },
+  "offline_verification_boundary": "The archive verifies recorded identity consistency; checking actual weights requires original checkpoint files."
+}

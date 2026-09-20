@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "arm": "relplus",
+  "phase": "smoke",
+  "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+  "started_at": 1789487470.661709,
+  "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+  "rank_initialization_count": 8,
+  "smoke_summary_sha256": "093c6bf6f0f64bc55df61b41cec6d7b88424ebab654e9fb25ce994d13df7f1a5",
+  "finished_at": 1789487541.2978513
+}

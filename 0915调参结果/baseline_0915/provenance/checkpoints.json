@@ -1,0 +1,26 @@
+{
+  "endpoint": "fixed_epoch_200",
+  "seed": 12345,
+  "last_checkpoint_hash_audit": "2026-09-14T17:42:08+08:00",
+  "weights_included": false,
+  "arms": {
+    "RGBD": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_rgbd_seed12345/checkpoints/epoch-200.pth",
+      "sha256": "508bd8ab921050675dae4d316f68438a48f2cd2aa710fd8a0126b878e11fd7d2",
+      "size_bytes": 799760393,
+      "mtime_ns": "1788538253494603438"
+    },
+    "HHA": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/cmx_hha_seed12345/checkpoints/epoch-200.pth",
+      "sha256": "3d1f85fb78b36ee06c65e586fd314cbd6df2762486639408d530dd429ca367db",
+      "size_bytes": 799760393,
+      "mtime_ns": "1789374945629256259"
+    },
+    "RELPlus": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_training/CMX_RELPlus_v2_3_seed12345/checkpoints/epoch-200.pth",
+      "sha256": "ed249f4365fa1f1bd31fcc9e50803b348f4e18c732e1bb5735cffa6de7ecdaa2",
+      "size_bytes": 799645801,
+      "mtime_ns": "1787900742412130344"
+    }
+  }
+}

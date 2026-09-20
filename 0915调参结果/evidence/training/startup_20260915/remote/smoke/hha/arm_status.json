@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "arm": "hha",
+  "phase": "smoke",
+  "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+  "started_at": 1789487405.0226626,
+  "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+  "rank_initialization_count": 8,
+  "smoke_summary_sha256": "a2181fffad4e4d4f4a25c87168d59d0b878140d4ae6d271fed4ed3e9081b9f13",
+  "finished_at": 1789487470.6597178
+}

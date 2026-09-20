@@ -1,0 +1,16 @@
+{
+  "status": "SMOKE_DISPATCHED",
+  "pid": 810843,
+  "starttime": "1015158923",
+  "argv": [
+    "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+    "-B",
+    "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915/run_suite.py",
+    "--suite",
+    "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915/suite.json",
+    "--phase",
+    "smoke"
+  ],
+  "suite_sha256": "a8f323e48d8b70fc2bb6f429a0450bbf47eaff1dfbb308edbfc2a458a2282090",
+  "time": 1789487339.2586646
+}

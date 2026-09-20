@@ -1,0 +1,43 @@
+{
+  "status": "AUTHORIZED_FIXED_PROTOCOL",
+  "authorized_request": "进行评估",
+  "recorded_at": "2026-09-20T18:41:59.429341+08:00",
+  "arms": [
+    "rgbd",
+    "hha",
+    "relplus"
+  ],
+  "checkpoint_epoch": 200,
+  "test_samples": 17593,
+  "seed": 12345,
+  "scale": [
+    1
+  ],
+  "flip": false,
+  "crop": [
+    480,
+    480
+  ],
+  "align_corners": false,
+  "eval_batch_per_rank": 1,
+  "world_size": 8,
+  "num_workers_per_rank": 16,
+  "precision": "FP32; inherited frozen PyTorch defaults, runtime flags recorded",
+  "bn_policy": "Keep frozen criterion=None constructor: decoder eps1e-5; training uses1e-3. Preserve0915 comparison semantics; impact unknown.",
+  "scientific_endpoint": "fixed_epoch200 mIoU and per-class IoU; report REL+-HHA and REL+-RGBD; compare against frozen0915; no test checkpoint selection",
+  "output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/evaluation_epoch200_20260920_attempt1",
+  "expected_runtime_minutes": "about10 for three arms based on past2.5min/arm; data cache may affect runtime",
+  "operational_timeout_per_arm_minutes": 30,
+  "resource_guard": "existing75percent allocator,20percent device free,85C,host32GiB,SHM2GiB; only owned process group cleanup",
+  "source_snapshot": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915/source",
+  "input_adapter_change": "Only SOURCE_ROOT relocated to the new frozen source snapshot; normalization and computations unchanged.",
+  "runtime_wrapper_changes": [
+    "actual B56 config injected",
+    "OpenCV/Torch/OMP/MKL threads1",
+    "GPU allocator cap75percent",
+    "finite model tensor check after unchanged checkpoint loader",
+    "rank runtime metadata and sample count every100 images; unchanged forward/argmax/metrics"
+  ],
+  "failure_action": "retain failed attempt, stop queue; no automatic retry or metric substitution",
+  "scientific_scope": "Single seed; batch and learning rate jointly changed; no attribution to either alone."
+}
