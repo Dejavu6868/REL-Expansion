@@ -1,0 +1,1790 @@
+{
+  "code/training/PROTOCOL.md": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/PROTOCOL.md",
+    "sha256": "cae3a19b42abdbf15d7b7f40eb87786c403c78eec7e354d29fadd226e6fc4f91"
+  },
+  "code/training/baseline/comparison_verified.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/baseline/comparison_verified.json",
+    "sha256": "c5148dd245515fa1f97d15f0ad06c56c3d93c5f663af9edad0c34a3b3ba609af"
+  },
+  "code/training/baseline/hha.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/baseline/hha.json",
+    "sha256": "97bc3b5fd8e98a2663c0596685feda34a38804ac73a34b147376be5ea70f3b6d"
+  },
+  "code/training/baseline/relplus.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/baseline/relplus.json",
+    "sha256": "dece975cbb673f4a543ea14b73ac8d6ee3f4dbb40d920b116a773e949947eb34"
+  },
+  "code/training/baseline/smoke_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/baseline/smoke_status.json",
+    "sha256": "0e79742e54fad10367aad817bbb9462f305ff96a5df337806c426cc13dccad66"
+  },
+  "code/training/baseline/suite.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/baseline/suite.json",
+    "sha256": "a8f323e48d8b70fc2bb6f429a0450bbf47eaff1dfbb308edbfc2a458a2282090"
+  },
+  "code/training/evaluation/LOCAL_VALIDATION.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evaluation/LOCAL_VALIDATION.json",
+    "sha256": "2c115388654056cd34543a4a1f9950b1cf99f1a265c456b2c7f5d466404cbed5"
+  },
+  "code/training/evaluation/PROTOCOL.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evaluation/PROTOCOL.json",
+    "sha256": "cbda96648a4275b4c1642833c8b9cf61aa9f8c8b4d7997ea77fd38166b1bf8c1"
+  },
+  "code/training/evaluation/audit_eval.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evaluation/audit_eval.py",
+    "sha256": "2c59e75f999ecd9e350dd1a75d19448f316d7dcf5f263d6cb94a8d125dfd6c07"
+  },
+  "code/training/evaluation/compare_results.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evaluation/compare_results.py",
+    "sha256": "641f4f149c64303e7a5d58574bfda05167bfc5b597ef4a24db72f49327187def"
+  },
+  "code/training/evaluation/eval_rank.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evaluation/eval_rank.py",
+    "sha256": "5a4a94692efcfc5dedeb34a32d20f51e2a56254be81368c485e0615514795f5c"
+  },
+  "code/training/evaluation/input_adapter.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evaluation/input_adapter.py",
+    "sha256": "76df98fb9e921de60d6eba8dbecccc7e878c2329de726b514ad48374995bd7ff"
+  },
+  "code/training/evaluation/run_evaluation.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evaluation/run_evaluation.py",
+    "sha256": "c6739715838bb25ce4207187eb2bdcd13a79c861b256fe4c3c10a099b57c3d8a"
+  },
+  "code/training/evaluation/test_evaluation_contract.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evaluation/test_evaluation_contract.py",
+    "sha256": "b87b7b222cfbb495fec9d83a834fc567c9d4e2df3ad3a53ea0dcd597cdf77605"
+  },
+  "code/training/frozen_integrity.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/frozen_integrity.json",
+    "sha256": "14b836875a060dd7283998345f9d3c8307b32d00043a3825e572fcbf055ced35"
+  },
+  "code/training/launch_phase.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/launch_phase.py",
+    "sha256": "ca75cdeda1afd420d3ae2d1643e1cdecc8158b3ab27b083eb02c83ff1da8190b"
+  },
+  "code/training/pipeline.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/pipeline.py",
+    "sha256": "0a9feccd0d18245ca54e7f44ae38116a0172117288226ce7d3bc593ac66fd1f9"
+  },
+  "code/training/preflight.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/preflight.py",
+    "sha256": "60bcb8db914722b731a2bdd2c64a7ad4563e13ef42a9400f84b008a5fbce6200"
+  },
+  "code/training/resource_guard.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/resource_guard.py",
+    "sha256": "09d9e19e5cbf92e83810c6aa55b3dd0d8bddca8e87cb1cadc0d7285f547ea9e4"
+  },
+  "code/training/run_arm.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/run_arm.py",
+    "sha256": "e84c86cd67c977ccc8f547cbc5c28531ba1bac7693aa1aa312c15bb4a975d423"
+  },
+  "code/training/run_suite.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/run_suite.py",
+    "sha256": "6544a43b79ebf372dff96cb79eec7862e613c5d2d34e374927766328e33da9b5"
+  },
+  "code/training/source/config.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/config.py",
+    "sha256": "3cbb11b3ecb3505fedf03260c35abdee1814e7c036fb41c719601a69be66cd6a"
+  },
+  "code/training/source/configs/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/__init__.py",
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/__init__.py",
+    "sha256": "83932f66b5bd0b19516db75faf0ef4e0e99890af4d53093687d64062465bcd6b"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/cmx_mit_b2_hha_three_arm_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/cmx_mit_b2_hha_three_arm_v1.py",
+    "sha256": "3bea5871bd25599dfa337c62f3c1e1659dca5579101e41b0a757c5e9e2825c5e"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/cmx_mit_b2_hha_v2_2_formal.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/cmx_mit_b2_hha_v2_2_formal.py",
+    "sha256": "1f3bcd9c8ba727be8efc2aed49fd1d1245a82dd8089721f3a14c72c73c762836"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_1_formal.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_1_formal.py",
+    "sha256": "ed1f449928253504dae9b96b678626a4db21379240c06fe03d4ecbed2439928a"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_1_pilot.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_1_pilot.py",
+    "sha256": "ad617b2fb6e58288e3788c1fd7c872275802f5cb581112c209759126b21cbd55"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_2_formal.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_2_formal.py",
+    "sha256": "f0e2100dbbf347afb52a077db78295bf2701799d70bc264a5f0d68e585472f5d"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_2_pilot.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_2_pilot.py",
+    "sha256": "f9284205471defbf7f7efa5da709ae51b146883874e315f2be6b396a4871875f"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_3_formal.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/cmx_mit_b2_rel_plus_v2_3_formal.py",
+    "sha256": "d8d8804797e507ab5994b244bcbe729f87297afa488f136004a0825fb3417752"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/cmx_mit_b2_rgbd_three_arm_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/cmx_mit_b2_rgbd_three_arm_v1.py",
+    "sha256": "f584313e17a183e3809f1b40c0e68e571d76726a7da917ec619a1318269da206"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/cmx_mit_b2_rgbd_v2_2_formal.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/cmx_mit_b2_rgbd_v2_2_formal.py",
+    "sha256": "c848f35c39c962bebdd5ab8e4bed7bb0ebc97c825126170e89cf6460f0257ad9"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/common.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/common.py",
+    "sha256": "a67063263dec9acbf2d96646dd35d82bc75e79f6887a98375c3164685b2901c2"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/comparison_three_arm_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/comparison_three_arm_v1.py",
+    "sha256": "4e63b22629d0a7fee036f168dd1d05bbae3435dd9d4b32c007062925738173e6"
+  },
+  "code/training/source/configs/stanford2d3d_s2d/comparison_v2_2.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3d_s2d/comparison_v2_2.py",
+    "sha256": "75db7d5bbbfff5831b6351cf651270258e9d8d3e64d66b3ec6017b4c9ff74f65"
+  },
+  "code/training/source/configs/stanford2d3dpano/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3dpano/__init__.py",
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  "code/training/source/configs/stanford2d3dpano/cmx_mit_b2_rel.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3dpano/cmx_mit_b2_rel.py",
+    "sha256": "1210c138be4a3977b4c278365c8ff69c527f553474373b9be3dcd362f5ddae35"
+  },
+  "code/training/source/configs/stanford2d3dpano/cmx_mit_b2_rel_plus_v2_1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3dpano/cmx_mit_b2_rel_plus_v2_1.py",
+    "sha256": "a10210ca2efbc0b8897336dca1b4ecf9fd28137b68d07ee4afd455ed9dd41104"
+  },
+  "code/training/source/configs/stanford2d3dpano/cmx_mit_b2_rel_smoke.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3dpano/cmx_mit_b2_rel_smoke.py",
+    "sha256": "46e3e26e4d3227cc974c6a0e55ba91902a2840daa9bf249a2d2ddf2a018cb911"
+  },
+  "code/training/source/configs/stanford2d3dpano/fold1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/configs/stanford2d3dpano/fold1.py",
+    "sha256": "c8b87759db071b494c7156b1051bf41e8a8c2b73e1582810699cd14f0cc062c9"
+  },
+  "code/training/source/dataloader/RGBXDataset.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/dataloader/RGBXDataset.py",
+    "sha256": "7a9b6830391c83a6fe0c535b7948a1a83a4b63194b91b61c05a4523f7887e4ee"
+  },
+  "code/training/source/dataloader/data_setting.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/dataloader/data_setting.py",
+    "sha256": "b4bc28ab4e240ee22736315ae458fabc52ca4bf203e1d312d52360efdd2baca3"
+  },
+  "code/training/source/dataloader/dataloader.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/dataloader/dataloader.py",
+    "sha256": "2cb84925a89976da31eb037a3faa710c615697979831c3ec7572c997eeb2d61c"
+  },
+  "code/training/source/dataloader/profiles.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/dataloader/profiles.py",
+    "sha256": "8cf58a84c5b68294a9cd692ef0b52b3bf92ecd41240446c52cc94ce2583816ef"
+  },
+  "code/training/source/dataloader/samplers.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/dataloader/samplers.py",
+    "sha256": "751c83d38fa1b91f641c8082ed9d5d0888bfee079b954805c9f0a408d3f1d8d5"
+  },
+  "code/training/source/engine/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/engine/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "code/training/source/engine/dist_test.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/engine/dist_test.py",
+    "sha256": "6f00e7137b2a972c215f1902847a5b4fa910335fac2acdde2d0a5324fbf295fb"
+  },
+  "code/training/source/engine/engine.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/engine/engine.py",
+    "sha256": "aa5ff50a3e58a3fcbb61fd175c345d0ebe16a6dfb14f2a43676d7a9095687ca0"
+  },
+  "code/training/source/engine/evaluator.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/engine/evaluator.py",
+    "sha256": "90d317d3d2478fee8c9dc71f9510e54d9fed98f0e734514e232fa893ca21757e"
+  },
+  "code/training/source/engine/logger.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/engine/logger.py",
+    "sha256": "7bb3951990ff20a720b3e29a8bc92d420b037ac4ac0737c2473e0b2926d217c8"
+  },
+  "code/training/source/engine/relplus_evaluator.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/engine/relplus_evaluator.py",
+    "sha256": "3ae0760eeab5d2c13d73bd6c3aa3d0d0733bc44c8e1cd421ad113817b096680a"
+  },
+  "code/training/source/eval.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/eval.py",
+    "sha256": "d38ba4c714713721124076b904ccf9ace419bea435eb6a2e436ef5fd182a2f1e"
+  },
+  "code/training/source/models/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/models/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "code/training/source/models/builder.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/models/builder.py",
+    "sha256": "25318c02b8f443a791831509f273481565d0f548ee447d390fffcd49d0d5e295"
+  },
+  "code/training/source/models/decoders/MLPDecoder.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/models/decoders/MLPDecoder.py",
+    "sha256": "9bd497a40304913e48fb13949c85c7b849a6d31c9aeedf6eb338b3f46376ea8d"
+  },
+  "code/training/source/models/decoders/UPernet.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/models/decoders/UPernet.py",
+    "sha256": "2a3da3eff6a0fb1b200b3106f72732a77666ed5ad0703720d3ee463c2e598ad4"
+  },
+  "code/training/source/models/decoders/deeplabv3plus.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/models/decoders/deeplabv3plus.py",
+    "sha256": "23056aa7a101cd4e7f368aa17dceffd0367365720aa336f9f58630980ca5d14e"
+  },
+  "code/training/source/models/decoders/fcnhead.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/models/decoders/fcnhead.py",
+    "sha256": "526012295677af17f506858643121612821f314a5fa6d289e635d5deabaa1891"
+  },
+  "code/training/source/models/encoders/dual_segformer.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/models/encoders/dual_segformer.py",
+    "sha256": "6d8994d0044929c97d318708223bf6fea48efce4575aa986c72e415ee017e755"
+  },
+  "code/training/source/models/encoders/dual_swin.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/models/encoders/dual_swin.py",
+    "sha256": "133ce1c2b110b8fb7a855a44f4489e34329910c1f2dae749983fa83341fad5ec"
+  },
+  "code/training/source/models/net_utils.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/models/net_utils.py",
+    "sha256": "ada5e36e14d83c35d9230618c4eb84352a76ec2275a086a624b280e7638d8473"
+  },
+  "code/training/source/rel_plus/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/__init__.py",
+    "sha256": "f3c96f0e5b3c800e4bfcee92acc1bda13d04f9175ca59d82e398df31cdd48536"
+  },
+  "code/training/source/rel_plus/camera.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/camera.py",
+    "sha256": "77946423930e471f1f54b3eb51b772a2af376fe9bb00ab4fd3c037f67c0ea2b1"
+  },
+  "code/training/source/rel_plus/constants.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/constants.py",
+    "sha256": "45f084a4ee6066ff362a38a668705b791dc9429c4b2d978c2fbf2b94028b0bd1"
+  },
+  "code/training/source/rel_plus/depth.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/depth.py",
+    "sha256": "5d3138cb852bbdea571e4ef5c5db13426a06263e9bd78890eb11d4a73b790bb0"
+  },
+  "code/training/source/rel_plus/encoding.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/encoding.py",
+    "sha256": "75782d9ca38d6d899312b22ba001049bceecb0a7e6ec9fb83e6fe817be3d7961"
+  },
+  "code/training/source/rel_plus/generator.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/generator.py",
+    "sha256": "d4b93ba18d69042810d28c57089686745509d10ead567236a2f73662ad489a4b"
+  },
+  "code/training/source/rel_plus/geometry.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/geometry.py",
+    "sha256": "ba38798084f4ce76554d05e2641719d0599b5cccf65a1969c8d57a514707d8d4"
+  },
+  "code/training/source/rel_plus/integration/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/integration/__init__.py",
+    "sha256": "0b13f0f16c3b7b62fcd4afeab94171ba46f1afe3aa2fabea2a29f5d68812c342"
+  },
+  "code/training/source/rel_plus/integration/cmx_preprocess.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/integration/cmx_preprocess.py",
+    "sha256": "6b7e78434e7a1930ce896d523d166ef021b27c41ba4f618deedb652eb9e79d88"
+  },
+  "code/training/source/rel_plus/normal_diagnostics.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/normal_diagnostics.py",
+    "sha256": "82c410e19ff738ebd1c6845a299723ab1423f041e23c383ec9ae9bf143e57b12"
+  },
+  "code/training/source/rel_plus/policy.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/policy.py",
+    "sha256": "f65446ca23ddfaf164b4a1367c26de4808b9498eeb71b962dc7c5d4d3bc63dc6"
+  },
+  "code/training/source/rel_plus/profiles.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/profiles.py",
+    "sha256": "b0025359c5850f2ef42359a2d09c86a69242e7d81d467b6445464bceacf61892"
+  },
+  "code/training/source/rel_plus/source_helpers.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/source_helpers.py",
+    "sha256": "79083fbe6ea22e795cb28d78786a88022fd8f2646180e1eacc416121511b57c6"
+  },
+  "code/training/source/rel_plus/stanford_s2d.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/stanford_s2d.py",
+    "sha256": "45680823b86ac15c389de77ec3b4a4b21bca169b397a0aec2c6b188f6ec18b33"
+  },
+  "code/training/source/rel_plus/storage.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/storage.py",
+    "sha256": "d5ff57653ec2d70af5b67c1b137baa5f312744ebec832c879dd6729ae4d7ee6f"
+  },
+  "code/training/source/rel_plus/validation/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/validation/__init__.py",
+    "sha256": "619383c2fb30fed0ed9c12946a8bd0a9a87245e97195ee62cc6145b6aac86e44"
+  },
+  "code/training/source/rel_plus/validation/canonical_geometry.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/validation/canonical_geometry.py",
+    "sha256": "7eb443eb8cb6a89f0d22203f09bf6522e1e42173890902a1f96304935b3545ae"
+  },
+  "code/training/source/rel_plus/validation/geometry_oracle.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/validation/geometry_oracle.py",
+    "sha256": "3bc08080a8544b1f40ab55fdff67a479fd1fa1cf9c998a7e3970edfde9a862ea"
+  },
+  "code/training/source/rel_plus/validation/pose_physics.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/validation/pose_physics.py",
+    "sha256": "5315ce02b52079e1a5ea8498ad3d41e8e6470cbf74bfca60c686d8e88b5ae014"
+  },
+  "code/training/source/rel_plus/validation/v1_v2_diff.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/rel_plus/validation/v1_v2_diff.py",
+    "sha256": "017a6599468ad1a8354a33bf36068a255dfc771a89e92a560e8b90c473512ff0"
+  },
+  "code/training/source/tests/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/__init__.py",
+    "sha256": "6a2e7337a9a64aa8c01a51ae4ad0e1e4a2d5498cc16b1355c0d3e99b5c3f8431"
+  },
+  "code/training/source/tests/conftest.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/conftest.py",
+    "sha256": "02671206e8cb63d845f4686235d68f27a8aa52d76dc59643fb325db1d66ca6e3"
+  },
+  "code/training/source/tests/helpers.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/helpers.py",
+    "sha256": "2afde62c45733d2663cfb37804ca07d1a2782f1b87b4e50ab7f0e3fd2224755b"
+  },
+  "code/training/source/tests/run_rel_integration_smoke.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/run_rel_integration_smoke.py",
+    "sha256": "a2edfda40a21f9eee8fad92d2a224c371b2d5d3d88738d106472f64525fdb405"
+  },
+  "code/training/source/tests/test_augmentation_contract.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_augmentation_contract.py",
+    "sha256": "07233307d2a522a056061bc7f9cf120038ce975d605431eb88ec10186c02d58d"
+  },
+  "code/training/source/tests/test_camera_resolution_contract.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_camera_resolution_contract.py",
+    "sha256": "baaa784dda902f57338930cd7fa6a8c7f7ba455094eea8acefdb095a3309bdfb"
+  },
+  "code/training/source/tests/test_canonical_geometry.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_canonical_geometry.py",
+    "sha256": "e9b1911e8aeec80f824399e2a3d99f266bfa0187b0ea4e09a1c6609df63a57da"
+  },
+  "code/training/source/tests/test_channel_sentinel.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_channel_sentinel.py",
+    "sha256": "2c6b869673c2cae7ffa8642d65a570ea4198f477656d69546a9337ecf6200d4e"
+  },
+  "code/training/source/tests/test_cmx_data_contract.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_cmx_data_contract.py",
+    "sha256": "c7fc12f34544af065c2a52e7002f33d7586590c88bbe37ac80f1cd5db20bb2fa"
+  },
+  "code/training/source/tests/test_cmx_eval_contract.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_cmx_eval_contract.py",
+    "sha256": "71a7d59b3f99528eb4937792f7dd0e6dee9493b4b67aacb34de4b36fd969bd4a"
+  },
+  "code/training/source/tests/test_cmx_training_protocol.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_cmx_training_protocol.py",
+    "sha256": "7a8584f2e2f1a081681e2e86ca84110e403d4e5a16dc8a905b64d6c3a02bb76d"
+  },
+  "code/training/source/tests/test_comparison_transform_profile.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_comparison_transform_profile.py",
+    "sha256": "27178e9528f94ea3e246b2e1be8c7eaea5f18861bb0cf581bf0755a56adab009"
+  },
+  "code/training/source/tests/test_encoding_units.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_encoding_units.py",
+    "sha256": "619d9a036ab43cb30f92794d86974e2c198422726a840f4f4fa4514b032a8180"
+  },
+  "code/training/source/tests/test_end_to_end_planes.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_end_to_end_planes.py",
+    "sha256": "ea1e0f35779cf9760c0e9dcdf9d2585387061dc7c2e94839ca3d27de37e97655"
+  },
+  "code/training/source/tests/test_formal_configs_and_guards.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_formal_configs_and_guards.py",
+    "sha256": "d09a3223dcc7b5bdcccd11d1e765eba87606407a03ec9d8b51ce9877200fa70f"
+  },
+  "code/training/source/tests/test_generator_byte_invariant_integration.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_generator_byte_invariant_integration.py",
+    "sha256": "55f196488b982b892875e30ff75951455b34b5408ad8c5fa15052c264cbf1ebc"
+  },
+  "code/training/source/tests/test_generator_contract.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_generator_contract.py",
+    "sha256": "1969b199dea200a9710c4054b40a0c64c881759140845593602fe833e23efc79"
+  },
+  "code/training/source/tests/test_gravity_singularity.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_gravity_singularity.py",
+    "sha256": "be4000cb660a6414c98e9f48852c1cf8d8051d08e02de085c610c163012acce7"
+  },
+  "code/training/source/tests/test_invalid_input_contract.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_invalid_input_contract.py",
+    "sha256": "05a2bed2476dec756ab061ea8755b6e1610bc8cf33faf25f7cc7f12408e0e538"
+  },
+  "code/training/source/tests/test_invalid_label_diagnostics.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_invalid_label_diagnostics.py",
+    "sha256": "bf46ac3164624a2e7e3bf1b235adc9a2df48bbeaf7420c6204fde896d4e19da1"
+  },
+  "code/training/source/tests/test_live_source_integration.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_live_source_integration.py",
+    "sha256": "65dd6d43a4b3fb60c255f85d076267c7f0e5b1d6a033786c1b763478115562fc"
+  },
+  "code/training/source/tests/test_normal_policy.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_normal_policy.py",
+    "sha256": "baadf9c155a1ba64e0047a59b31b14ed93e1b7d8c050925657efb73c27c93aa3"
+  },
+  "code/training/source/tests/test_pilot_selection.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_pilot_selection.py",
+    "sha256": "81575d68aa047650923f05b2433ea33f21a8993addea7ae5bc3c258738203451"
+  },
+  "code/training/source/tests/test_pose_physics.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_pose_physics.py",
+    "sha256": "db88e8e1f66f757ec87ee132aff5049a338067a64eba76093a7790a1816d1347"
+  },
+  "code/training/source/tests/test_preflight_dataset.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_preflight_dataset.py",
+    "sha256": "b006d4ce445cd1d9376cb9b935eff741968a1b4f45260853d4b8ef67ac9315d3"
+  },
+  "code/training/source/tests/test_review_batch_failure.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_review_batch_failure.py",
+    "sha256": "633737df7687fe0dcb1c2e7a1ca200e55d69f9b6646af1cb910dbbf910402642"
+  },
+  "code/training/source/tests/test_source_encoder_regression.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_source_encoder_regression.py",
+    "sha256": "1f6f7f54acdbf59d1a89bc7bf7a81ec6a5b12080ff3dd40d3f13a9fb3584a515"
+  },
+  "code/training/source/tests/test_source_normal_regression.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_source_normal_regression.py",
+    "sha256": "f20cff2783adaad42fe823d0a625941030d7cb1c4bcf19d22259dabecae21544"
+  },
+  "code/training/source/tests/test_source_rotation_regression.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_source_rotation_regression.py",
+    "sha256": "a3a957f5edd47cf3bde6258b186ff79b665dafab3ae3ad8dae86291d76c94693"
+  },
+  "code/training/source/tests/test_three_arm_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_three_arm_v1.py",
+    "sha256": "923ffc30025b4d4a5b8a029c0c5357b6031efeb6bd516ec1e7ca1052555056d0"
+  },
+  "code/training/source/tests/test_v1_v2_diff.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_v1_v2_diff.py",
+    "sha256": "c9a5e4b3588a9ce0b7601cdb2725a20eebb9d99d31ebe4e6e2a6ff29d165b14f"
+  },
+  "code/training/source/tests/test_v2_1_camera_profile.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_v2_1_camera_profile.py",
+    "sha256": "b38730fa756393b64f74ad6648e2276d9ab2e84d1ef5d0f94a5e705d5f35b2bb"
+  },
+  "code/training/source/tests/test_v2_2_infrastructure.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_v2_2_infrastructure.py",
+    "sha256": "4700d98121a8d3e33cd9d7e967bdd0231163fff711bee05b1198fb6fea80be18"
+  },
+  "code/training/source/tests/test_v2_3_infrastructure.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/test_v2_3_infrastructure.py",
+    "sha256": "e730ccb70ff7ea9a84aefd985cd47cb571219f06a7a98680319bd9e77ef29b66"
+  },
+  "code/training/source/tests/validate_rel_plus_v2_1_loader.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tests/validate_rel_plus_v2_1_loader.py",
+    "sha256": "46d31603a2bab2c2e4d98743c4f2e94b3642ee42f6ea0cc48e4a8351938216e4"
+  },
+  "code/training/source/third_party/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/third_party/__init__.py",
+    "sha256": "c47448032723af6def7388b8fdb59d0de23944f80adf1205fea99eaa9ae03fdf"
+  },
+  "code/training/source/third_party/rel_original/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/third_party/rel_original/__init__.py",
+    "sha256": "b50d41072b0e6496b0995e9d6750b612e554f80a16036c8aaef0a64c85d9d86d"
+  },
+  "code/training/source/third_party/rel_original/hha_util.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/third_party/rel_original/hha_util.py",
+    "sha256": "2b7e420d378aa7bfb546dc0ae3a821d193350ea89964b870831a5b9987f794fa"
+  },
+  "code/training/source/third_party/rel_original/rel.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/third_party/rel_original/rel.py",
+    "sha256": "0ea6876adf76253fd712befb4c9a21934aaecc8787614cf0c4cb17a369c615b3"
+  },
+  "code/training/source/third_party/rel_original/rgbd_util.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/third_party/rel_original/rgbd_util.py",
+    "sha256": "cadfc0f6df958b3169be8b580b18c9cd6e7fb2141e1ddceb1dd889c8b1d3e958"
+  },
+  "code/training/source/tools/adjudicate_relplus_200_step_equivalence_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/adjudicate_relplus_200_step_equivalence_v1.py",
+    "sha256": "7bbbc33651964798aeeb383cd5d4d88da9bc006b2a78fa46cecb481d3ee74b65"
+  },
+  "code/training/source/tools/analyze_pilot_invalid.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/analyze_pilot_invalid.py",
+    "sha256": "01282479fce2c2f46ce6470493da990beff8beb16562d26a7bd3a02f81e9f6c9"
+  },
+  "code/training/source/tools/audit_full_relplus_cache.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/audit_full_relplus_cache.py",
+    "sha256": "1e3f0dac70f43e899606b684278290ee83e3cca9656816f7071a420ad6c90b31"
+  },
+  "code/training/source/tools/audit_mit_b2_initialization.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/audit_mit_b2_initialization.py",
+    "sha256": "da94c29df87b7ec9572b3bcdef5fdaee9231908cf778ee9823d800086cf2359b"
+  },
+  "code/training/source/tools/audit_s3d_data.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/audit_s3d_data.py",
+    "sha256": "8bfe4ed76af43ff44c490afb1c453f0e2d492ee4238174d5d6a3d5c7d01d49d0"
+  },
+  "code/training/source/tools/audit_three_arm_dataloader_trajectories_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/audit_three_arm_dataloader_trajectories_v1.py",
+    "sha256": "e6396885b87ee12a0b81aaceb7c8cbaf724387648c7d6cf54efa0da70bf7f59d"
+  },
+  "code/training/source/tools/audit_three_arm_model_initialization_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/audit_three_arm_model_initialization_v1.py",
+    "sha256": "a80026d2264e9a7284ba998667fc6aef1a94dc67cc8728e6fd776bf35b1d8adf"
+  },
+  "code/training/source/tools/audit_three_arm_x_modalities_v2_3.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/audit_three_arm_x_modalities_v2_3.py",
+    "sha256": "9713a0606b3dd004f5cd9599a60c0d102c5f29739b9994ffd9e036833e97e108"
+  },
+  "code/training/source/tools/benchmark_cache_throughput_v2_3.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/benchmark_cache_throughput_v2_3.py",
+    "sha256": "d603148bb3f7eea8d7d824c43f45ddf4714bb188153c1fc23f4a7969f13feff1"
+  },
+  "code/training/source/tools/benchmark_dataloader_v2_2.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/benchmark_dataloader_v2_2.py",
+    "sha256": "ef9d4832a0dbf5bd804c65aade24fc219e3070c65e1acbf549a4a3e29de501e9"
+  },
+  "code/training/source/tools/build_fold1_visualizations.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/build_fold1_visualizations.py",
+    "sha256": "4ed19c13af3876a81722d63dbc8fbcb8b2354a66243460a1cf87a9e35ba8ec3c"
+  },
+  "code/training/source/tools/build_full_manifest.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/build_full_manifest.py",
+    "sha256": "db4b852bfd7d65023ec68219955a6e5659abcc1229ba3bcfd9d51e6a873d9b75"
+  },
+  "code/training/source/tools/collect_v2_2_evidence.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/collect_v2_2_evidence.py",
+    "sha256": "f2c02199d47d54b501d51740282ba0ddc0c8df1812a28f766cd27f1ffbb1c393"
+  },
+  "code/training/source/tools/compare_epoch200_evaluations_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/compare_epoch200_evaluations_v1.py",
+    "sha256": "0f29cdb14fcaa3a361cbef178669773a3188f8998eaaf4a5e15d0a8c09ea57a8"
+  },
+  "code/training/source/tools/compare_relplus_200_step_trajectories_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/compare_relplus_200_step_trajectories_v1.py",
+    "sha256": "07a85954b9fc5edf631c95d779d810b14eea7528714551fe112e419c9528eccc"
+  },
+  "code/training/source/tools/compare_sampler_epoch_sequences_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/compare_sampler_epoch_sequences_v1.py",
+    "sha256": "a676bf16ae0697bd98731f7c60a80dede31e46a0431119f525825b4fc36076ed"
+  },
+  "code/training/source/tools/compare_three_resolved_configs.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/compare_three_resolved_configs.py",
+    "sha256": "f7315c60c9ae17f7c65ec5b04e2e3e46db814426330213270c333e0a067759d8"
+  },
+  "code/training/source/tools/compare_v1_v2.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/compare_v1_v2.py",
+    "sha256": "0641f656c22d59a5ff9ac501a54077b00348b341e45d87f7190f43ee3f032b3c"
+  },
+  "code/training/source/tools/compare_v2_v2_1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/compare_v2_v2_1.py",
+    "sha256": "c2773fa497a14bda25a076ef72663adfc45b82147e6a257a3ce7ae31ecee0ac2"
+  },
+  "code/training/source/tools/create_source_golden_fixture.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/create_source_golden_fixture.py",
+    "sha256": "8364cd88a13eb29998164738721809527403c84439a2530f47933b80c23f6267"
+  },
+  "code/training/source/tools/eval_checkpoint_sweep_v2_2.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/eval_checkpoint_sweep_v2_2.py",
+    "sha256": "6eaf1c7e3353ffad4c1d7d822d2104dbbc844221d50199521fffc5b9a20357db"
+  },
+  "code/training/source/tools/eval_checkpoint_sweep_v2_3.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/eval_checkpoint_sweep_v2_3.py",
+    "sha256": "47f4e52c7d79596883f0a127f0b095a6a3a5b9925cb9bbef24eafc996888a473"
+  },
+  "code/training/source/tools/eval_fold1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/eval_fold1.py",
+    "sha256": "8b78e5923f0ab9614a8a0b76f6ad240b8002f8f1befd4d0a65673c69ffe472cf"
+  },
+  "code/training/source/tools/eval_rel_plus_v2_1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/eval_rel_plus_v2_1.py",
+    "sha256": "b1c6782b036fdbe2d2def61141aa6545f7b4320535e74d135c041d7a358dbb45"
+  },
+  "code/training/source/tools/eval_rel_plus_v2_1_smoke.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/eval_rel_plus_v2_1_smoke.py",
+    "sha256": "b8707b13f6894ef51f34361bd36efa5bcfab3147c82c862bde81a756d566cfd0"
+  },
+  "code/training/source/tools/eval_rel_plus_v2_2_full.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/eval_rel_plus_v2_2_full.py",
+    "sha256": "b405b1293d0553c992d71bd83301416737815f2310490c4ff6cbeb822ffad0b6"
+  },
+  "code/training/source/tools/eval_rel_plus_v2_3_full.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/eval_rel_plus_v2_3_full.py",
+    "sha256": "96fe040b02d11dc75fb81e4a6dab6246be3f7a8755d3044f46ade3852e0971fc"
+  },
+  "code/training/source/tools/export_resolved_config.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/export_resolved_config.py",
+    "sha256": "872649f12b662bfa4d033de5a65d149694bc16980488598c76570c24e85fd7bc"
+  },
+  "code/training/source/tools/export_sampler_epoch_sequences_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/export_sampler_epoch_sequences_v1.py",
+    "sha256": "0b05ef713bc2cdb49b227c6d9ce12f64edc767d08afaf2c16dd3398215086f81"
+  },
+  "code/training/source/tools/finalize_fold1_results.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/finalize_fold1_results.py",
+    "sha256": "77adfe1b7709e4b79dddc0d8cfb145f872119c306e57b7c940a35719a813dab6"
+  },
+  "code/training/source/tools/finalize_pretrain_audit.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/finalize_pretrain_audit.py",
+    "sha256": "8843b4e5053fc6a22e1fd1bbf05ec8208c648374e6d455fea44bd70395287e27"
+  },
+  "code/training/source/tools/generate_full_relplus_cache.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/generate_full_relplus_cache.py",
+    "sha256": "01caa43cbe5e74cd1662896df34bd02e8b061c863ae2cd4e28a6ff17b12eaf0c"
+  },
+  "code/training/source/tools/generate_pilot_cache.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/generate_pilot_cache.py",
+    "sha256": "140dec4e80cce077669ae7b3743969a59d4eab3fd47c634eef6a10bd270d8b8d"
+  },
+  "code/training/source/tools/generate_rel_plus.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/generate_rel_plus.py",
+    "sha256": "921472cfb8e26e79c6c023ac022e134a7b6f6f9552da9e3bcf0967be97b2d371"
+  },
+  "code/training/source/tools/generate_review_samples.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/generate_review_samples.py",
+    "sha256": "75bf2843ee637ea35da5f0e085673e1ff832f940e432419852d2778dbc39448e"
+  },
+  "code/training/source/tools/generate_stanford2d3d_rel.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/generate_stanford2d3d_rel.py",
+    "sha256": "d817d515465a982ef0bd1bb6e5217982e4c9d96aa21bba4f085a7f2789112492"
+  },
+  "code/training/source/tools/launch_formal_training_v2_3.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/launch_formal_training_v2_3.py",
+    "sha256": "a29f10df01079883c56e5a1dded35e6ec30cacff1dd574fbb087b3879285cf83"
+  },
+  "code/training/source/tools/launch_three_arm_training_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/launch_three_arm_training_v1.py",
+    "sha256": "48362cdb772dce7a2eb41cbdd0e9b5dc898a4d5faf53b37edeba7a1c4b0779cf"
+  },
+  "code/training/source/tools/preflight_cmx_training_data_v2_2.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/preflight_cmx_training_data_v2_2.py",
+    "sha256": "a71738a3457ceadd23520885b54025f78065d24fa6244e47dde888276fcd9f03"
+  },
+  "code/training/source/tools/preflight_cmx_training_data_v2_3.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/preflight_cmx_training_data_v2_3.py",
+    "sha256": "9f3c95c4e71a0752d5aca102bf322ae633f6d75851eba5c017248f9e648b0910"
+  },
+  "code/training/source/tools/preflight_dataset.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/preflight_dataset.py",
+    "sha256": "e9bb114bf1889a34c85692ecddb60c97e9926a1b4672c2cb53d4956df968ce70"
+  },
+  "code/training/source/tools/preflight_fold1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/preflight_fold1.py",
+    "sha256": "4a26cf399f4ac47c203d804097422907fd8b12981cba322c90499a510f2ee58f"
+  },
+  "code/training/source/tools/preflight_sliding_fold1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/preflight_sliding_fold1.py",
+    "sha256": "4e8a8324b5eec913aaa02dfc85b6348d668b88535d30ec6f3b20952c745c38e6"
+  },
+  "code/training/source/tools/prepare_cmx_rel_smoke_data.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/prepare_cmx_rel_smoke_data.py",
+    "sha256": "1a4c0c3b033ff1564285a27ed545d44a789a237ec643abb5cb7f4454439f3abb"
+  },
+  "code/training/source/tools/run_and_record_exitcode.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/run_and_record_exitcode.py",
+    "sha256": "cf557e0c4d58e0ff88ca6cb30aac74fef9d217ce3e6134562a24e12d9c1f901b"
+  },
+  "code/training/source/tools/run_ddp_optimizer_smoke_v2_3.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/run_ddp_optimizer_smoke_v2_3.py",
+    "sha256": "54653365a0dcd03d227609a3428641451af3bf1baabdba3c76feae3acb705693"
+  },
+  "code/training/source/tools/run_relplus_200_step_trajectory_v1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/run_relplus_200_step_trajectory_v1.py",
+    "sha256": "916c265693a1a93913c5bdf49f751b1fde1edd62b2415832246e9e7ba962a156"
+  },
+  "code/training/source/tools/run_with_config.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/run_with_config.py",
+    "sha256": "6aab1b9d61590381300946b9cbd3a08dc576895c4814c143fbf17f8e40a48c9b"
+  },
+  "code/training/source/tools/smoke_pilot_loaders.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/smoke_pilot_loaders.py",
+    "sha256": "fc0fb242c89b88e41c2727973c2ce6f9499e583fb866f8fcc04fbb544d661ce7"
+  },
+  "code/training/source/tools/summarize_checkpoints.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/summarize_checkpoints.py",
+    "sha256": "5f927e4519a4b512f113db684dac6fd6f1ab0142061ba27f310f5379121d6e52"
+  },
+  "code/training/source/tools/trace_comparison_profile.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/trace_comparison_profile.py",
+    "sha256": "12e14a0fadd8c2530bade759dc708e49a2e8abf1b878496dd7d5291b7eb13332"
+  },
+  "code/training/source/tools/trace_three_arm_dataloaders_v2_2.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/trace_three_arm_dataloaders_v2_2.py",
+    "sha256": "505f4261959cdb2e3a71a2ff12622a6815c3f60538e082b0e53ad0470eaace60"
+  },
+  "code/training/source/tools/validate_cache_tools_smoke_v2_2.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/validate_cache_tools_smoke_v2_2.py",
+    "sha256": "1b3481bada2af96b7fad9ca1f1ddb39ab789922b8ca0d13e3acebd458754e9f2"
+  },
+  "code/training/source/tools/validate_eval_rank_consistency_v2_2.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/validate_eval_rank_consistency_v2_2.py",
+    "sha256": "307836b1841c89afbeee2eec2eaa52e6ac46591f03120660e4636f8f7a644574"
+  },
+  "code/training/source/tools/validate_eval_rank_consistency_v2_3.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/validate_eval_rank_consistency_v2_3.py",
+    "sha256": "05d89339e9c3602a0bcc0ce38fa0570b2295c01f7ae5abad4341e508d2c24a0b"
+  },
+  "code/training/source/tools/validate_formal_startup_no_step_v2_2.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/validate_formal_startup_no_step_v2_2.py",
+    "sha256": "c6870898dd6afa93647f3e34b147b95b6ddecbca01cfebfacccaceb40265366e"
+  },
+  "code/training/source/tools/validate_real_geometry.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/validate_real_geometry.py",
+    "sha256": "1bb3f844287ee46f4775a98a5e12a4f7fcfd2c3b78b9e69ff11f250002b02ee1"
+  },
+  "code/training/source/tools/validate_single_batch_v2_1.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/validate_single_batch_v2_1.py",
+    "sha256": "828598c29e168b11531ee181cd9b3e21ad809336f0160fb4bcdfa1642d1ade00"
+  },
+  "code/training/source/tools/verify_generator_byte_invariant.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/verify_generator_byte_invariant.py",
+    "sha256": "0fcf85a2e25adeefbf15370ac76fd7a98b5a1749a0e47cb49532af46c36aef7a"
+  },
+  "code/training/source/tools/visualize_rel_plus.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/tools/visualize_rel_plus.py",
+    "sha256": "d6ad608147da6201997387038fe51761f9dc9e696e94947564bcc045c80b8ff5"
+  },
+  "code/training/source/train.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/train.py",
+    "sha256": "c4e4d961774a6918695962f6834aa21328d079d3dd7a3e03c492d368b9732ec1"
+  },
+  "code/training/source/utils/__init__.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "code/training/source/utils/init_func.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/init_func.py",
+    "sha256": "2a3a1c7da372079b8592612261cc9865127c292aea15d16eae957545a8585881"
+  },
+  "code/training/source/utils/load_utils.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/load_utils.py",
+    "sha256": "4a61a396bd4a73b78d432d25e8231f34f2bf76b1dd9ccb65ea83256b186e27d3"
+  },
+  "code/training/source/utils/loss_opr.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/loss_opr.py",
+    "sha256": "05f01a32341ff2872d3554512d7febe2c513ded69759dd07738aa4ee30a47b00"
+  },
+  "code/training/source/utils/lr_policy.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/lr_policy.py",
+    "sha256": "a51c9463c57e4c2efd727dd7c4cb9bde43c4d23e5c964dbc364bd19033d48c67"
+  },
+  "code/training/source/utils/metric.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/metric.py",
+    "sha256": "b4f4040552ab3efceea567841a1278fe37690743c6915f154739f4a4257104b9"
+  },
+  "code/training/source/utils/pyt_utils.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/pyt_utils.py",
+    "sha256": "dc7e2ade03ace98b82c3d3a5f4a35eba2a0a56065dcb63f06dfaa51af0c912e6"
+  },
+  "code/training/source/utils/resolved_config.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/resolved_config.py",
+    "sha256": "4c476f0396c140fa80bd069c1557d00fb43193a648eb5d49baefe0b728eaaf2a"
+  },
+  "code/training/source/utils/training_protocol.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/training_protocol.py",
+    "sha256": "29d42e20133d956727ce77ba261756af39b94307ecc189bade44df23cb52155d"
+  },
+  "code/training/source/utils/training_runtime.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/training_runtime.py",
+    "sha256": "48cd98dde89721c3195fa2e47c3ddfbc757fec8ef93edefc52b32bc0ede37559"
+  },
+  "code/training/source/utils/transforms.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/transforms.py",
+    "sha256": "b5222f3a35a3f80790516580b960a0b78064e3da0a9683a035b0c7cbf812661c"
+  },
+  "code/training/source/utils/visualize.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/source/utils/visualize.py",
+    "sha256": "c241682ad03cf1aa06cd370fd5bd8e54178543f00bf5a2e7cf8b43f4ce29bdce"
+  },
+  "code/training/suite.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/suite.json",
+    "sha256": "319d3d63d207e1ca8c3594ed20eb119f954ecfcb24562262b313dd74eedb4731"
+  },
+  "code/training/suite_common.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/suite_common.py",
+    "sha256": "d2b251be91398c0f49c209f7d6a157e400ff1833ae37531d969928cd151b8873"
+  },
+  "code/training/tests/test_contract.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/tests/test_contract.py",
+    "sha256": "b21ed90d50ae59f10030383ca37943aa4ce1e176e88cfebc6e709d27ca1acb08"
+  },
+  "code/training/tests/test_gamma_isolation.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/tests/test_gamma_isolation.py",
+    "sha256": "be1ec330e54695867fc68b4f5f2524a1a6535dfe2864878176347e77091bea71"
+  },
+  "code/training/tests/test_run_suite.py": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/tests/test_run_suite.py",
+    "sha256": "6a2ceb93707eebbfba79751b256baceb72d929cb6e682d0ee3fe6c2874eac5b6"
+  },
+  "code/training/bundle_manifest.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/bundle_manifest.json",
+    "sha256": "42df431764b0c0aad2f2a71214bda28dfc6a34d9d06eea2ab9bebad6b342892c"
+  },
+  "code/reference_notices/LICENSE": {
+    "source_workspace_relative": "0915调参结果/code/reference_notices/LICENSE",
+    "sha256": "a3fb69f7d2d7ab44ce80bba7f8c3a61f3c8a2775a2baac4bef815a60c4d8ba5e"
+  },
+  "code/reference_notices/requirements.txt": {
+    "source_workspace_relative": "0915调参结果/code/reference_notices/requirements.txt",
+    "sha256": "334f826de9b7553601904756ce9ad2f8c94ad4328e209fc82de3b7a5ceedaf50"
+  },
+  "code/reference_notices/third_party/rel_original/LICENSE": {
+    "source_workspace_relative": "0915调参结果/code/reference_notices/third_party/rel_original/LICENSE",
+    "sha256": "68881992798fb576557c55f621fafaf31c20bf21d020fb6dd6c82771ebc74895"
+  },
+  "evidence/completed/INDEPENDENT_OFFLINE_AUDIT.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/INDEPENDENT_OFFLINE_AUDIT.json",
+    "sha256": "06485441d3bce6248780318e595e6636a82a7527941ea94a10c52e6cf563c2b1"
+  },
+  "evidence/completed/LIVE_FINAL_RECHECK.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/LIVE_FINAL_RECHECK.json",
+    "sha256": "e7b7abbd62f77173e4825e0d315161cf369076a1b5296f4b12aec1f60d4a287f"
+  },
+  "evidence/completed/TRANSFER_MANIFEST.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/TRANSFER_MANIFEST.json",
+    "sha256": "68480595e39904a90db5f05ebe258e778982cc852260f19fe32d03150fba73d1"
+  },
+  "evidence/completed/TRANSFER_VERIFICATION.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/TRANSFER_VERIFICATION.json",
+    "sha256": "f61ee1fab2caa39b74da14d988b6cd4d67951da7ee02ebb17d775643063a366c"
+  },
+  "evidence/completed/configs/hha.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/configs/hha.json",
+    "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+  },
+  "evidence/completed/configs/relplus.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/configs/relplus.json",
+    "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+  },
+  "evidence/completed/evaluation_epoch200/dual_arm_comparison.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/dual_arm_comparison.json",
+    "sha256": "5d535c50ef1c29fa55de00b3cb8069077f7dff0d117c9b6b8abf1324efd64125"
+  },
+  "evidence/completed/evaluation_epoch200/hha/cleanup.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/cleanup.json",
+    "sha256": "fa57b9655d45aeb3b86c1a26c73d9752549db43208a06ca09aa7f79c6da24ea6"
+  },
+  "evidence/completed/evaluation_epoch200/hha/command.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/command.json",
+    "sha256": "01536b4dcdb7cbb9a83c86e2560eb7fad2b3931e681fd49b2bf27c82b0369c01"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/confusion_matrix.csv": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/confusion_matrix.csv",
+    "sha256": "f248689e6328cd70df9839373eed5b5129b73be985b68744b45f4c16d9fa7853"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/evaluation_manifest.csv": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/evaluation_manifest.csv",
+    "sha256": "ed59e1ebdb27827d71987c1de5449d8b7f7bc079b84e840d208ce1b8c8203b9d"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/metrics.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/metrics.json",
+    "sha256": "016b7a86fcef3c8fd6a0a0c656e969d36f273792457286d4a5b839cb0f22e703"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/per_class_iou.csv": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/per_class_iou.csv",
+    "sha256": "2981c019968840170da725ebbc7ee480c8e504f20fb008766f93ba15a5dad2bc"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/rank_00_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/rank_00_evaluation.json",
+    "sha256": "d089c02fafead51eac9d7f7f978b8bd7faa409939af23fae1813ee174bca23b5"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/rank_01_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/rank_01_evaluation.json",
+    "sha256": "951d4594c77eddca7d09923d32b083068cd7f2c12610a9f833bfc7166f5a128a"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/rank_02_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/rank_02_evaluation.json",
+    "sha256": "e81c7163cb371d6abfaa10ce09a6fa06637031a5161d1ede3255b5dd155f3b1c"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/rank_03_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/rank_03_evaluation.json",
+    "sha256": "b39cf3d383616e4b10b92368a09f03a56931f53ef3742cfe9d7a3d730630a4fe"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/rank_04_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/rank_04_evaluation.json",
+    "sha256": "e9649e75a5f1a0c38253c861a646c6378146c375e1201633c680cf733d7bb8fa"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/rank_05_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/rank_05_evaluation.json",
+    "sha256": "e10d7fd5ae26a0b8ae51fdfde9e42b8aae668b04b37e0d00066ff878622be186"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/rank_06_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/rank_06_evaluation.json",
+    "sha256": "7cb8c703b8bfa54c87e56070daba18d71e78d7f43f1890742bef5e3178397afe"
+  },
+  "evidence/completed/evaluation_epoch200/hha/evaluation/rank_07_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/evaluation/rank_07_evaluation.json",
+    "sha256": "c225e76a3740c3f18ea5324f123c33c19073c80aa371aac6854b4efeb1340657"
+  },
+  "evidence/completed/evaluation_epoch200/hha/exitcode": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/exitcode",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "evidence/completed/evaluation_epoch200/hha/gpu_before.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/gpu_before.json",
+    "sha256": "138b98b65f46dddb37027fda259c6099aaed63296d4cff781f27c9c7b5991fb4"
+  },
+  "evidence/completed/evaluation_epoch200/hha/idle_samples.jsonl": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/idle_samples.jsonl",
+    "sha256": "e381cd259a2ec3570b4011263a95694838974d844997fa7d5fe3a6901bb9a250"
+  },
+  "evidence/completed/evaluation_epoch200/hha/integrity_audit.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/integrity_audit.json",
+    "sha256": "072858db5746b34376919724093b72d0f1bc7ad05db2c4f2f8039fe5ecbe748b"
+  },
+  "evidence/completed/evaluation_epoch200/hha/launcher.log": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/launcher.log",
+    "sha256": "8cbdfa1d319117d44d315d6fcb8b1998149388782f44eb00b13ad834f1ee5b0d"
+  },
+  "evidence/completed/evaluation_epoch200/hha/process.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/process.json",
+    "sha256": "d5db020054b0eac22cbad9d2dd251579dbda98b0786fe5fb4d8968cf35ed6ddb"
+  },
+  "evidence/completed/evaluation_epoch200/hha/rank_00_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/rank_00_runtime.json",
+    "sha256": "2c55b791074a70457a6ab25ee33ff831aa7e559fd2280259e59bb97238fbfddf"
+  },
+  "evidence/completed/evaluation_epoch200/hha/rank_01_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/rank_01_runtime.json",
+    "sha256": "65f62912aba28e883559b06f5b580056cc29dfe282587891d2ee72ad1f1ce75a"
+  },
+  "evidence/completed/evaluation_epoch200/hha/rank_02_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/rank_02_runtime.json",
+    "sha256": "ab9949470aba423bc78755e1ece34fbf6ae55d7b028b78b418f5876e0e02a779"
+  },
+  "evidence/completed/evaluation_epoch200/hha/rank_03_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/rank_03_runtime.json",
+    "sha256": "d2c047efff20bbd677ab9ceae288d91689224dd6774c70cfcc78f5a323511bbd"
+  },
+  "evidence/completed/evaluation_epoch200/hha/rank_04_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/rank_04_runtime.json",
+    "sha256": "15f107b2ec663e55408f16e5d473f553aa0878bbc4b071983983e0688df0b212"
+  },
+  "evidence/completed/evaluation_epoch200/hha/rank_05_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/rank_05_runtime.json",
+    "sha256": "e5d327437c56c6858d8b7d8b87f23e78635193511151697a827e71cc5bd9ab20"
+  },
+  "evidence/completed/evaluation_epoch200/hha/rank_06_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/rank_06_runtime.json",
+    "sha256": "a66ef5172e4fb0dab9f52d26c22f8e1fad34ee7e06583edc006c723a23beb50f"
+  },
+  "evidence/completed/evaluation_epoch200/hha/rank_07_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/rank_07_runtime.json",
+    "sha256": "dd0100c3aaf63899d06d783ad527a286bae00f963f9349f3e3a89dd193495ccb"
+  },
+  "evidence/completed/evaluation_epoch200/hha/resources.jsonl": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/resources.jsonl",
+    "sha256": "5e755fe5602eab26b952fc06c33ca8ff6ce1e55e3fa3b3a5ee623456acb5c5fa"
+  },
+  "evidence/completed/evaluation_epoch200/hha/status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/hha/status.json",
+    "sha256": "c2d6b45c4c979346952414e1b8f9348299fbb3112cd3eda1d2ff02b091a78d1d"
+  },
+  "evidence/completed/evaluation_epoch200/preflight.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/preflight.json",
+    "sha256": "8fd04e545e264ae8d66efd8527db75ac868c51e6cc19ea973e188151d8d6b1a2"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/cleanup.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/cleanup.json",
+    "sha256": "a00df5510620617bfe2a5ab99f0a4fc3abcc983f138bb55ceffb0d539cde3c06"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/command.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/command.json",
+    "sha256": "a1bc8344c721815d380a0361e26a51c4f07d34afc07f17316ce8aff8dce434f8"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/confusion_matrix.csv": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/confusion_matrix.csv",
+    "sha256": "9dc30ec90a612553fc9b6e78e5c6b7282ceb6a2ef5860f3f7f2f20e08ff7ebec"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/evaluation_manifest.csv": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/evaluation_manifest.csv",
+    "sha256": "ed59e1ebdb27827d71987c1de5449d8b7f7bc079b84e840d208ce1b8c8203b9d"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/metrics.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/metrics.json",
+    "sha256": "be67a1705323b7971a13158f130915e829aa1a18239f39f7ff6d4300deec2677"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/per_class_iou.csv": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/per_class_iou.csv",
+    "sha256": "284fe2bce41a204b93b9ae6675dc2854dbb069ec0e0d581059445fc4fdefe270"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/rank_00_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/rank_00_evaluation.json",
+    "sha256": "ee5380545ba2dd831311145fb608d504307e13254b6ea869887aeebf1e72f9b4"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/rank_01_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/rank_01_evaluation.json",
+    "sha256": "db0c6771cb25804663177471128b59dbc9dd2b93cd04b1627d4cd7242de571e9"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/rank_02_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/rank_02_evaluation.json",
+    "sha256": "47a5fe02e2143f9a6d74f0fa1ab180ecd81c497ab76fa08d4bbd1ef2b3fdceef"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/rank_03_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/rank_03_evaluation.json",
+    "sha256": "34c82b6aebfe960caf3fa7676118fd5ae203d7d47f1a610a37395bdfdea9ee3b"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/rank_04_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/rank_04_evaluation.json",
+    "sha256": "f6fa43ccdd4b5314733d498c19699626f33d7684d73166f9bf66b0bf51d9fe4c"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/rank_05_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/rank_05_evaluation.json",
+    "sha256": "7a7ffa726b46cf30efa62dc842317e6770fab68fa6acadde79935205f84efa6d"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/rank_06_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/rank_06_evaluation.json",
+    "sha256": "f2f7155d17dfd3ce8820080bd37f8da30b0c0a9e273fe0140a016341f1ae4737"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/evaluation/rank_07_evaluation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/evaluation/rank_07_evaluation.json",
+    "sha256": "82f8024296a1bea65cbcf9477acc172285a555127311200d8e6cc618035c6056"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/exitcode": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/exitcode",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/gpu_before.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/gpu_before.json",
+    "sha256": "c69604e654e4b039ba16e254e6b64bfd3a6d55d56e1869d1c6b8050ab0c68ffe"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/idle_samples.jsonl": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/idle_samples.jsonl",
+    "sha256": "3b57182cc37c1d9a19d1ecfd0619724366f1f7fae5b1a3997a28172ce12d053c"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/integrity_audit.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/integrity_audit.json",
+    "sha256": "61887f2ba912c97109892fbb20b4230cba9cc1d5c2873f4b6a17829a200b78eb"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/launcher.log": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/launcher.log",
+    "sha256": "a2f6850358b3a72cb5fd0453a8138829b36e09b1dfea2e6913f20846b6e9cdf7"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/process.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/process.json",
+    "sha256": "110aa6135265748ef6ee29a1c22b88bad454bba77ecc91a94b81803437bdba71"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/rank_00_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/rank_00_runtime.json",
+    "sha256": "6971a1e76811c40d07518e0b8ec0cbf58bbe04417316cd033187fa2ae4c95999"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/rank_01_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/rank_01_runtime.json",
+    "sha256": "e6b3d99dd974d1f3cbd3bfcc16b3e11cfecc8e50aa9a9923c3265db963d93f3a"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/rank_02_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/rank_02_runtime.json",
+    "sha256": "89d34e1ab7b903e5fff1eede4d993368f7b9ada2953be31d11ec28a7724c1934"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/rank_03_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/rank_03_runtime.json",
+    "sha256": "e9bd4f6e62c2f6f004ef8538525597f90a1f15f17ffb08fecd9c9c8d42ff6c1c"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/rank_04_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/rank_04_runtime.json",
+    "sha256": "4e3ad0b8dbaaf06ca882ec01994d364df81c92a434e7dd167e48a406477b6b1f"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/rank_05_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/rank_05_runtime.json",
+    "sha256": "ffddec39584313e3983ede69fac9120095e6be3ea8fb819be285a1053ec57031"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/rank_06_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/rank_06_runtime.json",
+    "sha256": "5fbc2ac62d09e79229f018906efe23f5c79084e422ca45064294184152ed80c4"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/rank_07_runtime.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/rank_07_runtime.json",
+    "sha256": "760c00794bafe2de121a6fe315871b752bf7974ee1c2d74494f4bf70df0c52fd"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/resources.jsonl": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/resources.jsonl",
+    "sha256": "acf9e4669753568fd1a16536c93cbabc9ab7c3294fc67d14351eeda83c9a5ff8"
+  },
+  "evidence/completed/evaluation_epoch200/relplus/status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/relplus/status.json",
+    "sha256": "c1e36f2b36dd4e9577a1e8569513911bccb327a03891decbdfa51af9a38677ac"
+  },
+  "evidence/completed/evaluation_epoch200/status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/status.json",
+    "sha256": "b0914840faa1fbd2cac3d552ab39b4035c4e8d115b9c481c6fdab5f9af57ae9e"
+  },
+  "evidence/completed/execute_supervisor_launch.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/execute_supervisor_launch.json",
+    "sha256": "a167282c7018eba5dbbb08e799f1a67c8065733258b465e808e401edca96c994"
+  },
+  "evidence/completed/inputs/hha_test.txt": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/inputs/hha_test.txt",
+    "sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a"
+  },
+  "evidence/completed/inputs/relplus_test.txt": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/inputs/relplus_test.txt",
+    "sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a"
+  },
+  "evidence/completed/local_status_before_completion.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/local_status_before_completion.json",
+    "sha256": "c819d41204d29b1b9eee43b2e64d4c10e8bc2ee6ee6784d04afe76112058df56"
+  },
+  "evidence/completed/pipeline_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/pipeline_status.json",
+    "sha256": "9600af560c71dadd7cb46db420a651e3bc3021414549b54d88d816230555a4a7"
+  },
+  "evidence/completed/runs/hha/arm_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/arm_status.json",
+    "sha256": "2b15e9290ca34dcdbd42bbf44087db6cc824967b1913f52db50ca3fc056848d3"
+  },
+  "evidence/completed/runs/hha/cleanup.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/cleanup.json",
+    "sha256": "44b75a73ce401a17384da60dda1e0d637bb75b351044c2ff2296c42a4460eeeb"
+  },
+  "evidence/completed/runs/hha/command.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/command.json",
+    "sha256": "e870d80078d84ce2398e7ae91503275aee0caf0e550eb6f799febfae5eced8d0"
+  },
+  "evidence/completed/runs/hha/exitcode": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/exitcode",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "evidence/completed/runs/hha/initialization_check.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/initialization_check.json",
+    "sha256": "ed567b2b48b27a91d8623c4fc802f5062fd14cbda34482dee0896cd2c37a5f1b"
+  },
+  "evidence/completed/runs/hha/rank_done_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_done_00.json",
+    "sha256": "601fad4afb375c425f91d6f1b1581981e3c0696f58805dd5c4744ba39bd47f76"
+  },
+  "evidence/completed/runs/hha/rank_done_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_done_01.json",
+    "sha256": "8b0ebb18a7fef9c762786e8efcd37cf7ff327af3d63e571858f66c924d6044aa"
+  },
+  "evidence/completed/runs/hha/rank_done_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_done_02.json",
+    "sha256": "8d3ffb7bf45cda7f26fa18df8fb1b13c8fea09bc76197d175c8574380b36f504"
+  },
+  "evidence/completed/runs/hha/rank_done_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_done_03.json",
+    "sha256": "99ba54fce5eeb046917d310c6c6c8e420e3eee2374936bc690fb0d3405a70bb8"
+  },
+  "evidence/completed/runs/hha/rank_done_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_done_04.json",
+    "sha256": "944ac9cf63da46e042fbefc85d38172fc7ee43f52233f654d6cfc4ec9692a905"
+  },
+  "evidence/completed/runs/hha/rank_done_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_done_05.json",
+    "sha256": "9dc5e8c0618d9db8800856fb70bb6cc8e1c97bceb46756623933a56fb12b2d10"
+  },
+  "evidence/completed/runs/hha/rank_done_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_done_06.json",
+    "sha256": "8a0d70b383b608cbb018f43a76c6f9934c5b1c993a6a386aac99285832ee86ff"
+  },
+  "evidence/completed/runs/hha/rank_done_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_done_07.json",
+    "sha256": "8b683348364a16daa384a90099f735486728665d0f3571246ebf2d51066047dc"
+  },
+  "evidence/completed/runs/hha/rank_init_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_init_00.json",
+    "sha256": "6bf794a072636ffa56ca4d2c19bd1faffbf4568caa435b94b12a5b5e610b2b64"
+  },
+  "evidence/completed/runs/hha/rank_init_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_init_01.json",
+    "sha256": "0b9f512dc5b137162229a783e05b5e08804d9139645aa2a0d3014574e5dc9611"
+  },
+  "evidence/completed/runs/hha/rank_init_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_init_02.json",
+    "sha256": "67b1c29ba1d883c079355b98a90bdd95a80635d9dbb0003d008e421c03bcd9ab"
+  },
+  "evidence/completed/runs/hha/rank_init_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_init_03.json",
+    "sha256": "367b10f78b8657a0919b4d1937e4604b66680a89cfc216332db74325e70a4a55"
+  },
+  "evidence/completed/runs/hha/rank_init_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_init_04.json",
+    "sha256": "efad0f4365f6507fd85eaed3d4e795232ee120f889b5e39a7e95ad586deed885"
+  },
+  "evidence/completed/runs/hha/rank_init_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_init_05.json",
+    "sha256": "7e2dc5d0de178215680a1b3d7872fa776f2ccfdfce26724b12b7c0c4979326b7"
+  },
+  "evidence/completed/runs/hha/rank_init_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_init_06.json",
+    "sha256": "950fe10579569d083ffa44367dd512cfad16eb0af6c71d365d70190f1352cae3"
+  },
+  "evidence/completed/runs/hha/rank_init_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/rank_init_07.json",
+    "sha256": "9c7903f0de6033e9f3fa210b42a8b7728d767c29e9105c0e32dc9f81ed7b013d"
+  },
+  "evidence/completed/runs/hha/runtime_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/hha/runtime_status.json",
+    "sha256": "bc606fca52c698a4548d0dff14b367b87cb2eb376eb95935a71b53960c2f078b"
+  },
+  "evidence/completed/runs/relplus/arm_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/arm_status.json",
+    "sha256": "01db74dd67fc906befc58a0200ab38a3c4b640b9c04a6495a79d542f3bbb9e06"
+  },
+  "evidence/completed/runs/relplus/cleanup.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/cleanup.json",
+    "sha256": "30d739cbdc425e7da735daeece83dfec990e28dbde79103202bef3a7403522f5"
+  },
+  "evidence/completed/runs/relplus/command.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/command.json",
+    "sha256": "679a0953f5010a783efe3516c19b7240367971c0cc5b8ae274f9fdd45af5f8fd"
+  },
+  "evidence/completed/runs/relplus/exitcode": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/exitcode",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "evidence/completed/runs/relplus/initialization_check.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/initialization_check.json",
+    "sha256": "3833e4e9b62f32beac37c5f9786bc63c865e3fec118ddd3e5d31ca709033d194"
+  },
+  "evidence/completed/runs/relplus/rank_done_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_done_00.json",
+    "sha256": "c49ac3d6f4faf3b029df5b38dba1950bb26fa32e2ca11f8b1115ded195bf0e89"
+  },
+  "evidence/completed/runs/relplus/rank_done_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_done_01.json",
+    "sha256": "7ecd80356c4cd7f625df4121f9e889708f8ebf269ad35c592babce4f6c6d89f8"
+  },
+  "evidence/completed/runs/relplus/rank_done_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_done_02.json",
+    "sha256": "717767104d7abfe4eb0cb25e12c75020b25de061c86beda7e3eb6a9ad981fe2c"
+  },
+  "evidence/completed/runs/relplus/rank_done_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_done_03.json",
+    "sha256": "0f3c6f50e608fcea9812eadbb4818e9b880b709b916cf0c6b2bff9a1d630063a"
+  },
+  "evidence/completed/runs/relplus/rank_done_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_done_04.json",
+    "sha256": "4516bb08a187babb69a49ab872af0fa8e2445bae06bf10478729f33b14d309b1"
+  },
+  "evidence/completed/runs/relplus/rank_done_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_done_05.json",
+    "sha256": "86c98e6dbda631884f86f5d9b54556fed7cf6bd3b3897928f52732e112ff2373"
+  },
+  "evidence/completed/runs/relplus/rank_done_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_done_06.json",
+    "sha256": "1be89d02d999a7f0ab68886c82a46478ce448f92329c257a3baadadaf92193c0"
+  },
+  "evidence/completed/runs/relplus/rank_done_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_done_07.json",
+    "sha256": "2575f92aaf7f1cf678d47b40701b7f96588715eb0c569317b6d441cc81f21ae9"
+  },
+  "evidence/completed/runs/relplus/rank_init_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_init_00.json",
+    "sha256": "670d2c4e50cf4bcf66e52ff4b3b788db28dc66efb19f90b36c4a2ffcac49cf79"
+  },
+  "evidence/completed/runs/relplus/rank_init_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_init_01.json",
+    "sha256": "772212df6f96a898c7d3ea9230c5031b956f8df53e0d848bf6ed23649de66b11"
+  },
+  "evidence/completed/runs/relplus/rank_init_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_init_02.json",
+    "sha256": "20e33c0a393252d44e1ee2e320041bc121a3907a91326da6fad0b5e94fa83dd6"
+  },
+  "evidence/completed/runs/relplus/rank_init_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_init_03.json",
+    "sha256": "f69a4c650f7df9c5a9e0acd5d474de45167beb9282a971a9e12811c48cb476fb"
+  },
+  "evidence/completed/runs/relplus/rank_init_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_init_04.json",
+    "sha256": "c478db9205750fa000f155872612a1a8b097f113ee37d06f5bf1919b132042d5"
+  },
+  "evidence/completed/runs/relplus/rank_init_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_init_05.json",
+    "sha256": "1b72d96015c1a1c2f7ed780c82b0d9fd27362ba7944c289e688c8886d2b36607"
+  },
+  "evidence/completed/runs/relplus/rank_init_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_init_06.json",
+    "sha256": "91c537c809d270193ba703debe70a5b97044f0db137301142bc10b61a8866499"
+  },
+  "evidence/completed/runs/relplus/rank_init_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/rank_init_07.json",
+    "sha256": "fe2fc0c252cce5670f2dac74a80414ca7c457db6fae1cf88cca33ce22b3d9367"
+  },
+  "evidence/completed/runs/relplus/runtime_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/runs/relplus/runtime_status.json",
+    "sha256": "bc606fca52c698a4548d0dff14b367b87cb2eb376eb95935a71b53960c2f078b"
+  },
+  "evidence/completed/train_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/train_status.json",
+    "sha256": "75c87bf01ea0ee02342980344909aed4367bb3ff581c535fbd4b13575a3028e2"
+  },
+  "evidence/preparation/TRANSFER_MANIFEST.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/TRANSFER_MANIFEST.json",
+    "sha256": "07d37a24f38a526c887ac3ccc3f898115afc42ee5440a12f12aa3b260262bc21"
+  },
+  "evidence/preparation/configs/hha.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/configs/hha.json",
+    "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+  },
+  "evidence/preparation/configs/relplus.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/configs/relplus.json",
+    "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+  },
+  "evidence/preparation/execute_supervisor_launch.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/execute_supervisor_launch.json",
+    "sha256": "a167282c7018eba5dbbb08e799f1a67c8065733258b465e808e401edca96c994"
+  },
+  "evidence/preparation/preflight.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/preflight.json",
+    "sha256": "1fef199d8198ca80f040931504eb47ea2615f3c4eea7b14043fdcf04619c3051"
+  },
+  "evidence/preparation/preparation_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/preparation_status.json",
+    "sha256": "984d0fce25d1726cc178f130079342b2dcb086281a5155f9b9ce4648f73574d9"
+  },
+  "evidence/preparation/prepare_supervisor.log": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/prepare_supervisor.log",
+    "sha256": "760c09afb550bfbb441abdb2d52cddbcf9663c2c85eda13e4da473d946cd488a"
+  },
+  "evidence/preparation/prepare_supervisor_launch.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/prepare_supervisor_launch.json",
+    "sha256": "9fe3d31cd0308858d6a518c5f88611141b8489ebd0f1338387897704dd546cb6"
+  },
+  "evidence/preparation/smoke/hha/arm_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/arm_status.json",
+    "sha256": "fdc1aa71dc0fce29d38849575466e215f3a64fe3f4b176a1366f79ffabc133b4"
+  },
+  "evidence/preparation/smoke/hha/cleanup.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/cleanup.json",
+    "sha256": "ba706132f4c08d83d7644ec0f300913af2bb5c68a48e6aef99132b695222a87e"
+  },
+  "evidence/preparation/smoke/hha/command.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/command.json",
+    "sha256": "74bc070e9e9974652d4652960493f4db77c3a45316f47c56ea1d4a58ab022e8e"
+  },
+  "evidence/preparation/smoke/hha/ddp_optimizer_smoke_summary.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/ddp_optimizer_smoke_summary.json",
+    "sha256": "8c4862b997c65c765a364d3c9febe4ce193d7e76ea076d4214d0f7a93912194d"
+  },
+  "evidence/preparation/smoke/hha/exitcode": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/exitcode",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "evidence/preparation/smoke/hha/gpu_before.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/gpu_before.json",
+    "sha256": "858b14f1b792877c5c75ec3eeaeb80de52f0045ed655ea35cd5cfbbadb63d6ef"
+  },
+  "evidence/preparation/smoke/hha/idle_samples.jsonl": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/idle_samples.jsonl",
+    "sha256": "0bbaf4727552324b1cc0dc602c87228305b409f785d2d393710f4a1d0e2b1b35"
+  },
+  "evidence/preparation/smoke/hha/launcher.log": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/launcher.log",
+    "sha256": "e1aa5b6e4c5235c414c957b0d782328b4199ecc98871a0f7654668c60cbe5c9f"
+  },
+  "evidence/preparation/smoke/hha/process.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/process.json",
+    "sha256": "0f3cc6445a6c03c9f0b1a7d2b0e757e85c94cd2c1a9f55903499464c0fa9ec11"
+  },
+  "evidence/preparation/smoke/hha/rank_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_00.json",
+    "sha256": "82dee72ed72772e4426a1b063a75e48800a8fb31514d6f490ce2d3281849a8e1"
+  },
+  "evidence/preparation/smoke/hha/rank_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_01.json",
+    "sha256": "68cff37ae7363c904da988b4e009e1f33ccdd43ae2e999eb5881d771c53ca8e6"
+  },
+  "evidence/preparation/smoke/hha/rank_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_02.json",
+    "sha256": "3b31f801ad982a1407e0185af60118aa68ae06ebe0bb79cde93063cc8bf3e5a8"
+  },
+  "evidence/preparation/smoke/hha/rank_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_03.json",
+    "sha256": "6e6e55d4c710373eec3671d97376d0647c1246d4ad19c2936922be5d337e40dd"
+  },
+  "evidence/preparation/smoke/hha/rank_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_04.json",
+    "sha256": "1ac710e5bd650b58e521571c1b72141184602f66058667398d2eccb00ad4154b"
+  },
+  "evidence/preparation/smoke/hha/rank_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_05.json",
+    "sha256": "151c85f41cbb27036b887ae2926943c9e80c4c7a3fceb90918c923439e97dcb6"
+  },
+  "evidence/preparation/smoke/hha/rank_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_06.json",
+    "sha256": "8d0bcc7ef3f16bb235732d5f03b3d4584bb81938bb47e563ef1b7436e2b2c9d4"
+  },
+  "evidence/preparation/smoke/hha/rank_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_07.json",
+    "sha256": "96379456cf7a7cb5b673d5e8cf6a6361aeb7456c0222421caf3f69acd34b38d3"
+  },
+  "evidence/preparation/smoke/hha/rank_done_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_done_00.json",
+    "sha256": "983d64348ed28cb1da81b58d02881104b706b4eb7826630042835e545b15bb02"
+  },
+  "evidence/preparation/smoke/hha/rank_done_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_done_01.json",
+    "sha256": "89cbb332a8ab042336065e9589e27ee1c307f619412dc54c0e849ccdc6882454"
+  },
+  "evidence/preparation/smoke/hha/rank_done_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_done_02.json",
+    "sha256": "d21949b72321f1b04144449a25bd08f431c99b33712a757a8d18e6f50fc48c19"
+  },
+  "evidence/preparation/smoke/hha/rank_done_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_done_03.json",
+    "sha256": "e3a0fbe1aa1f2821f4b1cd3187b29286b23bcbf7eee542b4be5df5ddadeec298"
+  },
+  "evidence/preparation/smoke/hha/rank_done_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_done_04.json",
+    "sha256": "a59240fd31d9bcf339ab6105b63d370256ac8948ed69974ad9d1e9d5ad07fd4d"
+  },
+  "evidence/preparation/smoke/hha/rank_done_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_done_05.json",
+    "sha256": "7ebeb110fe9505cb4bd043fd060ca6922b0f17cc7a470b1fc291304de90d0d78"
+  },
+  "evidence/preparation/smoke/hha/rank_done_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_done_06.json",
+    "sha256": "30a3236063efec3c0d674e6a883a56e1f5c7100a97b540771c143fed4ad5de3f"
+  },
+  "evidence/preparation/smoke/hha/rank_done_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_done_07.json",
+    "sha256": "178bef0d75295e5905651a0ed97c5b9322983252c7a6152a8d707231076fc633"
+  },
+  "evidence/preparation/smoke/hha/rank_init_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_init_00.json",
+    "sha256": "46dd87e279f0f69861d0d3acd054fdc214a641242da2cda1cd73c8f215e3b755"
+  },
+  "evidence/preparation/smoke/hha/rank_init_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_init_01.json",
+    "sha256": "fe7513e9c187c4409baaffacd65211c0366cedf867bd67785dab816042faef41"
+  },
+  "evidence/preparation/smoke/hha/rank_init_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_init_02.json",
+    "sha256": "151e7bdb65a58d76e1dee6488312e4bb893acb673887098001266dd66c1a8770"
+  },
+  "evidence/preparation/smoke/hha/rank_init_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_init_03.json",
+    "sha256": "a4f7907feca473d5f8447ac70ac95ef3947a3c0ebea41d516837460e9b64cc02"
+  },
+  "evidence/preparation/smoke/hha/rank_init_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_init_04.json",
+    "sha256": "20b6c9930b2c33a13e9d5d0f4a36ac59c36acb7c71a17a439a0859c3b639787f"
+  },
+  "evidence/preparation/smoke/hha/rank_init_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_init_05.json",
+    "sha256": "f8321e98c6ca69f116f33e2433e984f2449ba116bc220d2da0181ebbfb6e72a6"
+  },
+  "evidence/preparation/smoke/hha/rank_init_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_init_06.json",
+    "sha256": "bbcb46fa60ac957f77b0ab15c8185eb04842d7bd4c870854cac03305440e095a"
+  },
+  "evidence/preparation/smoke/hha/rank_init_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/rank_init_07.json",
+    "sha256": "b9ea40b1cd28e87660d762a5324fee41f2966022d65030d2b20a748d39b31c3c"
+  },
+  "evidence/preparation/smoke/hha/resource_samples.jsonl": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/resource_samples.jsonl",
+    "sha256": "5eb7b9d5291521134b957e01c579993446aded7397d8a28577826cee4a4ea620"
+  },
+  "evidence/preparation/smoke/hha/resources_after.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/resources_after.json",
+    "sha256": "a2906669bb193faa63e05075be4eb758fff7b192001b43b9f253b53150249146"
+  },
+  "evidence/preparation/smoke/hha/runtime/logs/train.log": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/hha/runtime/logs/train.log",
+    "sha256": "628cdc5fdf04c41f74ef07e2e7f5803d125bd862b011a5f042e7db7bf90096e8"
+  },
+  "evidence/preparation/smoke/relplus/arm_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/arm_status.json",
+    "sha256": "987b4b5b63e727767b76f063f720adacc5f2284b4b4deb9d45d1e4f5a1593ce4"
+  },
+  "evidence/preparation/smoke/relplus/cleanup.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/cleanup.json",
+    "sha256": "fc9482bc9e44af7bc42aa3996ece9293d6c4afbb8fa7e961bfc8d43c3cd3a654"
+  },
+  "evidence/preparation/smoke/relplus/command.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/command.json",
+    "sha256": "17f19d3ca04e0cd51a379bcd6fc55aea252a00b692ac3d43b4a786d059dc9803"
+  },
+  "evidence/preparation/smoke/relplus/ddp_optimizer_smoke_summary.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/ddp_optimizer_smoke_summary.json",
+    "sha256": "7822140759c858ae2daaae379d2ecb9e75d0ead3a11fe9d9610a8f36efeb4638"
+  },
+  "evidence/preparation/smoke/relplus/exitcode": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/exitcode",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "evidence/preparation/smoke/relplus/gpu_before.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/gpu_before.json",
+    "sha256": "5e6863a514767d4cbb3c6ed37d8690afd040491375e96ca63938b562b814a431"
+  },
+  "evidence/preparation/smoke/relplus/idle_samples.jsonl": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/idle_samples.jsonl",
+    "sha256": "7d31cbf6630e600e8d62ba1ced3af5e54a7509e1405b2f1a3bb63b3815008c2e"
+  },
+  "evidence/preparation/smoke/relplus/launcher.log": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/launcher.log",
+    "sha256": "6500f63564c732e096d345ea177ccfb75fbb495fd476a49095f71a8516427fe8"
+  },
+  "evidence/preparation/smoke/relplus/process.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/process.json",
+    "sha256": "f4416887663b5111f1e5f9eec49e3d74261ac96a8370b3cf1c5396b2e5704436"
+  },
+  "evidence/preparation/smoke/relplus/rank_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_00.json",
+    "sha256": "1748b903ac5fb945d54da16183d6aca624d4f767ca1a0a8281f1915b0f89053f"
+  },
+  "evidence/preparation/smoke/relplus/rank_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_01.json",
+    "sha256": "78dec3e3365062718a05617723d5f6dfb6681c76e4f445cc3b4517eefe752183"
+  },
+  "evidence/preparation/smoke/relplus/rank_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_02.json",
+    "sha256": "6a90d8fa46412f4ff484ad247974bf86f429ff68be6e1d775fb6c606777e7132"
+  },
+  "evidence/preparation/smoke/relplus/rank_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_03.json",
+    "sha256": "098f9780daaba00297e02bb9bd66083dea7d2aeef516dc55245efbecff9b6cd1"
+  },
+  "evidence/preparation/smoke/relplus/rank_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_04.json",
+    "sha256": "4de51e41be24c58212206fa0e731bb228daac427c8723c2e82a2f5aef534d740"
+  },
+  "evidence/preparation/smoke/relplus/rank_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_05.json",
+    "sha256": "df70dabc5094a14d98e25a9d7a2bcf994f682917f62da6f3f6174563bae9fa7e"
+  },
+  "evidence/preparation/smoke/relplus/rank_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_06.json",
+    "sha256": "d35db315dd00bfbcb69e1ed991c9b02dd0ade585db4f2c89ee7e42cf3ef4c567"
+  },
+  "evidence/preparation/smoke/relplus/rank_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_07.json",
+    "sha256": "5eb14e7dd84dcf303c6c4b3dc0e3dcf29c0bcb7d6d6ccf3db9da93323ee61889"
+  },
+  "evidence/preparation/smoke/relplus/rank_done_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_done_00.json",
+    "sha256": "0268a1aa1520ba01326c7a3cfd814884f023390ca565ca2abd8e0beb7ddef4dd"
+  },
+  "evidence/preparation/smoke/relplus/rank_done_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_done_01.json",
+    "sha256": "327f4581c5a34e30f9567340f05671e8f0fd319c999ae025eb2a3f48e95cee8b"
+  },
+  "evidence/preparation/smoke/relplus/rank_done_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_done_02.json",
+    "sha256": "1cfffc6b1084f957236c2c338593f311ed4bfd87cf45897f8325804b373f39cb"
+  },
+  "evidence/preparation/smoke/relplus/rank_done_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_done_03.json",
+    "sha256": "a02b8f324e67c5e359d8374230264c9cc142e666e289b4c37f8e4761813d06b8"
+  },
+  "evidence/preparation/smoke/relplus/rank_done_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_done_04.json",
+    "sha256": "da9baab66ee14bd32c1a0a5169b087f4f09b86e084e5fd9146d74719aae47456"
+  },
+  "evidence/preparation/smoke/relplus/rank_done_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_done_05.json",
+    "sha256": "e6588217fa4e7b74a9aa6b6e1b67c99e431e21c64cdea150bf08ddff76de1b30"
+  },
+  "evidence/preparation/smoke/relplus/rank_done_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_done_06.json",
+    "sha256": "777d7156150793e7c7a2a73aaae173ec055f5c43994b002757c47ba1db5714ad"
+  },
+  "evidence/preparation/smoke/relplus/rank_done_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_done_07.json",
+    "sha256": "c178b6730b2a9d85411c30b26fffde49f5f904cb148844f3dfec324de3303b7f"
+  },
+  "evidence/preparation/smoke/relplus/rank_init_00.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_init_00.json",
+    "sha256": "ca9464c3a66b5f52cdb6293e91890067501aa6cc872e0579546a6bb365351fe5"
+  },
+  "evidence/preparation/smoke/relplus/rank_init_01.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_init_01.json",
+    "sha256": "11b7ae2508465656564b6434081292c4723104005e749aaf3bbbddd126cd6f0c"
+  },
+  "evidence/preparation/smoke/relplus/rank_init_02.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_init_02.json",
+    "sha256": "06882b3c85d59b7391eecf4976a61c88ad1b8545112d97d10ed5b3560fba9f8d"
+  },
+  "evidence/preparation/smoke/relplus/rank_init_03.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_init_03.json",
+    "sha256": "6434d3f19e493fd9fa7dbb6e47b9a03ebc7bde0f3c261d21e56a5504180a2e8a"
+  },
+  "evidence/preparation/smoke/relplus/rank_init_04.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_init_04.json",
+    "sha256": "0c4c9d944792bb746a51b88d725c91c0456d7ec8c5940f7b3f5e5d0dac18f4f2"
+  },
+  "evidence/preparation/smoke/relplus/rank_init_05.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_init_05.json",
+    "sha256": "b30d434a4bddf6c97c78169561922d17bf15e0c2cc3c5eff0f23c007ea260572"
+  },
+  "evidence/preparation/smoke/relplus/rank_init_06.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_init_06.json",
+    "sha256": "bc1205ea524d1fafc9c0abf10a25bb5a09453ffec870211da738280d2078f937"
+  },
+  "evidence/preparation/smoke/relplus/rank_init_07.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/rank_init_07.json",
+    "sha256": "30d066251ed04f28a06b7cb500c5af9e292f307ed4bc292260d82ab875f3fb85"
+  },
+  "evidence/preparation/smoke/relplus/resource_samples.jsonl": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/resource_samples.jsonl",
+    "sha256": "b1b3e923969cb46cd2656a79a95509773418e164eb761c0a6e4f3161b8be50c6"
+  },
+  "evidence/preparation/smoke/relplus/resources_after.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/resources_after.json",
+    "sha256": "ff27c6ad1b938f5e7cf12606d6242b29def21fc05873e89c9e83b2ad96eb740c"
+  },
+  "evidence/preparation/smoke/relplus/runtime/logs/train.log": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke/relplus/runtime/logs/train.log",
+    "sha256": "2304978c77b5e28817dc267bfa91f200043929ee3bd8245edc36e167bdc08575"
+  },
+  "evidence/preparation/smoke_status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_preparation/smoke_status.json",
+    "sha256": "1a3687a79eed482c0849ee7371b8a1119b0e0139b282726f01e1fa75843c347c"
+  },
+  "evidence/startup/TRANSFER_VERIFICATION.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/TRANSFER_VERIFICATION.json",
+    "sha256": "470c9eb62cfc330eabaad931511b30632379694104f898f31aafc71d547f54a7"
+  },
+  "evidence/startup/attempt1_bundle_manifest.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/attempt1_bundle_manifest.json",
+    "sha256": "7c2f13f79134888b12d01925b9990a9482dfa3c165ab85dbe73e7d20544d89fe"
+  },
+  "evidence/startup/baseline_remote_live.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/baseline_remote_live.json",
+    "sha256": "5c27d756edd9479c2e85d216cf2870aaa77bac972e4df6cdb7befe07f7970f5d"
+  },
+  "evidence/startup/deployment.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/deployment.json",
+    "sha256": "21046df74d813cd01421b3252cfec1ff54f4e5afa6c95b0a2bdf58c9b9da3446"
+  },
+  "evidence/startup/deployment_attempt2.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/deployment_attempt2.json",
+    "sha256": "1401e71840d752d9f9bf4ceb3781e661d3a27ebeda5be0b5b19db49e1b940c13"
+  },
+  "evidence/startup/execute_supervisor_launch.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/execute_supervisor_launch.json",
+    "sha256": "a167282c7018eba5dbbb08e799f1a67c8065733258b465e808e401edca96c994"
+  },
+  "evidence/startup/independent_review.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/independent_review.json",
+    "sha256": "f8993db8bac7008c1c3ca42445a3e689e83e0bde74a84efb3fbbba91fc391a84"
+  },
+  "evidence/startup/local_validation.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/local_validation.json",
+    "sha256": "534b989f7bf8a9c2e8cb1b4258533366dddb9306447da97e70a3826baf725eb4"
+  },
+  "evidence/startup/preparation_attempt2_snapshot.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/preparation_attempt2_snapshot.json",
+    "sha256": "9d429280bf5ef4b9af58b54f22cff79df0899de94e08cb332a058184af7d1425"
+  },
+  "evidence/startup/preparation_result.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/preparation_result.json",
+    "sha256": "88bbb10011ef90876d564aa20f755b0a7e1086b974ba8e327747ea330ca0c50a"
+  },
+  "evidence/startup/preparation_snapshot.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/preparation_snapshot.json",
+    "sha256": "980f4ecf5621d3af955d77fc3649e8af3818436b0818cb2861840965befce0d8"
+  },
+  "evidence/startup/prepare_supervisor_launch.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/prepare_supervisor_launch.json",
+    "sha256": "e76c8af119cc8bfab1b01d7cdc29a7158ba1e71e142042a31deb6d1b1d30cd19"
+  },
+  "evidence/startup/prepare_supervisor_launch_attempt2.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/prepare_supervisor_launch_attempt2.json",
+    "sha256": "9fe3d31cd0308858d6a518c5f88611141b8489ebd0f1338387897704dd546cb6"
+  },
+  "evidence/startup/progress_20260922_085540.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/progress_20260922_085540.json",
+    "sha256": "0fcf700d4ce1e214a074c8966914d08f130eff186799b225321657dbb69178af"
+  },
+  "evidence/startup/progress_20260922_085540_estimate.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/progress_20260922_085540_estimate.json",
+    "sha256": "6b57bec5bdfc11754728ae44e2117ac4cadd44ed3ba3e4da4671d5041c800b16"
+  },
+  "evidence/startup/progress_20260923_211252.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/progress_20260923_211252.json",
+    "sha256": "26de592c17aacfce2534beb736b49a2738152100cb2b5920ae623994e8eb2c2a"
+  },
+  "evidence/startup/progress_20260923_211252_estimate.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/progress_20260923_211252_estimate.json",
+    "sha256": "ffaf8520ad00f703b7645d150248248e12e6f847fac07445843e55a812340ffd"
+  },
+  "evidence/startup/progress_20260924_100124.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/progress_20260924_100124.json",
+    "sha256": "2090fd49237f8a640fc7dafbd04375f056f720014f0180572b378a2c0e540a2d"
+  },
+  "evidence/startup/remote_tests.log": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_tests.log",
+    "sha256": "d70fadc56ef368819b4109485fbe9c34e05dc33c0b37304e7e5f44d03b224501"
+  },
+  "evidence/startup/remote_tests_attempt2.log": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/remote_tests_attempt2.log",
+    "sha256": "83f276bca53d0e23dee56418873bdb207ccd33cc531e61f8d6822361bbdfb44a"
+  },
+  "evidence/startup/resolved_config_difference.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/resolved_config_difference.json",
+    "sha256": "8b7b67b339f70aa27b243be31f1e05d357ccd6ba21787e787b3dace056a26d97"
+  },
+  "evidence/startup/startup_snapshot.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/startup_snapshot.json",
+    "sha256": "af1ea9e7c1a639407e523a7d556be07a6b6db5bbe0460c64d47385b8197a1ae0"
+  },
+  "evidence/local_original/STARTUP.md": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/STARTUP.md",
+    "sha256": "2e1c335bb120da6bee6ab7b6d55e5f4e015d66a6f64bb6bb33429dc9a9618af2"
+  },
+  "evidence/local_original/READINESS.md": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/READINESS.md",
+    "sha256": "d2d8db9262919619605a39d4540af87c5908a4fdfdeb780a2802d5c203bce05b"
+  },
+  "evidence/local_original/PREPARATION.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/PREPARATION.json",
+    "sha256": "d04bb9a84ac1c03673de3e2a7cae2088284c54e0b78a851f1cbd6bcd1ef55152"
+  },
+  "evidence/local_original/status.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/status.json",
+    "sha256": "7d068a39712472a940778e10ac30534225903dbbc1a909d42ac6de5eb21f6726"
+  },
+  "evidence/local_original/RESULTS.md": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/RESULTS.md",
+    "sha256": "2c6656ecdfc0023553e6f7aa13ce2cf07886023522ab60a83bad2c27025b30bd"
+  },
+  "configs/hha.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/configs/hha.json",
+    "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+  },
+  "baseline_gamma2/hha/metrics.json": {
+    "source_workspace_relative": "0915调参结果/evidence/evaluation/hha/evaluation/metrics.json",
+    "sha256": "9a57ad58c581add215f2732c4d485bcc9f6f29b453cf28598f192666cc9a45dc"
+  },
+  "baseline_gamma2/hha/confusion_matrix.csv": {
+    "source_workspace_relative": "0915调参结果/evidence/evaluation/hha/evaluation/confusion_matrix.csv",
+    "sha256": "8a339a7e1e6ca17d04d1fde3b517022983a9873a7fc065c4c5b07e2e013f1db3"
+  },
+  "baseline_gamma2/hha/per_class_iou.csv": {
+    "source_workspace_relative": "0915调参结果/evidence/evaluation/hha/evaluation/per_class_iou.csv",
+    "sha256": "dab701d69ac1e48b3b97026775c6fd4c035a999f21f2865cbc488033fa651db6"
+  },
+  "configs/relplus.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/configs/relplus.json",
+    "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+  },
+  "baseline_gamma2/relplus/metrics.json": {
+    "source_workspace_relative": "0915调参结果/evidence/evaluation/relplus/evaluation/metrics.json",
+    "sha256": "c51e1826ac742dff7daf4ed323f845bb1ce39718e2d5d4b71c7067d33cc615eb"
+  },
+  "baseline_gamma2/relplus/confusion_matrix.csv": {
+    "source_workspace_relative": "0915调参结果/evidence/evaluation/relplus/evaluation/confusion_matrix.csv",
+    "sha256": "4bfdb01bf4bfaf2272922e23524d4b4ed652fb7d630db69acf667949b5c5754f"
+  },
+  "baseline_gamma2/relplus/per_class_iou.csv": {
+    "source_workspace_relative": "0915调参结果/evidence/evaluation/relplus/evaluation/per_class_iou.csv",
+    "sha256": "d040de1800bb0bc02ebb5b12d06f2810f3f8ad63dad56f3be14fbf1e45a5e13d"
+  },
+  "baseline_gamma2/comparison_verified.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/baseline/comparison_verified.json",
+    "sha256": "c5148dd245515fa1f97d15f0ad06c56c3d93c5f663af9edad0c34a3b3ba609af"
+  },
+  "baseline_gamma2/provenance/frozen_protocol.json": {
+    "source_workspace_relative": "0915调参结果/provenance/frozen_protocol.json",
+    "sha256": "b909024569a6b154d450ebebae64d7688dd936a2576dbfd332a9a4e95fa137ba"
+  },
+  "baseline_gamma2/provenance/checkpoints.json": {
+    "source_workspace_relative": "0915调参结果/provenance/checkpoints.json",
+    "sha256": "111fff06bcf0b2459a5f94e05ab1b6df908c17dc60367c859ca617040eaeb9ee"
+  },
+  "baseline_gamma2/provenance/source_provenance.json": {
+    "source_workspace_relative": "0915调参结果/provenance/source_provenance.json",
+    "sha256": "1592951d87f45e5d066db21f7bd88640c3cc4b0c4ece60503655b82c0ded45c6"
+  },
+  "baseline_gamma2/provenance/observed_environment.json": {
+    "source_workspace_relative": "0915调参结果/provenance/observed_environment.json",
+    "sha256": "f1f350b72dea0e9290b13995f1cf78757b2fc3334dcab74562aa3d79db4d2dd8"
+  },
+  "results/gamma1_vs_gamma2_metrics.csv": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/RESULTS_metrics.csv",
+    "sha256": "44b9a4c28eaf6e167f635caf2153d2ec68fbce56636f60bbc80f56b9b432aa95"
+  },
+  "results/gamma1_per_class.csv": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/RESULTS_per_class.csv",
+    "sha256": "392436fde5c97805ce098c7f808420fa3bae95af4c0ca27824379a241bb03f46"
+  },
+  "results/dual_arm_comparison.json": {
+    "source_workspace_relative": "work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924/evaluation_epoch200/dual_arm_comparison.json",
+    "sha256": "5d535c50ef1c29fa55de00b3cb8069077f7dff0d117c9b6b8abf1324efd64125"
+  }
+}

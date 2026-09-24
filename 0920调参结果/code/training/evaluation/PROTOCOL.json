@@ -1,0 +1,52 @@
+{
+  "status": "AUTHORIZED_FIXED_PROTOCOL_IMPLEMENTED_NOT_EXECUTED",
+  "arms": [
+    "hha",
+    "relplus"
+  ],
+  "train_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920",
+  "training_focal_gamma": 1,
+  "baseline_focal_gamma": 2,
+  "changed_scientific_factor": "focal_gamma only; full resolved training configurations validated against pinned gamma2 same-arm configurations",
+  "checkpoint_epoch": 200,
+  "updates_per_arm": 189000,
+  "test_samples": 17593,
+  "seed": 12345,
+  "training_batch_size": 56,
+  "training_lr": 0.00012,
+  "scale": [
+    1
+  ],
+  "flip": false,
+  "crop": [
+    480,
+    480
+  ],
+  "align_corners": false,
+  "world_size": 8,
+  "eval_batch_per_rank": 1,
+  "num_workers_per_rank": 16,
+  "precision": "FP32; frozen defaults and runtime flags recorded",
+  "bn_policy": "Frozen criterion=None constructor; decoder eval eps1e-5, training eps1e-3; unchanged gamma2 comparison semantics.",
+  "output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/evaluation_epoch200",
+  "endpoint": "Fixed epoch200 full-test mIoU and per-class IoU for HHA/REL+; report same-arm gamma1-gamma2, REL+-HHA at both gamma values, and change in that gap.",
+  "training_gate": "Exact dual-arm formal PASS; suite and manifest fingerprints; unchanged preflight/smoke prerequisites; per-arm PASS, exitcode0, epoch200, iteration189000, 8 completed ranks, no NaN replacement; exact checkpoint path/size/SHA256; resolved config and frozen data evidence.",
+  "runtime_evidence_exception": "Only ddp_smoke_report may appear after original preflight; require exact new-arm smoke path and SHA256 from freshly validated formal-training prerequisites.",
+  "failure_policy": "Refuse preexisting output; stop on failure; preserve evidence; no automatic retry, no checkpoint sweep, no metric substitution.",
+  "resource_policy": "Inherited guard: allocator75%, device free20%,85C,host32GiB,SHM2GiB; owned process group cleanup only.",
+  "operational_timeout_per_arm_minutes": 30,
+  "comparison_file": "dual_arm_comparison.json",
+  "baseline_source_sha256": "c5148dd245515fa1f97d15f0ad06c56c3d93c5f663af9edad0c34a3b3ba609af",
+  "frozen_evaluator_provenance": {
+    "run_evaluation.py": "d011c5ed88af0b6b3b7648a87f7caa4a486041e624b646ea9b66f38f33400a72",
+    "eval_rank.py": "336eb18f9b891905aa175dc33ea37464af714c58c6e93bbb7ce9c34610c049c6",
+    "input_adapter.py": "0f802339b3b002782ed8fc02869cb21fb99a7ff612cb9e501e909b5386fba452",
+    "audit_eval.py": "2c59e75f999ecd9e350dd1a75d19448f316d7dcf5f263d6cb94a8d125dfd6c07"
+  },
+  "frozen_computation_check": {
+    "audit_eval_byte_identity": true,
+    "input_adapter_only_source_path_changed": true,
+    "forward_normalization_BN_metrics": "inherited source, not rewritten"
+  },
+  "scientific_scope": "Single seed descriptive comparison. PASS permits reporting this fixed-endpoint comparison; it does not establish stable superiority or authorize additional experiment arms."
+}

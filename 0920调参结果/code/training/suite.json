@@ -1,0 +1,102 @@
+{
+  "suite_id": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+  "created_at": "2026-09-20T23:19:03.709627+08:00",
+  "remote_source_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920",
+  "frozen_source_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-ThreeArm-v1",
+  "output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2",
+  "python": "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+  "arms": [
+    "hha",
+    "relplus"
+  ],
+  "shared": {
+    "batch_size": 56,
+    "lr": 0.00012,
+    "nepochs": 200,
+    "num_train_imgs": 52903,
+    "num_eval_imgs": 17593,
+    "niters_per_epoch": 945,
+    "logical_samples_per_epoch": 52920,
+    "sampler_padding_count": 17,
+    "warm_up_epoch": 10,
+    "lr_power": 0.9,
+    "optimizer": "AdamW",
+    "weight_decay": 0.01,
+    "criterion": "Focal",
+    "focal_gamma": 1.0,
+    "loss_reduction": "none_then_mean",
+    "seed": 12345,
+    "num_workers": 16,
+    "image_height": 480,
+    "image_width": 480,
+    "num_classes": 13,
+    "background": 255,
+    "backbone": "mit_b2",
+    "decoder": "MLPDecoder",
+    "decoder_embed_dim": 512,
+    "amp": false,
+    "sync_bn": true,
+    "bn_eps": 0.001,
+    "bn_momentum": 0.1,
+    "train_horizontal_flip": false,
+    "train_vertical_flip": false,
+    "train_arbitrary_rotation": false,
+    "train_perspective_warp": false,
+    "train_scale_array": [
+      0.5,
+      0.75,
+      1.0,
+      1.25,
+      1.5,
+      1.75
+    ],
+    "scheduler": "WarmUpPolyLR",
+    "checkpoint_start_epoch": 100,
+    "checkpoint_step": 5,
+    "recovery_checkpoint_step": 5,
+    "recovery_checkpoint_before_epoch": 100,
+    "primary_endpoint": "epoch_200",
+    "eval_scale_array": [
+      1
+    ],
+    "eval_flip": false
+  },
+  "authorization": {
+    "approved": true,
+    "request": "调整参数focal_gamma，并进行HHA和REL+的双臂评估，其他参数使用原先冻结的参数",
+    "gamma_reply": "focal_gamma=1",
+    "focal_gamma": 1.0,
+    "baseline": "latest frozen 0915调参结果 batch56 lr1.2e-4",
+    "baseline_interpretation": "latest handoff and frozen completed run; explicitly stated to user",
+    "recorded_at": "2026-09-20T23:19:03.709627+08:00"
+  },
+  "scope": {
+    "training_only": false,
+    "training_then_evaluation": true,
+    "new_seeds": false,
+    "auto_retry": false,
+    "auto_resume": false,
+    "automatic_checkpoint_selection": false,
+    "evaluation": "fixed epoch200; original full17593 S2D Fold1; after both arms pass training"
+  },
+  "resource_policy": {
+    "cuda_allocator_fraction": 0.75,
+    "minimum_device_free_fraction": 0.2,
+    "temperature_limit_c": 85,
+    "cpu_available_start_gib": 64,
+    "cpu_available_runtime_gib": 32,
+    "shm_start_gib": 4,
+    "shm_runtime_gib": 2,
+    "opencv_threads": 1,
+    "torch_threads": 1,
+    "omp_threads": 1
+  },
+  "budget": {
+    "optimizer_updates_per_arm": 189000,
+    "warmup_updates": 9450,
+    "estimated_two_arm_hours": 72.9,
+    "estimate_basis": "previous gamma2 HHA+REL+ wall-time; gamma1 duration unknown"
+  },
+  "scientific_boundary": "single-seed single-factor gamma2->gamma1, compare paired representations and same-arm prior gamma2; no stable superiority claim",
+  "baseline_initial_model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa"
+}

@@ -1,0 +1,32 @@
+{
+  "argv": [
+    "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+    "-B",
+    "-m",
+    "torch.distributed.launch",
+    "--nproc_per_node=8",
+    "--master_addr=127.0.0.1",
+    "--master_port=48731",
+    "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/run_arm.py",
+    "--suite",
+    "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/suite.json",
+    "--arm",
+    "relplus",
+    "--mode",
+    "smoke",
+    "--port",
+    "48731"
+  ],
+  "cwd": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920",
+  "environment_overrides": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONUNBUFFERED": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "CUDA_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7"
+  },
+  "suite_sha256": "319d3d63d207e1ca8c3594ed20eb119f954ecfcb24562262b313dd74eedb4731",
+  "run_arm_sha256": "e84c86cd67c977ccc8f547cbc5c28531ba1bac7693aa1aa312c15bb4a975d423",
+  "run_suite_sha256": "6544a43b79ebf372dff96cb79eec7862e613c5d2d34e374927766328e33da9b5",
+  "resource_guard_sha256": "09d9e19e5cbf92e83810c6aa55b3dd0d8bddca8e87cb1cadc0d7285f547ea9e4"
+}

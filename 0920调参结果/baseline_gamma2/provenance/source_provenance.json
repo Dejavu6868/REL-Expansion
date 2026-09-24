@@ -1,0 +1,15 @@
+{
+  "remote_training_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915",
+  "remote_source_snapshot": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915/source",
+  "frozen_original_source_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-ThreeArm-v1",
+  "remote_training_output": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1",
+  "remote_evaluation_code": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-EVAL-20260920",
+  "remote_evaluation_output": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/evaluation_epoch200_20260920_attempt1",
+  "source_snapshot_python_files": 174,
+  "training_bundle_manifest_files": 184,
+  "source_identity": "Exact executed snapshot bytes identified by SHA256, not a claim that repository HEAD was the remote execution checkout.",
+  "baseline_repository_commit": "da823a691f8666f9877df017743387d6b6f9074e",
+  "input_adapter_policy": "Only SOURCE_ROOT changed relative to baseline adapter; frozen computation preserved.",
+  "supplementary_notices": "code/reference_notices copied from baseline commit; outside executed 184-file bundle manifest.",
+  "report_policy": "REPORT.md derived from final local report with only evidence links and section title localized to this archive."
+}

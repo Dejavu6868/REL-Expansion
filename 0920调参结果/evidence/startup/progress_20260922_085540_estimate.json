@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-09-22T08:55:40.303455+08:00",
+  "hha_progress_percent": 91.71164021164022,
+  "overall_updates_percent": 45.85582010582011,
+  "recent_seconds_per_update": 0.6934318378488854,
+  "hha_remaining_hours_estimate": 3.0173915944174414,
+  "hha_finish_estimate": "2026-09-22T11:56:42.913195+08:00",
+  "both_finish_estimate_using_previous_relplus_36_5h": "2026-09-24T00:26:42.913195+08:00",
+  "estimate_basis": "HHA checkpoint170-to180 wall-time; REL+ previous-run rough36.5h; not a guarantee"
+}

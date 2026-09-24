@@ -1,0 +1,99 @@
+{
+  "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+  "created_at": "2026-09-15T23:41:50.291066+08:00",
+  "remote_source_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915",
+  "frozen_source_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-ThreeArm-v1",
+  "output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1",
+  "python": "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+  "arms": [
+    "rgbd",
+    "hha",
+    "relplus"
+  ],
+  "shared": {
+    "batch_size": 56,
+    "lr": 0.00012,
+    "nepochs": 200,
+    "num_train_imgs": 52903,
+    "num_eval_imgs": 17593,
+    "niters_per_epoch": 945,
+    "logical_samples_per_epoch": 52920,
+    "sampler_padding_count": 17,
+    "warm_up_epoch": 10,
+    "lr_power": 0.9,
+    "optimizer": "AdamW",
+    "weight_decay": 0.01,
+    "criterion": "Focal",
+    "focal_gamma": 2,
+    "loss_reduction": "none_then_mean",
+    "seed": 12345,
+    "num_workers": 16,
+    "image_height": 480,
+    "image_width": 480,
+    "num_classes": 13,
+    "background": 255,
+    "backbone": "mit_b2",
+    "decoder": "MLPDecoder",
+    "decoder_embed_dim": 512,
+    "amp": false,
+    "sync_bn": true,
+    "bn_eps": 0.001,
+    "bn_momentum": 0.1,
+    "train_horizontal_flip": false,
+    "train_vertical_flip": false,
+    "train_arbitrary_rotation": false,
+    "train_perspective_warp": false,
+    "train_scale_array": [
+      0.5,
+      0.75,
+      1.0,
+      1.25,
+      1.5,
+      1.75
+    ],
+    "scheduler": "WarmUpPolyLR",
+    "checkpoint_start_epoch": 100,
+    "checkpoint_step": 5,
+    "recovery_checkpoint_step": 5,
+    "recovery_checkpoint_before_epoch": 100,
+    "primary_endpoint": "epoch_200",
+    "eval_scale_array": [
+      1
+    ],
+    "eval_flip": false
+  },
+  "authorization": {
+    "approved": true,
+    "recorded_at": "2026-09-15T23:41:50.291066+08:00",
+    "request": "以这组参数把CMX三臂进行训练",
+    "split_reply": "沿用原划分，做三臂正式训练（推荐）"
+  },
+  "scope": {
+    "training_only": true,
+    "new_seeds": false,
+    "auto_retry": false,
+    "auto_resume": false,
+    "automatic_checkpoint_selection": false,
+    "evaluation": "fixed epoch200; deferred until training completion, no test sweep"
+  },
+  "resource_policy": {
+    "cuda_allocator_fraction": 0.75,
+    "minimum_device_free_fraction": 0.2,
+    "temperature_limit_c": 85,
+    "cpu_available_start_gib": 64,
+    "cpu_available_runtime_gib": 32,
+    "shm_start_gib": 4,
+    "shm_runtime_gib": 2,
+    "opencv_threads": 1,
+    "torch_threads": 1,
+    "omp_threads": 1
+  },
+  "budget": {
+    "optimizer_updates_per_arm": 189000,
+    "warmup_updates": 9450,
+    "estimated_pure_training_hours_per_arm": 35.77,
+    "estimated_three_arm_hours": 107.31,
+    "estimate_basis": "historical HHA batch56 engineering throughput only; not a deadline"
+  },
+  "scientific_boundary": "single-seed three-modality comparison; batch and LR jointly changed versus 0915; no isolated LR effect or stable superiority claim"
+}

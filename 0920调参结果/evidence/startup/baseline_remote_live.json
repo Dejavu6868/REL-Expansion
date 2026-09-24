@@ -1,0 +1,36 @@
+{
+  "checked_at": "2026-09-20T23:24:52.766351+08:00",
+  "baseline_bundle_integrity": "PASS",
+  "baseline_bundle_files": 184,
+  "new_paths_absent": true,
+  "arms": {
+    "hha": {
+      "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/runs/hha/checkpoints/epoch-200.pth",
+      "checkpoint_sha256": "c5cf78b12d2458a48fe5505a4b7099ef84308dd4790f8283c02a605ba05ccd03",
+      "config_sha256": "97bc3b5fd8e98a2663c0596685feda34a38804ac73a34b147376be5ea70f3b6d",
+      "runtime_status": {
+        "status": "FORMAL_TRAINING_COMPLETED",
+        "epoch": 200,
+        "iteration_in_epoch": 945,
+        "global_iteration": 189000,
+        "optimizer_step_executed": true,
+        "author_nan_replacement_count": 0,
+        "world_size": 8
+      }
+    },
+    "relplus": {
+      "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/runs/relplus/checkpoints/epoch-200.pth",
+      "checkpoint_sha256": "bf17b065bbbedf01f78c698b039c384c9b220a2332b24b930ca685db552e1232",
+      "config_sha256": "dece975cbb673f4a543ea14b73ac8d6ee3f4dbb40d920b116a773e949947eb34",
+      "runtime_status": {
+        "status": "FORMAL_TRAINING_COMPLETED",
+        "epoch": 200,
+        "iteration_in_epoch": 945,
+        "global_iteration": 189000,
+        "optimizer_step_executed": true,
+        "author_nan_replacement_count": 0,
+        "world_size": 8
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "at": "2026-09-20T23:24:17.084430+08:00",
+  "tests": 26,
+  "source_files_identical": 174,
+  "scope": "training wrapper controls, failure gates, config isolation, syntax; GPU smoke not yet run"
+}

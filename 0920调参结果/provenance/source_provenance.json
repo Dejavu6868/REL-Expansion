@@ -1,0 +1,15 @@
+{
+  "remote_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920",
+  "remote_output": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2",
+  "source_snapshot_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+  "training_entrypoint": "pipeline.py --phase execute -> run_suite.py -> run_arm.py -> source/train.py",
+  "evaluation_entrypoint": "evaluation/run_evaluation.py -> evaluation/eval_rank.py",
+  "bundle_manifest_sha256": "42df431764b0c0aad2f2a71214bda28dfc6a34d9d06eea2ab9bebad6b342892c",
+  "suite_sha256": "319d3d63d207e1ca8c3594ed20eb119f954ecfcb24562262b313dd74eedb4731",
+  "bundle_files": 200,
+  "source_python_files": 174,
+  "source_identity": "Exact executed snapshot bytes identified by SHA256; repository HEAD is not claimed as remote execution checkout.",
+  "baseline_repository_commit": "791f11db670239a19e78f3956c6f3d4466f17dc3",
+  "supplementary_notices": "code/reference_notices comes from the frozen gamma2 archive, outside the executed 200-file manifest.",
+  "report_derivation": "REPORT.md preserves results and changes local evidence links plus the publication sentence; original is evidence/local_original/RESULTS.md."
+}

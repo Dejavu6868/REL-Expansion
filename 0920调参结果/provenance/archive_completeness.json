@@ -1,0 +1,25 @@
+{
+  "status": "FROZEN_PARAMETERS_RESULTS_AND_EXECUTION_EVIDENCE",
+  "created_at": "2026-09-24T10:16:56.993346+08:00",
+  "training_bundle_files": 200,
+  "final_remote_transferred_files": 114,
+  "preparation_remote_transferred_files": 80,
+  "includes": [
+    "Exact executed training/evaluation bundle",
+    "Full resolved HHA/REL+ configs",
+    "Final training and evaluation evidence",
+    "Preparation and historical local progress evidence",
+    "Per-rank samples and confusion matrices",
+    "Gamma2 matrix/metrics for standalone comparison",
+    "Actual weight identity audit",
+    "Portable offline verification"
+  ],
+  "excluded": [
+    "Dataset images/caches",
+    "Pretrained/trained model weight bytes",
+    "Full epoch training stdout and continuous resource histories"
+  ],
+  "authoritative_completion": "evidence/completed/pipeline_status.json",
+  "historical_warning": "evidence/startup, evidence/preparation and evidence/local_original include historical RUNNING/failed-attempt records; they do not override final PASS.",
+  "reproduction_boundary": "Offline metric and evidence checks are standalone; rerunning training/inference requires external data, weights, environment and adaptation of original absolute paths."
+}

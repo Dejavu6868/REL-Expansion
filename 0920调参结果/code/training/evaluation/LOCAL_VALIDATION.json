@@ -1,0 +1,11 @@
+{
+  "status": "PASS_CPU_ONLY",
+  "test_command": "python3 -B evaluation/test_evaluation_contract.py",
+  "tests_run": 9,
+  "tests_failed": 0,
+  "syntax_check": "PASS",
+  "audit_eval_byte_identity": "PASS",
+  "input_adapter_only_source_path_changed": "PASS",
+  "real_training_or_evaluation_launched": false,
+  "synthetic_metrics_are_not_model_results": true
+}

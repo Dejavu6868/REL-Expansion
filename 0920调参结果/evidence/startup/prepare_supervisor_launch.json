@@ -1,0 +1,19 @@
+{
+  "status": "LAUNCHED",
+  "pid": 1558592,
+  "starttime": "1058226934",
+  "pgid": 1558592,
+  "argv": [
+    "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+    "-B",
+    "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/pipeline.py",
+    "--phase",
+    "prepare"
+  ],
+  "cwd": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920",
+  "phase": "prepare",
+  "started_at": 1789918019.3695226,
+  "detached_session": true,
+  "suite_sha256": "548e8d8464a5847413599929c2b43d58401f980bdcd92fe3301f3cf258847012",
+  "bundle_manifest_sha256": "7c2f13f79134888b12d01925b9990a9482dfa3c165ab85dbe73e7d20544d89fe"
+}

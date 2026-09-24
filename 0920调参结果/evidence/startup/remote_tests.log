@@ -1,0 +1,45 @@
+test_batch_change_without_recomputed_sampling_rejected (test_contract.ContractTests) ... ok
+test_full_epoch_covers_every_image_with_minimal_padding (test_contract.ContractTests) ... ok
+test_invalid_batch_rejected (test_contract.ContractTests) ... ok
+test_original_output_cannot_be_reused (test_contract.ContractTests) ... ok
+test_relative_output_cannot_be_used (test_contract.ContractTests) ... ok
+test_extra_override_cannot_escape_frozen_control_check (test_gamma_isolation.GammaIsolationTests) ... ok
+test_gamma_is_the_only_allowed_semantic_change_in_both_arms (test_gamma_isolation.GammaIsolationTests) ... ok
+test_nested_input_change_is_rejected (test_gamma_isolation.GammaIsolationTests) ... ok
+test_existing_arm_directory_is_not_overwritten (test_run_suite.SuiteTests) ... ok
+test_failed_arm_prevents_later_arms_and_phase_restart (test_run_suite.SuiteTests) ... ok
+test_foreign_process_failure_cleans_only_owned_group_and_records_exit (test_run_suite.SuiteTests) ... ok
+test_formal_completion_requires_all_ranks_and_checkpoint (test_run_suite.SuiteTests) ... ok
+test_formal_initialization_is_checked_once_after_eighth_rank_is_ready (test_run_suite.SuiteTests) ... ok
+test_formal_initialization_mismatch_stops_as_soon_as_all_ranks_ready (test_run_suite.SuiteTests) ... ok
+test_incorrect_final_iteration_rejected (test_run_suite.SuiteTests) ... ok
+test_legacy_launcher_uses_explicit_local_rank_contract (test_run_suite.SuiteTests) ... ok
+test_matching_16_initializations_permit_train (test_run_suite.SuiteTests) ... ok
+test_missing_finite_evidence_rejected (test_run_suite.SuiteTests) ... ok
+test_missing_preflight_prevents_train (test_run_suite.SuiteTests) ... ok
+test_nan_replaced_rank_rejected_even_when_summary_passes (test_run_suite.SuiteTests) ... ok
+test_nan_runtime_and_rank_errors_stop_work (test_run_suite.SuiteTests) ... ok
+test_one_arm_initialization_mismatch_prevents_train (test_run_suite.SuiteTests) ... ok
+test_parameters_changed_after_smoke_prevent_training (test_run_suite.SuiteTests) ... ok
+test_progress_watchdog_is_based_on_progress_not_file_rewrites (test_run_suite.SuiteTests) ... ok
+test_stale_preflight_suite_fingerprint_prevents_training (test_run_suite.SuiteTests) ... ok
+test_unapproved_suite_rejected (test_run_suite.SuiteTests) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.072s
+
+OK
+test_audited_baseline_and_attribution (test_evaluation_contract.EvaluationContractTests) ... ok
+test_changed_baseline_bytes_refused (test_evaluation_contract.EvaluationContractTests) ... ok
+test_new_smoke_report_requires_validated_runtime_hash (test_evaluation_contract.EvaluationContractTests) ... ok
+test_supervisor_refuses_existing_output_without_overwriting (test_evaluation_contract.EvaluationContractTests) ... ok
+test_synthetic_same_arm_and_gap_differences (test_evaluation_contract.EvaluationContractTests) ... ok
+test_worker_accepts_matching_completed_gate (test_evaluation_contract.EvaluationContractTests) ... ok
+test_worker_refuses_changed_manifest_and_checkpoint (test_evaluation_contract.EvaluationContractTests) ... ok
+test_worker_refuses_output_redirect (test_evaluation_contract.EvaluationContractTests) ... ok
+test_worker_refuses_training_not_completed (test_evaluation_contract.EvaluationContractTests) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.014s
+
+OK

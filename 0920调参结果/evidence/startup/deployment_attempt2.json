@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "files": 200,
+  "manifest_sha256": "42df431764b0c0aad2f2a71214bda28dfc6a34d9d06eea2ab9bebad6b342892c",
+  "failed_attempt_preserved": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt1",
+  "checked_at": "2026-09-20T23:29:27.856247+08:00",
+  "failure": "non-gamma training/data change: {'focal_gamma', 'abs_dir', 'root_dir'}",
+  "old_optimizer_steps": 0
+}

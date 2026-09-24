@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-09-23T21:12:52.060539+08:00",
+  "relplus_progress_percent": 91.32275132275133,
+  "overall_training_updates_percent": 95.66137566137566,
+  "recent_seconds_per_update": 0.6919713124270161,
+  "remaining_training_hours_estimate": 3.1523137566119623,
+  "training_finish_estimate": "2026-09-24T00:22:00.390063+08:00",
+  "hha_finished_at": "2026-09-22T11:57:06.479169+08:00",
+  "estimate_basis": "REL+ epoch170-to180 checkpoint wall-time; evaluation additional minutes; estimate only"
+}

@@ -1,0 +1,99 @@
+{
+  "status": "AWAITING_PARAMETER_SELECTION",
+  "created_at": "2026-09-20T23:14:45.591698+08:00",
+  "requested_scope": "HHA and REL+ focal_gamma single-factor train-and-evaluate comparison",
+  "training_started": false,
+  "evaluation_started": false,
+  "baseline_candidate": "0915调参结果 batch56 lr1.2e-4",
+  "baseline_bundle": "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_B56_LR12_20260915",
+  "baseline_bundle_manifest_sha256": "3908af1523e7ed01e6d7b3bb8c352159d964214e66113b9fcc43fdc20b7bb049",
+  "baseline_bundle_hash_check": {
+    "status": "PASS",
+    "files": 184
+  },
+  "candidate_shared_config": {
+    "batch_size": 56,
+    "lr": 0.00012,
+    "nepochs": 200,
+    "num_train_imgs": 52903,
+    "num_eval_imgs": 17593,
+    "niters_per_epoch": 945,
+    "logical_samples_per_epoch": 52920,
+    "sampler_padding_count": 17,
+    "warm_up_epoch": 10,
+    "lr_power": 0.9,
+    "optimizer": "AdamW",
+    "weight_decay": 0.01,
+    "criterion": "Focal",
+    "focal_gamma": 1.0,
+    "loss_reduction": "none_then_mean",
+    "seed": 12345,
+    "num_workers": 16,
+    "image_height": 480,
+    "image_width": 480,
+    "num_classes": 13,
+    "background": 255,
+    "backbone": "mit_b2",
+    "decoder": "MLPDecoder",
+    "decoder_embed_dim": 512,
+    "amp": false,
+    "sync_bn": true,
+    "bn_eps": 0.001,
+    "bn_momentum": 0.1,
+    "train_horizontal_flip": false,
+    "train_vertical_flip": false,
+    "train_arbitrary_rotation": false,
+    "train_perspective_warp": false,
+    "train_scale_array": [
+      0.5,
+      0.75,
+      1.0,
+      1.25,
+      1.5,
+      1.75
+    ],
+    "scheduler": "WarmUpPolyLR",
+    "checkpoint_start_epoch": 100,
+    "checkpoint_step": 5,
+    "recovery_checkpoint_step": 5,
+    "recovery_checkpoint_before_epoch": 100,
+    "primary_endpoint": "epoch_200",
+    "eval_scale_array": [
+      1
+    ],
+    "eval_flip": false
+  },
+  "candidate_difference": {
+    "focal_gamma": {
+      "before": 2,
+      "candidate": 1.0,
+      "selected": false
+    }
+  },
+  "pending": [
+    "focal_gamma value",
+    "which frozen baseline"
+  ],
+  "arms": [
+    "hha",
+    "relplus"
+  ],
+  "unchanged_control_count": 40,
+  "planned_training_updates_per_arm": 189000,
+  "planned_warmup_updates": 9450,
+  "new_seed": false,
+  "new_validation_split": false,
+  "checkpoint_selection": "fixed_epoch200",
+  "gpu_snapshot": {
+    "checked_at": "2026-09-20T23:12:31+08:00",
+    "observed_gpu_count": 8,
+    "model": "RTX 3090",
+    "memory_used_MiB_each": 1,
+    "utilization_percent_each": 0,
+    "temperature_range_C": [
+      23,
+      25
+    ],
+    "qualifier": "historical snapshot from this turn; refresh before launch"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "file_count": 80,
+  "remote_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2",
+  "checked_at": "2026-09-20T23:33:37.117844+08:00",
+  "actual_gamma1_ranks": 16,
+  "initial_model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa"
+}

@@ -1,0 +1,25 @@
+{
+  "weights_included": false,
+  "endpoint": "fixed_epoch_200",
+  "seed": 12345,
+  "arms": {
+    "hha": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/checkpoints/epoch-200.pth",
+      "size": 799760393,
+      "mtime_ns": "1790049412856291533",
+      "sha256": "d4d210ea92a473cc700b1660dff7da644e8d1b9934be759b216c0d4931ae2b4d"
+    },
+    "relplus": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/checkpoints/epoch-200.pth",
+      "size": 799760393,
+      "mtime_ns": "1790180519036268283",
+      "sha256": "6506a922b9d31919576b3f998864993a24ca7f07baca868d71a5ff3b6a581831"
+    }
+  },
+  "baseline_gamma2": {
+    "hha": "c5cf78b12d2458a48fe5505a4b7099ef84308dd4790f8283c02a605ba05ccd03",
+    "relplus": "bf17b065bbbedf01f78c698b039c384c9b220a2332b24b930ca685db552e1232"
+  },
+  "last_actual_weight_hash_audit": "evidence/completed/LIVE_FINAL_RECHECK.json",
+  "offline_boundary": "Offline verifier checks identity records; actual weight bytes remain on the server."
+}

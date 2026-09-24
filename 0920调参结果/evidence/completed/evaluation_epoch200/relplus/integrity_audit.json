@@ -1,0 +1,103 @@
+{
+  "status": "PASS",
+  "metrics": {
+    "metric_unit": "fraction_0_to_1",
+    "mIoU": 0.6140637239796889,
+    "pixel_accuracy": 0.8291289229550066,
+    "mean_accuracy": 0.6936485738988449,
+    "mIoU_percent": 61.40637239796889,
+    "pixel_accuracy_percent": 82.91289229550067,
+    "mean_accuracy_percent": 69.36485738988449,
+    "per_class_iou": [
+      0.03470764804424046,
+      0.7492307683566491,
+      0.6661219350494576,
+      0.9183918486267807,
+      0.8275258739229548,
+      0.4982972389784342,
+      0.2511310818442015,
+      0.45153329111059615,
+      0.9644773343906601,
+      0.41926787862750625,
+      0.7688971233809136,
+      0.7923347400936639,
+      0.6409116493098963
+    ],
+    "per_class_iou_percent": [
+      3.470764804424046,
+      74.92307683566492,
+      66.61219350494576,
+      91.83918486267807,
+      82.75258739229548,
+      49.82972389784342,
+      25.113108184420152,
+      45.15332911105961,
+      96.44773343906601,
+      41.92678786275062,
+      76.88971233809137,
+      79.23347400936639,
+      64.09116493098963
+    ],
+    "valid_pixel_count": 3973620198,
+    "status": "PASS",
+    "scientific_metric_reported": true,
+    "integration_protocol_id": "CMX_RELPLUS_V2_3",
+    "representation_protocol_id": "RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT",
+    "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/checkpoints/epoch-200.pth",
+    "checkpoint_epoch": 200,
+    "evaluation_sample_count": 17593,
+    "class_count": 13,
+    "ignore_index": 255,
+    "eval_scale_array": [
+      1
+    ],
+    "eval_flip": false,
+    "eval_crop_size": [
+      480,
+      480
+    ],
+    "eval_align_corners": false,
+    "world_size": 8,
+    "file_hash_written": false
+  },
+  "gt_histogram": [
+    1847860,
+    119677520,
+    490228389,
+    305645486,
+    62043298,
+    410165825,
+    75956637,
+    389388075,
+    322981046,
+    8229986,
+    147588579,
+    1466019722,
+    173847775
+  ],
+  "rank_counts": [
+    2200,
+    2199,
+    2199,
+    2199,
+    2199,
+    2199,
+    2199,
+    2199
+  ],
+  "checkpoint_sha256": "6506a922b9d31919576b3f998864993a24ca7f07baca868d71a5ff3b6a581831",
+  "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+  "checks": {
+    "exitcode_zero": true,
+    "fixed_epoch_200": true,
+    "ordered_rank_shards_match": true,
+    "unique_test_samples": 17593,
+    "manifest_matches_rank_shards": true,
+    "rank_confusions_match_csv": true,
+    "nonnegative_integer_confusions": true,
+    "metrics_independently_recomputed": true,
+    "valid_pixel_count": 3973620198,
+    "class_order_matches": true,
+    "checkpoint_path_size_mtime_sha256_unchanged": true
+  }
+}
