@@ -1,0 +1,386 @@
+{
+  "status": "PASS_INDEPENDENT_OFFLINE_AUDIT",
+  "method": "Independent standard-library integer matrices and exact Fraction arithmetic; no experimental audit modules imported",
+  "scope": "Retrieved evidence and local frozen code/configuration only; no network, training or inference",
+  "checkpoint_bytes_available_locally": false,
+  "checkpoint_boundary": "Checkpoint paths, sizes and SHA256 records are cross-checked, not recomputed from local checkpoint bytes. Main agent must supply fresh remote checkpoint/source/data verification.",
+  "current": {
+    "hha": {
+      "metrics": {
+        "mIoU_percent": 60.47034660962766,
+        "pixel_accuracy_percent": 82.34337649196739,
+        "mean_accuracy_percent": 68.76393518402722
+      },
+      "fractions": {
+        "mIoU": 0.6047034660962766,
+        "pixel_accuracy": 0.8234337649196739,
+        "mean_accuracy": 0.6876393518402721
+      },
+      "per_class_iou": [
+        0.045830533059216465,
+        0.7698460010777418,
+        0.6671823553829368,
+        0.91771270714125,
+        0.8291690534288946,
+        0.5176275193914417,
+        0.21231610685700927,
+        0.41778607151946534,
+        0.9660814536812822,
+        0.34959293799063773,
+        0.7639701912208835,
+        0.7675616874073361,
+        0.6364684410935002
+      ],
+      "per_class_iou_percent": [
+        4.583053305921647,
+        76.98460010777418,
+        66.71823553829368,
+        91.771270714125,
+        82.91690534288945,
+        51.762751939144174,
+        21.231610685700925,
+        41.77860715194654,
+        96.60814536812822,
+        34.95929379906377,
+        76.39701912208835,
+        76.75616874073361,
+        63.64684410935002
+      ],
+      "per_class_accuracy_percent": [
+        18.00179667290812,
+        85.01275761730356,
+        77.47203946607833,
+        94.43322843642454,
+        92.9751816223567,
+        74.38347136795221,
+        26.110837424253,
+        44.156132156846354,
+        97.7796820931715,
+        35.46681610393991,
+        87.78921843268103,
+        94.40739017561457,
+        65.94260582282402
+      ],
+      "gt_histogram": [
+        1847860,
+        119677520,
+        490228389,
+        305645486,
+        62043298,
+        410165825,
+        75956637,
+        389388075,
+        322981046,
+        8229986,
+        147588579,
+        1466019722,
+        173847775
+      ],
+      "valid_pixels": 3973620198
+    },
+    "relplus": {
+      "metrics": {
+        "mIoU_percent": 61.160967604910454,
+        "pixel_accuracy_percent": 83.43638356954013,
+        "mean_accuracy_percent": 69.32064280830565
+      },
+      "fractions": {
+        "mIoU": 0.6116096760491045,
+        "pixel_accuracy": 0.8343638356954013,
+        "mean_accuracy": 0.6932064280830565
+      },
+      "per_class_iou": [
+        0.032201237896485,
+        0.7258384581727294,
+        0.6815875011091633,
+        0.9263402369577449,
+        0.8253272736055068,
+        0.5195393074952225,
+        0.25223770444901,
+        0.5035928597507494,
+        0.9653857723584823,
+        0.31598812394595455,
+        0.7661288902393804,
+        0.7884429472069842,
+        0.648315475450946
+      ],
+      "per_class_iou_percent": [
+        3.2201237896485,
+        72.58384581727294,
+        68.15875011091633,
+        92.63402369577449,
+        82.53272736055068,
+        51.95393074952224,
+        25.223770444901,
+        50.35928597507494,
+        96.53857723584824,
+        31.598812394595456,
+        76.61288902393804,
+        78.84429472069841,
+        64.83154754509461
+      ],
+      "per_class_accuracy_percent": [
+        12.230634355416536,
+        82.16295591686726,
+        78.14378677282193,
+        94.87071273154677,
+        92.25781163341769,
+        75.7270474691547,
+        33.48623373096415,
+        53.77702642794082,
+        97.6842746369705,
+        31.966154012898684,
+        87.95909201077137,
+        93.91002537959035,
+        66.99260142961278
+      ],
+      "gt_histogram": [
+        1847860,
+        119677520,
+        490228389,
+        305645486,
+        62043298,
+        410165825,
+        75956637,
+        389388075,
+        322981046,
+        8229986,
+        147588579,
+        1466019722,
+        173847775
+      ],
+      "valid_pixels": 3973620198
+    }
+  },
+  "baseline_metrics": {
+    "gamma1": {
+      "hha": {
+        "mIoU_percent": 60.182898850089714,
+        "pixel_accuracy_percent": 82.49702494591558,
+        "mean_accuracy_percent": 68.10313214153501
+      },
+      "relplus": {
+        "mIoU_percent": 61.40637239796888,
+        "pixel_accuracy_percent": 82.91289229550065,
+        "mean_accuracy_percent": 69.36485738988449
+      }
+    },
+    "gamma2": {
+      "hha": {
+        "mIoU_percent": 60.98827182233774,
+        "pixel_accuracy_percent": 82.42028293615996,
+        "mean_accuracy_percent": 69.20157179544748
+      },
+      "relplus": {
+        "mIoU_percent": 61.01689759750301,
+        "pixel_accuracy_percent": 83.01789966389737,
+        "mean_accuracy_percent": 69.13876764179273
+      }
+    }
+  },
+  "changes_percentage_points": {
+    "gamma1": {
+      "hha": {
+        "mIoU_percent": 0.28744775953794743,
+        "pixel_accuracy_percent": -0.15364845394819326,
+        "mean_accuracy_percent": 0.6608030424922049
+      },
+      "relplus": {
+        "mIoU_percent": -0.24540479305842666,
+        "pixel_accuracy_percent": 0.5234912740394719,
+        "mean_accuracy_percent": -0.04421458157884217
+      }
+    },
+    "gamma2": {
+      "hha": {
+        "mIoU_percent": -0.5179252127100753,
+        "pixel_accuracy_percent": -0.07690644419257353,
+        "mean_accuracy_percent": -0.43763661142025967
+      },
+      "relplus": {
+        "mIoU_percent": 0.1440700074074428,
+        "pixel_accuracy_percent": 0.41848390564275917,
+        "mean_accuracy_percent": 0.18187516651292412
+      }
+    }
+  },
+  "relplus_minus_hha_percentage_points": {
+    "gamma1_5": {
+      "mIoU_percent": 0.6906209952827922,
+      "pixel_accuracy_percent": 1.0930070775727359,
+      "mean_accuracy_percent": 0.556707624278431
+    },
+    "gamma1": {
+      "mIoU_percent": 1.2234735478791663,
+      "pixel_accuracy_percent": 0.41586734958507066,
+      "mean_accuracy_percent": 1.261725248349478
+    },
+    "gamma2": {
+      "mIoU_percent": 0.028625775165274092,
+      "pixel_accuracy_percent": 0.5976167277374032,
+      "mean_accuracy_percent": -0.06280415365475278
+    }
+  },
+  "candidate_screening": {
+    "status": "FAIL",
+    "checks": {
+      "relplus_mIoU_strictly_above_gamma1": false,
+      "hha_mIoU_at_least_gamma1": true
+    }
+  },
+  "checkpoint_records": {
+    "hha": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/checkpoints/epoch-200.pth",
+      "size": 799760393,
+      "mtime_ns": "1790350172193791613",
+      "sha256": "cb5d1d9a456a32f98952f9b1eb429e1393493988f17218511436042e889ac405"
+    },
+    "relplus": {
+      "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/checkpoints/epoch-200.pth",
+      "size": 799760393,
+      "mtime_ns": "1790481468675021594",
+      "sha256": "1812ce2f4c1109b1ce5308a51e5a3aa06376a9f6abc8ffc43194ac6658358be6"
+    }
+  },
+  "actual_training_focal_gamma_all_16_ranks": 1.5,
+  "shared_initialization_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+  "training_completed_ranks": 16,
+  "evaluation_completed_ranks": 16,
+  "unique_test_samples_per_arm": 17593,
+  "transferred_files_verified": 121,
+  "bundle_files_verified": 206,
+  "frozen_source_files_verified": 174,
+  "full_config_fields": {
+    "hha": 129,
+    "relplus": 122
+  },
+  "pipeline_finished_beijing": "2026-09-27T12:03:45.892772+08:00",
+  "training_wall_seconds": 262838.1922392845,
+  "evaluation_wall_seconds": 344.4750099182129,
+  "checked_at": "2026-09-27T06:44:39.083895+00:00",
+  "check_count": 1073,
+  "check_counts_by_group": {
+    "transfer": 122,
+    "bundle": 208,
+    "frozen_source": 174,
+    "configuration": 12,
+    "dataset": 5,
+    "completion": 14,
+    "training": 10,
+    "training_rank": 96,
+    "evaluation": 19,
+    "matrix": 18,
+    "metrics": 256,
+    "evaluation_rank": 80,
+    "checkpoint_records": 2,
+    "baseline": 24,
+    "comparison": 33
+  },
+  "failures": [],
+  "files_read_sha256": {
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/TRANSFER_MANIFEST.json": "385d4b58d27ccf54f8a7d618bb85eb5cdace9fa2b88432783058e2305b48a8e4",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/bundle_manifest.json": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/frozen_integrity.json": "14b836875a060dd7283998345f9d3c8307b32d00043a3825e572fcbf055ced35",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/suite.json": "ccd10368db7f700eb06c846e0d65a12367f5b0b5b6c71dbb54ae189639dd7e64",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/baseline_gamma1/suite.json": "319d3d63d207e1ca8c3594ed20eb119f954ecfcb24562262b313dd74eedb4731",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/pipeline_status.json": "1576c9cd175b653e70961308844bd9a03e1e27cc3cac88fa24d289f7cf08b04e",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/train_status.json": "a281d0e7261b7a7870dcadd8abf9fe6c0dc66c4291200adbfb40067a47073c69",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/preflight.json": "56e9540e1b806d286169400578fb1cc0754b1e98f1cf9e473a51e50401a5b63d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/status.json": "f30281550badd54737fafa0dbb1620498916abde020009d3383bbf2d33096752",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/preflight.json": "80350693354201151b197f271ede030423a3449f86566cdb7f0af1707eeb956d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/dual_arm_comparison.json": "2560a976481a1b2e789157f742f0cbcee8618b49f2574b677ed1d6cf83e0966a",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/configs/hha.json": "c2fd7b6543fdc25185d1c43496ade8b31fca0870a1f9925dd71a4a96ae2a1425",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/baseline_gamma1/hha.json": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/arm_status.json": "e46eddb6f472c8ab2db861d925c869cb13ab1c0babc1d15d88a54a611bbaba05",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/runtime_status.json": "bc606fca52c698a4548d0dff14b367b87cb2eb376eb95935a71b53960c2f078b",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_init_00.json": "0843578f85fe512eb33e0190a768be21751ccd5762a45fa2685e1994c96bb12d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_done_00.json": "e85572e4048a48f9857a66be30696979fd0965eadd76353acc857fac8a5cc2ef",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_init_01.json": "3f873ab80d492debe475136c1dec4b92fd4693a58a3fa757642d1f28fa3f7d0b",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_done_01.json": "349e480dadef9c2f46cdf7d772adfada06070a3c3aa69075c9a4f96296e46189",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_init_02.json": "94f3e114acbc352ea43ab4c04e4e4373e4cdea5ccc14ecc37985b71dbaba7bea",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_done_02.json": "fd9b9f82f7d136daef9c0b5a3452b83239894820f4c8e76e7b53af483857a969",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_init_03.json": "8a123aac78fe2a5ab3166d153065bf9d4c800eb580c2f536de6c86b1d2d51c0c",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_done_03.json": "dde0a93eca33e289c2d1fd8fe0ba54671788f9e0b1b606ea75e44886bcf90058",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_init_04.json": "17c432c952e9ba70eb7070907ac3da02699bc9c311048a520a6a7ee930864060",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_done_04.json": "96608c545b66e61e57e4e2e64c2aef7a36d050d5c73a28c10c868966252649c1",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_init_05.json": "fcc1da659d2f63d024ba0e36bf35a9d4716fa8f10f3ac840246c8186cd7939f9",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_done_05.json": "71e727ec2fb7d3bf7472df534fddc82342038ff01418c2db79120d68cafcc914",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_init_06.json": "2de6dc76d236ed3ad342d52eef65375034844d79eb44b8ef2044bec1d5798efc",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_done_06.json": "be869fabfd7b324095db2074a424ad659bfe7295ebbda755e63c4a49a427de20",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_init_07.json": "45f3080f7156913b04357c95b7d704f1e5d29ff7562a6b42c3f57aed338d8ec9",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/hha/rank_done_07.json": "8c723829e0cbb0d977f9bcf0cbc1e408dfd188a48bf9360cf81248907b8d8591",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/status.json": "d4d38c7b03832880c247283fa9c7ec893f04895b5e9becf8e174224adc906143",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/confusion_matrix.csv": "6caf3d4a230a1c4414abb20db2839fb38737314a187a3558a61e3eaa40d2fdfd",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/metrics.json": "fcffd2c57e57c01be8b72aa7332830465aeadd0a2f7186ca1f3bef54a0cb8971",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/rank_00_evaluation.json": "c16426b5e1944a3cef3cda848a0ebcfa57d6272a720523c8434a3429eaca84de",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/rank_00_runtime.json": "ccaa0e1081309e6e2705c15fbe5a0397372e797366c5c477ff717a6121a457b6",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/rank_01_evaluation.json": "c4b07412800e37a628752f9d4a5dbfe37cfeb573e50f100d6370228a33aed450",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/rank_01_runtime.json": "1562bfea3772fcefc01fa734e501a164e9e4cc780ba52768bb055b6397c8569b",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/rank_02_evaluation.json": "0c384c54e3d58f8b71ddb254b877ab21f888fbcfcb0820215a917c0b835f6af0",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/rank_02_runtime.json": "984294d9fb32981c7cfed4ca68fabcd83553c65f64ba33ad25921d6af9fda86d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/rank_03_evaluation.json": "7e31bf1b088673013ea8461e1a2fd0b6d15383ace4a8f81593da407150c28fee",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/rank_03_runtime.json": "34b209faa2bd6c311088f5c69dc503307f69f3044a6885a5c5beac69d1cf6114",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/rank_04_evaluation.json": "cc544f5bdf5cbeea11f862b6612b2e714ff3e9edbeaab7f8068047262d64df72",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/rank_04_runtime.json": "68c82c4cdebd6358a23675e72f574d716f5910ee3e6a880ac97e9b7903f0462d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/rank_05_evaluation.json": "9eeeb485e2b70e5036c558e35104fdad614ee21640192c69512ced1e04ed3ac1",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/rank_05_runtime.json": "f66dc662faf491ca44f72b2da2f6ea9686eb018adcd5dc392850b059adb5fe63",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/rank_06_evaluation.json": "1000b6776dee9c02fc838c057a5c4d0683c642d153215aad348d98a4d58068a6",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/rank_06_runtime.json": "99fd86a5dae4833ebc687450339daee4750de25634f4ae62e3c7c3f073350a9a",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/rank_07_evaluation.json": "a88d5b88e2a9cd2fcc4a34eddfd63a7be69b6fd20833957957cc60843803730d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/rank_07_runtime.json": "32a1b63d252567a9eb6d475c315b5cda376882a95ae0b76e0099125687dfc930",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/evaluation_manifest.csv": "ed59e1ebdb27827d71987c1de5449d8b7f7bc079b84e840d208ce1b8c8203b9d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/evaluation/per_class_iou.csv": "7bf6847987830a69635710b4d2e49ee5293db3a145b771b16c2b9766552af909",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/hha/integrity_audit.json": "e05f469acea276474c7c3c9a4975d03661ad372bebcaa71a436d50d3e2ac3d32",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/configs/relplus.json": "568099fd30acbcae606d1825d6db17cd9a34fe2196c0e92c73e2b131beaaa9f0",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/baseline_gamma1/relplus.json": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/arm_status.json": "4dee5f3061e21c74feec085c4bf72f26a2e2f21ef0712b37524c88443cefd5fd",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/runtime_status.json": "bc606fca52c698a4548d0dff14b367b87cb2eb376eb95935a71b53960c2f078b",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_init_00.json": "68ccc1066e581eecdab513a49f158e3745dd617f5e4e0dd747f0d7b520460384",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_done_00.json": "0d527ede6e1a747fe111b52ed80bc964a339166f9f642074a1e3c1111c22428e",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_init_01.json": "1d1aef5c168494d35a04c3a1199e280d6ce0d999801ab8aa2f6c700ee75f925b",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_done_01.json": "4a01ce4070a59b28f4b232b00dc78f7f462c0f51a77513f688117c671ecdfc1e",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_init_02.json": "27c3a1396e6cb5d6c3d37b4530384b1e51d6ed00a3f5e46f9b5911ca26d9d2eb",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_done_02.json": "446aa9f88fef085a8631a3acffecab18bd580e13625c32f6497256df89a7aaae",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_init_03.json": "e8e9f47db4aaffda0044b219191dd7f12d1c49108c82683eef42a9811271bd39",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_done_03.json": "b44a641a55f76de628017e413494ef8430a3b00e89609f754941b8d4d674a0d5",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_init_04.json": "7ce613b109d307667b6b2c7698f0509d641dae00ffdf68c32ff478233c583676",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_done_04.json": "dd955be4961f5c0625c1c03e9d7ff59e23cf425e9a76d6cfdc0c99680fd9f2df",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_init_05.json": "2fd6b3efd7240471ca30bf5cda5d346e8b7bae3b378576662756fefb3ea1a2c0",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_done_05.json": "93bec468009df128c1022c6fd0b49764930c5e058ae428cb53ffe7ae979f7574",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_init_06.json": "434722dbd6a669a13a4bced2430b63e809210bc391fd24a4cce232691c478fe5",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_done_06.json": "92c0f76e25cd9fe6a484e6d15044a7a4aa6e04d8b809ebb21d9a2f5c0c567910",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_init_07.json": "0e50f3e58f07ec2101d6d5a6c6da67e796d1ef86c1c72c8b66738b29c8ed06cd",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/runs/relplus/rank_done_07.json": "a74163594275fa061fc509c508013f4e5444f234624087f5e78532f8e0e228f2",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/status.json": "527bfbec6ec88ce7c7c2b2bbdae8969716543abfc8a79554e7953ebff15717a1",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/confusion_matrix.csv": "2882fdd5130660505bccff1924b9605dd25e250714ee77a394238c1844a574b9",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/metrics.json": "900bc3a48e43fd78caa7287dc9d9617a5b09c3411b6cc10ca9cfc949341966c5",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/rank_00_evaluation.json": "f183ca11c14ab55a097032adf198d8817f911cb2e9f25b64c3281affa1ddb6fa",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/rank_00_runtime.json": "d86d9eb60f8be82e0146a567fc06af9c107261ffb49f6db0b6e3e21bbf52a479",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/rank_01_evaluation.json": "be881d2bcdd41f9cee1b9af3f2e6b9eccfad59acbb5cb47286b1193a029be21d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/rank_01_runtime.json": "d7bdff834e77cff4c7e680dcbb5cd7efefbd37f7c9e4c0be0de32800a8f20bfe",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/rank_02_evaluation.json": "e34d31368262c714cb756a1f080aedae620cacd6d1f12010addbf5ae431e3709",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/rank_02_runtime.json": "2c228e370ee39f0cf573f271ca40fa3a14d1be2f05d9db3c81b8339392bd4433",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/rank_03_evaluation.json": "58b933469ff7717f0c14c17dd308e47deb3fc6add357068e8ebe02d5c22b8093",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/rank_03_runtime.json": "bea83379cba9807331eab1dd5f7145acea13cd9af7bf2281cb158c113567f361",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/rank_04_evaluation.json": "cbbb25e4d9f22fcca7a31bb66463cdecba0d12792f0b6bac7bfd7d46e3dffe06",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/rank_04_runtime.json": "19412509f81932802006cba87e73dc59707454b67eb03d9523312a366c938805",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/rank_05_evaluation.json": "4a6baac950a2362f355002b0f2e66c3dd4341005dbf8a60ba6d7f4218f7b23bb",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/rank_05_runtime.json": "57216b04ab00403c1b46c44758304b22c6b1ce3bc4936bceb588e757d99d64ca",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/rank_06_evaluation.json": "d87b25f820bd66adba4358a016aae916fef98e9dc1f67c6f6e7d6f5cce54620d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/rank_06_runtime.json": "0f4c03211e0a7ea94afd1fd57eeabc38b8fee5db41cb1f7ca46e980c0d623a10",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/rank_07_evaluation.json": "a7a57a3ce0c4ceb9a4ff5ba5988699fe1494cf266222c470ef5eee4a7c97a1c1",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/rank_07_runtime.json": "447ca47e79dc1a7f1bdba8181b746846eaad5ac1138352a910a122d089292e20",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/evaluation_manifest.csv": "ed59e1ebdb27827d71987c1de5449d8b7f7bc079b84e840d208ce1b8c8203b9d",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/evaluation/per_class_iou.csv": "a114d1372590efbcb960dc4a84780141958bfb325dcf479bc81103712e0acc4c",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL15_DUAL_20260924/evidence/completed_20260927/evaluation_epoch200/relplus/integrity_audit.json": "c498aea34d6c85909410130042de581b96e90caf5a796f5c3e95363e7a0d0000",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/0920调参结果/evidence/completed/evaluation_epoch200/hha/evaluation/confusion_matrix.csv": "f248689e6328cd70df9839373eed5b5129b73be985b68744b45f4c16d9fa7853",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/0920调参结果/evidence/completed/evaluation_epoch200/hha/evaluation/metrics.json": "016b7a86fcef3c8fd6a0a0c656e969d36f273792457286d4a5b839cb0f22e703",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/0920调参结果/evidence/completed/evaluation_epoch200/relplus/evaluation/confusion_matrix.csv": "9dc30ec90a612553fc9b6e78e5c6b7282ceb6a2ef5860f3f7f2f20e08ff7ebec",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/0920调参结果/evidence/completed/evaluation_epoch200/relplus/evaluation/metrics.json": "be67a1705323b7971a13158f130915e829aa1a18239f39f7ff6d4300deec2677",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/0920调参结果/baseline_gamma2/hha/confusion_matrix.csv": "8a339a7e1e6ca17d04d1fde3b517022983a9873a7fc065c4c5b07e2e013f1db3",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/0920调参结果/baseline_gamma2/hha/metrics.json": "9a57ad58c581add215f2732c4d485bcc9f6f29b453cf28598f192666cc9a45dc",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/0920调参结果/baseline_gamma2/relplus/confusion_matrix.csv": "4bfdb01bf4bfaf2272922e23524d4b4ed652fb7d630db69acf667949b5c5754f",
+    "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/0920调参结果/baseline_gamma2/relplus/metrics.json": "c51e1826ac742dff7daf4ed323f845bb1ce39718e2d5d4b71c7067d33cc615eb"
+  },
+  "audit_script_sha256": "c3c5bec26ab6b66a4762587183088f657545e4b657882e1003e5fb7405e88616"
+}

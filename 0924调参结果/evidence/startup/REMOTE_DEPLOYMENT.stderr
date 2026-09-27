@@ -1,0 +1,31 @@
+tests tests PASS
+Traceback (most recent call last):
+  File "<stdin>", line 15, in <module>
+AssertionError: test_audit_computation_byte_identity (test_evaluation_contract.EvaluationContractTests) ... ok
+test_audited_baseline_and_attribution (test_evaluation_contract.EvaluationContractTests) ... ok
+test_candidate_screening_uses_full_precision_and_strict_relplus_boundary (test_evaluation_contract.EvaluationContractTests) ... ERROR
+test_changed_baseline_bytes_refused (test_evaluation_contract.EvaluationContractTests) ... ok
+test_changed_primary_baseline_or_config_bytes_refused (test_evaluation_contract.EvaluationContractTests) ... ok
+test_full_resolved_config_refuses_semantic_and_identity_drift (test_evaluation_contract.EvaluationContractTests) ... ok
+test_new_smoke_report_requires_validated_runtime_hash (test_evaluation_contract.EvaluationContractTests) ... ok
+test_seed_class_order_and_invalid_metrics_refused (test_evaluation_contract.EvaluationContractTests) ... ok
+test_supervisor_refuses_existing_output_without_overwriting (test_evaluation_contract.EvaluationContractTests) ... ok
+test_synthetic_same_arm_and_gap_differences (test_evaluation_contract.EvaluationContractTests) ... ok
+test_worker_accepts_matching_completed_gate (test_evaluation_contract.EvaluationContractTests) ... ok
+test_worker_refuses_changed_manifest_and_checkpoint (test_evaluation_contract.EvaluationContractTests) ... ok
+test_worker_refuses_output_redirect (test_evaluation_contract.EvaluationContractTests) ... ok
+test_worker_refuses_training_not_completed (test_evaluation_contract.EvaluationContractTests) ... ok
+
+======================================================================
+ERROR: test_candidate_screening_uses_full_precision_and_strict_relplus_boundary (test_evaluation_contract.EvaluationContractTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/evaluation/test_evaluation_contract.py", line 114, in test_candidate_screening_uses_full_precision_and_strict_relplus_boundary
+    audits['relplus']['metrics']['mIoU_percent'] = math.nextafter(
+AttributeError: module 'math' has no attribute 'nextafter'
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.085s
+
+FAILED (errors=1)
+

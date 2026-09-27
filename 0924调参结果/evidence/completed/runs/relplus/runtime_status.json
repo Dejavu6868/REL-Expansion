@@ -1,0 +1,9 @@
+{
+  "status": "FORMAL_TRAINING_COMPLETED",
+  "epoch": 200,
+  "iteration_in_epoch": 945,
+  "global_iteration": 189000,
+  "optimizer_step_executed": true,
+  "author_nan_replacement_count": 0,
+  "world_size": 8
+}

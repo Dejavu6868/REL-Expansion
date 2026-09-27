@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "bundle_files_verified": 206,
+  "baseline_gamma1": "PASS",
+  "baseline_gamma2": "PASS",
+  "actual_resolved_configs": {
+    "hha": {
+      "status": "PASS_ONLY_FOCAL_GAMMA_AND_DERIVED_IDENTITIES_CHANGED",
+      "baseline_focal_gamma": 1,
+      "training_focal_gamma": 1.5,
+      "resolved_field_count": 129,
+      "baseline_config_source": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/hha.json",
+        "size": 8651,
+        "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+      }
+    },
+    "relplus": {
+      "status": "PASS_ONLY_FOCAL_GAMMA_AND_DERIVED_IDENTITIES_CHANGED",
+      "baseline_focal_gamma": 1,
+      "training_focal_gamma": 1.5,
+      "resolved_field_count": 122,
+      "baseline_config_source": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/relplus.json",
+        "size": 7818,
+        "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+      }
+    }
+  },
+  "remote_python_tests": "27 training + 14 evaluation PASS",
+  "manifest_sha256": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f"
+}

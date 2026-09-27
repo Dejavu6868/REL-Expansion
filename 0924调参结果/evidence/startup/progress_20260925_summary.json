@@ -1,0 +1,21 @@
+{
+  "as_of": "2026-09-25T16:24:31.462791+08:00",
+  "hha_epoch": 162,
+  "iteration_in_epoch": 230,
+  "global_iteration": 152375,
+  "hha_training_percent": 80.62169312169311,
+  "two_arm_updates_percent": 40.31084656084656,
+  "hha_elapsed_hours": 29.452300947970816,
+  "hha_remaining_hours_estimate": 7.079183082654182,
+  "hha_finish_estimate": "2026-09-25T23:29:16.521888+08:00",
+  "two_arm_finish_estimate": "2026-09-27T11:54:19.086751+08:00",
+  "total_remaining_hours_estimate": 43.49656221118977,
+  "eta_basis": "HHA extrapolated from current elapsed time per completed update; REL+ uses previous gamma1 actual 36.417 hours. Estimates exclude possible stalls/resource variation and final evaluation time.",
+  "latest_checkpoint": "epoch-160.pth",
+  "nan_replacement_count": 0,
+  "rank_errors": [],
+  "supervisor_identity_match": true,
+  "progress_observed_between_two_reads": true,
+  "relplus": "QUEUED",
+  "evaluation": "NOT_STARTED"
+}

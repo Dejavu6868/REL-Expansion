@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "time": 1790218017.1527076,
+  "torch": "1.8.2",
+  "cuda": "11.1",
+  "gamma": 1.5,
+  "device": "NVIDIA GeForce RTX 3090",
+  "source": "frozen gamma1 source/utils/loss_opr.py",
+  "formula_unchanged": true,
+  "cases": {
+    "random13_scales": [
+      1,
+      10,
+      100
+    ],
+    "random13_tensor_shape": [
+      2,
+      13,
+      480,
+      480
+    ],
+    "random13_ignore_index": 255,
+    "saturated2_logits": [
+      5,
+      10,
+      20,
+      100
+    ]
+  },
+  "all_loss_and_gradient_finite": true,
+  "random13_losses": [
+    2.75998592376709,
+    16.772998809814453,
+    166.60379028320312
+  ],
+  "random13_max_probability": [
+    0.9206945300102234,
+    1.0,
+    1.0
+  ],
+  "boundary": "Seven synthetic CUDA FP32 cases; does not replace actual dual-arm smoke or formal completion."
+}

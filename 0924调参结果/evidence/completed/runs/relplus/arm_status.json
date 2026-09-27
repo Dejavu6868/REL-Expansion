@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "arm": "relplus",
+  "phase": "train",
+  "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+  "started_at": 1790350181.9318845,
+  "epoch": 200,
+  "global_iteration": 189000,
+  "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/checkpoints/epoch-200.pth",
+  "checkpoint_size": 799760393,
+  "checkpoint_sha256": "1812ce2f4c1109b1ce5308a51e5a3aa06376a9f6abc8ffc43194ac6658358be6",
+  "rank_done_count": 8,
+  "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+  "finished_at": 1790481481.3601227
+}

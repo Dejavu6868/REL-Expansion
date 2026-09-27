@@ -1,0 +1,101 @@
+{
+  "status": "PASS_INDEPENDENT_EVALUATION_STATIC_REVIEW",
+  "reviewed_at": "2026-09-24T02:56:39.409537+00:00",
+  "scope": "Bounded local read-only code/artifact review. No tests rerun, no server access, no training/evaluation execution and no runtime or manifest changes.",
+  "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+  "manifest_file_count": 206,
+  "manifest_sha256": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f",
+  "manifest_mismatches": [],
+  "reviewed_file_sha256": {
+    "evaluation/compare_results.py": "ca9ae25acfd10fffc37304801dd1d6191e763727fd9734a5daceedcfc26c12a4",
+    "evaluation/run_evaluation.py": "590cf935a9c51f25e532965b3ccd8c4170419d04c5a0a910a51466333b0c56b4",
+    "evaluation/eval_rank.py": "88cb155b47271265bd103b729a1f429b8585882604cb0d3e588b569349749f55",
+    "evaluation/input_adapter.py": "b62b983a429b17b04f6a45607e717694cac9cdb053f931f24bdb2341ae27a602",
+    "evaluation/audit_eval.py": "2c59e75f999ecd9e350dd1a75d19448f316d7dcf5f263d6cb94a8d125dfd6c07",
+    "evaluation/PROTOCOL.json": "d0e28b97941ba6e6ed9ff96c98171b806e672c123975d3953b8d4b90ef7022b5",
+    "bundle_manifest.json": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f",
+    "suite.json": "ccd10368db7f700eb06c846e0d65a12367f5b0b5b6c71dbb54ae189639dd7e64",
+    "evidence/REMOTE_RESOLVED_CONFIG.json": "d0368b9dd647011669b61b482776f9e8fff0820ffaebf897188bf5ccfdc05197",
+    "evidence/REMOTE_DEPLOYMENT.json": "b94d46c3e45cc0a7fd5f0ba6aff7a178dd3b17e8c5b2ca35ad4e5725c6d20d80"
+  },
+  "pinned_baseline_files_verified": {
+    "baseline/comparison_verified.json": "c5148dd245515fa1f97d15f0ad06c56c3d93c5f663af9edad0c34a3b3ba609af",
+    "baseline/suite.json": "a8f323e48d8b70fc2bb6f429a0450bbf47eaff1dfbb308edbfc2a458a2282090",
+    "baseline_gamma1/comparison.json": "5d535c50ef1c29fa55de00b3cb8069077f7dff0d117c9b6b8abf1324efd64125",
+    "baseline_gamma1/suite.json": "319d3d63d207e1ca8c3594ed20eb119f954ecfcb24562262b313dd74eedb4731",
+    "baseline_gamma1/hha.json": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120",
+    "baseline/gamma2_hha.json": "97bc3b5fd8e98a2663c0596685feda34a38804ac73a34b147376be5ea70f3b6d",
+    "baseline_gamma1/relplus.json": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01",
+    "baseline/gamma2_relplus.json": "dece975cbb673f4a543ea14b73ac8d6ee3f4dbb40d920b116a773e949947eb34"
+  },
+  "paths": {
+    "train_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924",
+    "train_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1",
+    "evaluation_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/evaluation_epoch200",
+    "supervisor_worker_suite_paths_agree": true
+  },
+  "resolved_config_reconstruction": {
+    "hha": {
+      "field_count": 129,
+      "remote_observed_delta_matches_exact_evaluation_identity_rebase": true
+    },
+    "relplus": {
+      "field_count": 122,
+      "remote_observed_delta_matches_exact_evaluation_identity_rebase": true
+    }
+  },
+  "frozen_evaluation_semantics": {
+    "audit_eval_byte_identity": true,
+    "input_adapter_only_source_path_changed": true,
+    "eval_rank_main_AST_identity": true,
+    "evaluate_arm_AST_identity": true
+  },
+  "provenance_interpretation": "evaluation/PROTOCOL.json frozen_evaluator_provenance hashes identify the gamma1 predecessor files in 0920 archive, not the adapted gamma1.5 wrapper files; verified against predecessor. Current executable hashes are in bundle_manifest.json.",
+  "fixed_endpoint_wiring": {
+    "epoch": 200,
+    "updates_per_arm": 189000,
+    "arms": [
+      "hha",
+      "relplus"
+    ],
+    "test_samples_per_arm": 17593,
+    "ranks_per_arm": 8,
+    "eval_batch_per_rank": 1,
+    "scale": [
+      1
+    ],
+    "flip": false,
+    "crop": [
+      480,
+      480
+    ],
+    "align_corners": false,
+    "criterion": null,
+    "training_decoder_bn_eps": 0.001,
+    "evaluation_decoder_bn_eps": 1e-05,
+    "evidence": [
+      "evaluation/run_evaluation.py:67-132",
+      "evaluation/eval_rank.py:18-37",
+      "evaluation/eval_rank.py:86-123",
+      "source/tools/eval_rel_plus_v2_3_full.py:132-139"
+    ]
+  },
+  "comparison_review": {
+    "primary_focal_gamma": 1,
+    "historical_focal_gamma": 2,
+    "new_focal_gamma": 1.5,
+    "both_baselines_pinned_and_checked_before_inference": true,
+    "GT_test_seed_class_order_checked": true,
+    "same_arm_deltas_and_pairwise_gaps_use_percentage_points": true,
+    "candidate_screening_separate_from_execution_PASS": true,
+    "metrics_recomputed_from_rank_confusions_by_byte_identical_auditor": true
+  },
+  "remote_deployment_evidence": {
+    "status": "PASS",
+    "bundle_files_verified": 206,
+    "remote_tests_reported": "27 training + 14 evaluation PASS",
+    "boundary": "Read existing local remote-deployment receipt; not independently rerun."
+  },
+  "findings": [],
+  "conclusion": "No obvious deterministic late-failure point found in gamma1.5 path selection, dual-baseline attribution, current configuration reconstruction, manifest inclusion, or fixed epoch200 evaluation wiring. Runtime completion and data/checkpoint identity remain governed by the existing gates."
+}

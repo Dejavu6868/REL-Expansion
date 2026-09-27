@@ -1,0 +1,265 @@
+{
+  "status": "PASS",
+  "actual_rank_count": 16,
+  "rows": [
+    {
+      "arm": "hha",
+      "rank": 0,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "hha",
+      "rank": 1,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "hha",
+      "rank": 2,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "hha",
+      "rank": 3,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "hha",
+      "rank": 4,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "hha",
+      "rank": 5,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "hha",
+      "rank": 6,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "hha",
+      "rank": 7,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "relplus",
+      "rank": 0,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "relplus",
+      "rank": 1,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "relplus",
+      "rank": 2,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "relplus",
+      "rank": 3,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "relplus",
+      "rank": 4,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "relplus",
+      "rank": 5,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "relplus",
+      "rank": 6,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    },
+    {
+      "arm": "relplus",
+      "rank": 7,
+      "actual_criterion": {
+        "type": "FocalLoss2d",
+        "focal_gamma": 1.5,
+        "reduction": "none",
+        "ignore_index": 255
+      },
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "initial_optimizer_lrs": [
+        0.00012,
+        0.00012
+      ],
+      "status": "PASS"
+    }
+  ],
+  "preparation_sha256": "4cc59f94af984dab767411eebf03869475dbe4b8a71ef04643e72244c1add10d",
+  "baseline_commit": "c8ff74502cf6717fc554adc47db4d14e9ddd42a9",
+  "scope": "actual gamma1.5, baseline initialization, frozen batch/lr, finite training and recovery"
+}

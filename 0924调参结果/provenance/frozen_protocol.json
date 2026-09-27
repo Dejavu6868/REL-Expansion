@@ -1,0 +1,227 @@
+{
+  "status": "FROZEN_GAMMA15_DUAL_ARM_FIXED_EPOCH200_SINGLE_SEED",
+  "folder_name": "0924调参结果",
+  "archive_date": "2026-09-27",
+  "folder_date_meaning": "0924 is the recipe and training start date; completion and freeze occurred on 2026-09-27.",
+  "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+  "arms": [
+    "hha",
+    "relplus"
+  ],
+  "dataset": {
+    "name": "Stanford2D3D_S2D",
+    "train_areas": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "6"
+    ],
+    "test_areas": [
+      "5a",
+      "5b"
+    ],
+    "train_count": 52903,
+    "test_count": 17593,
+    "image_size": [
+      480,
+      480
+    ],
+    "classes": [
+      "beam",
+      "board",
+      "bookcase",
+      "ceiling",
+      "chair",
+      "clutter",
+      "column",
+      "door",
+      "floor",
+      "sofa",
+      "table",
+      "wall",
+      "window"
+    ],
+    "ignore_index": 255,
+    "train_list_sha256": "96788184f2a1b318a05395a2c6b3867759526e0adb612a90eb6af59b1491b011",
+    "test_list_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a"
+  },
+  "model": {
+    "architecture": "Original CMX-derived",
+    "backbone": "dual_mit_b2",
+    "decoder": "MLPDecoder",
+    "decoder_embed_dim": 512,
+    "gate": false,
+    "smmf": false,
+    "dymm": false,
+    "sga": false,
+    "pretrained_path": "/data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth",
+    "pretrained_sha256": "ced22617efb7bae3c34ad0a80f20a9b8afb4d27368cb0835a23456baa9d0e092"
+  },
+  "training": {
+    "batch_size": 56,
+    "lr": 0.00012,
+    "nepochs": 200,
+    "num_train_imgs": 52903,
+    "num_eval_imgs": 17593,
+    "niters_per_epoch": 945,
+    "logical_samples_per_epoch": 52920,
+    "sampler_padding_count": 17,
+    "warm_up_epoch": 10,
+    "lr_power": 0.9,
+    "optimizer": "AdamW",
+    "weight_decay": 0.01,
+    "criterion": "Focal",
+    "focal_gamma": 1.5,
+    "loss_reduction": "none_then_mean",
+    "seed": 12345,
+    "num_workers": 16,
+    "image_height": 480,
+    "image_width": 480,
+    "num_classes": 13,
+    "background": 255,
+    "backbone": "mit_b2",
+    "decoder": "MLPDecoder",
+    "decoder_embed_dim": 512,
+    "amp": false,
+    "sync_bn": true,
+    "bn_eps": 0.001,
+    "bn_momentum": 0.1,
+    "train_horizontal_flip": false,
+    "train_vertical_flip": false,
+    "train_arbitrary_rotation": false,
+    "train_perspective_warp": false,
+    "train_scale_array": [
+      0.5,
+      0.75,
+      1.0,
+      1.25,
+      1.5,
+      1.75
+    ],
+    "scheduler": "WarmUpPolyLR",
+    "checkpoint_start_epoch": 100,
+    "checkpoint_step": 5,
+    "recovery_checkpoint_step": 5,
+    "recovery_checkpoint_before_epoch": 100,
+    "primary_endpoint": "epoch_200",
+    "eval_scale_array": [
+      1
+    ],
+    "eval_flip": false
+  },
+  "budget": {
+    "optimizer_updates_per_arm": 189000,
+    "warmup_updates": 9450,
+    "estimated_two_arm_hours": 72.82,
+    "estimate_basis": "previous gamma1 HHA+REL+ observed wall-time; gamma1.5 duration unknown"
+  },
+  "budget_context": "Original pre-execution estimate; actual completed durations recorded below.",
+  "evaluation": {
+    "status": "PASS_FIXED_EPOCH200_EVALUATION_COMPLETED",
+    "arms": [
+      "hha",
+      "relplus"
+    ],
+    "train_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924",
+    "training_focal_gamma": 1.5,
+    "changed_scientific_factor": "focal_gamma only; pinned full gamma2/gamma1/current resolved configurations compared field by field; only exact derived source/output/protocol identities may also change",
+    "checkpoint_epoch": 200,
+    "updates_per_arm": 189000,
+    "test_samples": 17593,
+    "seed": 12345,
+    "training_batch_size": 56,
+    "training_lr": 0.00012,
+    "scale": [
+      1
+    ],
+    "flip": false,
+    "crop": [
+      480,
+      480
+    ],
+    "align_corners": false,
+    "world_size": 8,
+    "eval_batch_per_rank": 1,
+    "num_workers_per_rank": 16,
+    "precision": "FP32; frozen defaults and runtime flags recorded",
+    "bn_policy": "Frozen criterion=None constructor; decoder eval eps1e-5, training eps1e-3; unchanged gamma2 comparison semantics.",
+    "output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/evaluation_epoch200",
+    "endpoint": "Fixed epoch200 full-test mIoU and per-class IoU for HHA/REL+; report same-arm gamma1.5-gamma1 and gamma1.5-gamma2, REL+-HHA at all three gamma values, and both changes in that gap.",
+    "training_gate": "Exact dual-arm formal PASS; suite and manifest fingerprints; unchanged preflight/smoke prerequisites; per-arm PASS, exitcode0, epoch200, iteration189000, 8 completed ranks, no NaN replacement; exact checkpoint path/size/SHA256; resolved config and frozen data evidence.",
+    "runtime_evidence_exception": "Only ddp_smoke_report may appear after original preflight; require exact new-arm smoke path and SHA256 from freshly validated formal-training prerequisites.",
+    "failure_policy": "Refuse preexisting output; stop on failure; preserve evidence; no automatic retry, no checkpoint sweep, no metric substitution.",
+    "resource_policy": "Inherited guard: allocator75%, device free20%,85C,host32GiB,SHM2GiB; owned process group cleanup only.",
+    "operational_timeout_per_arm_minutes": 30,
+    "comparison_file": "dual_arm_comparison.json",
+    "baseline_source_sha256": {
+      "gamma1": "5d535c50ef1c29fa55de00b3cb8069077f7dff0d117c9b6b8abf1324efd64125",
+      "gamma2": "c5148dd245515fa1f97d15f0ad06c56c3d93c5f663af9edad0c34a3b3ba609af"
+    },
+    "frozen_evaluator_provenance": {
+      "run_evaluation.py": "c6739715838bb25ce4207187eb2bdcd13a79c861b256fe4c3c10a099b57c3d8a",
+      "eval_rank.py": "5a4a94692efcfc5dedeb34a32d20f51e2a56254be81368c485e0615514795f5c",
+      "input_adapter.py": "76df98fb9e921de60d6eba8dbecccc7e878c2329de726b514ad48374995bd7ff",
+      "audit_eval.py": "2c59e75f999ecd9e350dd1a75d19448f316d7dcf5f263d6cb94a8d125dfd6c07"
+    },
+    "frozen_computation_check": {
+      "audit_eval_byte_identity": true,
+      "input_adapter_only_source_path_changed": true,
+      "eval_rank_main_AST_identity": true,
+      "evaluate_arm_AST_identity": true,
+      "forward_normalization_BN_metrics": "inherited source, not rewritten"
+    },
+    "scientific_scope": "Single seed descriptive comparison. PASS permits reporting this fixed-endpoint comparison; it does not establish stable superiority or authorize additional experiment arms.",
+    "primary_baseline_focal_gamma": 1,
+    "historical_baseline_focal_gamma": 2,
+    "candidate_screening": {
+      "criterion": "REL+ mIoU > gamma1 REL+ mIoU AND HHA mIoU >= gamma1 HHA mIoU",
+      "comparison_precision": "full stored precision; no rounding",
+      "status_semantics": "descriptive single-seed candidate PASS/FAIL, separate from execution/integrity PASS; no statistical superiority claim"
+    },
+    "baseline_suite_sha256": {
+      "gamma1": "319d3d63d207e1ca8c3594ed20eb119f954ecfcb24562262b313dd74eedb4731",
+      "gamma2": "a8f323e48d8b70fc2bb6f429a0450bbf47eaff1dfbb308edbfc2a458a2282090"
+    },
+    "authorization": "调整参数`focal_gamma`=1.5，并进行HHA和REL+的双臂评估，其他参数使用原先冻结的参数",
+    "original_protocol_status": "AUTHORIZED_FIXED_PROTOCOL_IMPLEMENTED_NOT_EXECUTED",
+    "completion_evidence": "evidence/completed/evaluation_epoch200/status.json"
+  },
+  "sole_changed_scientific_control": {
+    "focal_gamma": {
+      "before": 1,
+      "after": 1.5
+    }
+  },
+  "baseline_commit": "c8ff74502cf6717fc554adc47db4d14e9ddd42a9",
+  "historical_baseline_commit": "791f11db670239a19e78f3956c6f3d4466f17dc3",
+  "actual_optimizer_updates_per_arm": 189000,
+  "actual_warmup_updates": 9450,
+  "actual_duration_seconds": {
+    "training": 262838.1922392845,
+    "evaluation": 344.4750099182129
+  },
+  "configuration_difference_evidence": "evidence/startup/REMOTE_RESOLVED_CONFIG.json",
+  "execution_status": "PASS",
+  "candidate_screening": {
+    "status": "FAIL",
+    "checks": {
+      "relplus_mIoU_strictly_above_gamma1": false,
+      "hha_mIoU_at_least_gamma1": true
+    },
+    "metric": "mIoU_percent",
+    "comparison_precision": "full stored float precision; no rounding before comparison",
+    "scope": "Single-seed descriptive candidate screening; not a statistical superiority claim."
+  },
+  "freeze_meaning": "Immutable record of this executed configuration and result, not a claim that it meets the candidate promotion criterion.",
+  "known_boundaries": [
+    "Single seed 12345; descriptive comparison, no stable-superiority/significance claim.",
+    "Fixed epoch200 on the original S2D Area-5 test split; no validation split or checkpoint sweep.",
+    "Decoder BN eps training=1e-3, evaluation=1e-5; frozen evaluator semantics retained.",
+    "FP32 tensors/no AMP; original observed TF32 settings retained.",
+    "Historical HHA physical-channel and K/gravity provenance gaps are not resolved by this archive.",
+    "CMX-derived model with project adapters; not a full official-CMX protocol reproduction claim.",
+    "Area-5 has informed repeated parameter selection; these numbers are not independent held-out generalization confirmation.",
+    "The suggested lr=0.00010 experiment was not executed and is not part of this archive."
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/Dejavu6868/REL-Expansion",
+  "commit": "c8ff74502cf6717fc554adc47db4d14e9ddd42a9",
+  "path": "0920调参结果",
+  "focal_gamma": 1,
+  "policy": "Exact byte copies of previously frozen evidence; no new baseline training/evaluation."
+}

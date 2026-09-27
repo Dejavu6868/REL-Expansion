@@ -1,0 +1,1832 @@
+{
+  "queried_at": 1790218546.2467115,
+  "root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1",
+  "files": {
+    "preparation_status.json": {
+      "status": "PASS",
+      "phase": "prepare",
+      "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+      "started_at": 1790218399.5562706,
+      "supervisor_pid": 2052814,
+      "supervisor_starttime": "1088264944",
+      "completed_stages": [
+        "preflight",
+        "smoke"
+      ],
+      "active_stage": null,
+      "bundle_integrity": {
+        "status": "PASS",
+        "file_count": 206,
+        "manifest_sha256": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f"
+      },
+      "final_bundle_integrity": {
+        "status": "PASS",
+        "file_count": 206,
+        "manifest_sha256": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f"
+      },
+      "finished_at": 1790218544.1867547
+    },
+    "preflight.json": {
+      "status": "PASS",
+      "suite_sha256": "ccd10368db7f700eb06c846e0d65a12367f5b0b5b6c71dbb54ae189639dd7e64",
+      "arms": {
+        "hha": {
+          "status": "PASS",
+          "resolved_config": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/configs/hha.json",
+          "baseline_comparison": {
+            "status": "PASS_ONLY_FOCAL_GAMMA_CHANGED",
+            "arm": "hha",
+            "baseline_sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120",
+            "resolved_field_count": 129,
+            "differences": {
+              "root_dir": {
+                "before": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+                "after": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source"
+              },
+              "abs_dir": {
+                "before": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+                "after": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source"
+              },
+              "experiment_name": {
+                "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920_hha",
+                "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924_hha"
+              },
+              "focal_gamma": {
+                "before": 1.0,
+                "after": 1.5
+              },
+              "output_dir": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha"
+              },
+              "log_dir": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs"
+              },
+              "tb_dir": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/tensorboard",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/tensorboard"
+              },
+              "log_dir_link": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/latest_logs",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/latest_logs"
+              },
+              "checkpoint_dir": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/checkpoints",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/checkpoints"
+              },
+              "log_file": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs/train.log",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs/train.log"
+              },
+              "link_log_file": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs/train_last.log",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs/train_last.log"
+              },
+              "val_log_file": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs/val.log",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs/val.log"
+              },
+              "link_val_log_file": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs/val_last.log",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs/val_last.log"
+              },
+              "ddp_smoke_report": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/smoke/hha/ddp_optimizer_smoke_summary.json",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/ddp_optimizer_smoke_summary.json"
+              },
+              "comparison_protocol_id": {
+                "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+                "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924"
+              },
+              "experiment_protocol_id": {
+                "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+                "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924"
+              }
+            },
+            "semantic_changes": [
+              "focal_gamma"
+            ]
+          },
+          "resolved_config_sha256": "c2fd7b6543fdc25185d1c43496ade8b31fca0870a1f9925dd71a4a96ae2a1425",
+          "train_count": 52903,
+          "test_count": 17593,
+          "train_test_disjoint": true,
+          "train_ordered_ids_sha256": "e0f166edfe72ed1bba5d071d6a241caeaf99e0746835f2530ff235643b20588b",
+          "test_ordered_ids_sha256": "34daacba2b6d3d6535dd7bfeed39706d6f932f22b7ff2279dfd42eca0a7223ad",
+          "data_contract_checks": [
+            "assert_training_ready",
+            "assert_runtime_dataset_contract"
+          ],
+          "data_evidence_files": {
+            "cache_audit_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/audit/cache_audit_summary.json",
+              "exists": true,
+              "required_for_data_preflight": false,
+              "size_bytes": 1444,
+              "sha256": "d5c89f0be2a564b8be1e42a7547e4baac4aa4a0ec40993c2b72afcdb43a40935"
+            },
+            "cache_generation_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/cache_generation_summary.json",
+              "exists": true,
+              "required_for_data_preflight": false,
+              "size_bytes": 1146,
+              "sha256": "2251b638832667dd0491c8b72fd6eda09b36c23ba32df7e41aebb56437ec31e8"
+            },
+            "class_mapping": {
+              "path": "/data/zhuzhaoziao/cmx/datasets/Stanford2D3D_480/class_mapping.json",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 343,
+              "sha256": "21ccecf9e9772ee9cc4bb1e3296a742e594f9e31a31d2f4ca12748a2ae87b0d7"
+            },
+            "dataloader_trace_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/dataloader/THREE_ARM_DATALOADER_CROSS_EPOCH_TRACE.json",
+              "exists": true,
+              "required_for_data_preflight": false,
+              "size_bytes": 928658,
+              "sha256": "c8d54804c6b8bdcbb172987d5d3c6a161248edc75f2050b29a80447bac6726df"
+            },
+            "ddp_smoke_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/ddp_optimizer_smoke_summary.json",
+              "exists": false,
+              "required_for_data_preflight": false
+            },
+            "eval_source": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/test.txt",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 1179828,
+              "sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a"
+            },
+            "evaluator_equivalence_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/evaluator/RELPLUS_EPOCH200_EVALUATOR_EQUIVALENCE.json",
+              "exists": true,
+              "required_for_data_preflight": false,
+              "size_bytes": 2147,
+              "sha256": "04a05acd097ed05da279c0961b1e295c037930bc4f2603b83d467b2f6d0e46df"
+            },
+            "evaluator_rank_consistency_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/evaluator/RELPLUS_EPOCH200_1GPU_VS_8GPU_CONFUSION_AUDIT.json",
+              "exists": true,
+              "required_for_data_preflight": false,
+              "size_bytes": 2111,
+              "sha256": "b514e33a4beedc16ed771b48c3955f15b9f92753c02b435814a26bbabc0b01d2"
+            },
+            "full_manifest": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 48307082,
+              "sha256": "afb6912545a59645e0104d081e9078a3d296e0c4f6cababf8a541e1e8156a65e"
+            },
+            "generation_resolved_manifest_path": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/cache_manifest_resolved.csv",
+              "exists": true,
+              "required_for_data_preflight": false,
+              "size_bytes": 69232533,
+              "sha256": "c603ece954d9d08d8bdda058e66c82da2673e019d4e2a5f7531077315e42c76f"
+            },
+            "input_audit_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/reports/three_arm_data_contract.json",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 1326,
+              "sha256": "e038020647be49b5b7e6c9cbb92ecb9b5f61e4ff07bb9fd878604fa0b7c48f41"
+            },
+            "model_initialization_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/initialization/THREE_ARM_MODEL_INITIALIZATION_AUDIT.json",
+              "exists": true,
+              "required_for_data_preflight": false,
+              "size_bytes": 31100,
+              "sha256": "a8876644e15d379ee2ea7a548410fca4804a86b2cba06ee9a7c67e5211e80f99"
+            },
+            "resolved_manifest_path": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/audit/cache_manifest_resolved.csv",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 68880053,
+              "sha256": "0150a30a567aa89c322d21eb9bf42212145869ce3cd18c9bf4a15f9056a19c77"
+            },
+            "sampler_sequence_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/sampler/OLD_VS_NEW_SAMPLER_SEQUENCE_AUDIT.json",
+              "exists": true,
+              "required_for_data_preflight": false,
+              "size_bytes": 572,
+              "sha256": "1d4f314a8aa7b1691359b47678109c9271777a507a642ee1d9acb1d0568f6606"
+            },
+            "train_source": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/train.txt",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 3502204,
+              "sha256": "96788184f2a1b318a05395a2c6b3867759526e0adb612a90eb6af59b1491b011"
+            },
+            "training_code_equivalence_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_ThreeArm_v1/reports/training_code_equivalence/TRAINING_CODE_EQUIVALENCE_AUDIT.json",
+              "exists": true,
+              "required_for_data_preflight": false,
+              "size_bytes": 6268,
+              "sha256": "a8fa9a83f5d2e9f3d80a72bdfff33b52bb629e03948e4ec5609bfd3908cfeb61"
+            },
+            "training_data_preflight_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/preflight/cmx_training_data_preflight_summary.json",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 1520,
+              "sha256": "c9db3da8153133ede89d252f21630b003d1098ccaccee26a02c08c322b0bff84"
+            }
+          },
+          "sampler": {
+            "status": "PASS",
+            "world_size": 8,
+            "epochs": {
+              "1": {
+                "rank_sequences": [
+                  {
+                    "rank": 0,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "762e49e0319433369ece8906704fab44ac8ac7705e1a48efe7ca4c65ab02ffa5",
+                    "first_sample_id": "area_2/camera_52d9534af45345c4928bc23e73933cf6_hallway_12_frame_32",
+                    "last_sample_id": "area_4/camera_d3953b1c7b8c421ab7abd79a09e2eb2d_office_4_frame_46"
+                  },
+                  {
+                    "rank": 1,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "eb8b218fcd70b3e2e1e41b51a97da5df3cd4e6c975ff0fae561f0a8e9c4f2c7e",
+                    "first_sample_id": "area_2/camera_e5c3d07d3c284daea1c0aacfd2cbe9af_auditorium_1_frame_20",
+                    "last_sample_id": "area_6/camera_6e253b2eef4544d38aaa2d11b9e0fd63_office_24_frame_17"
+                  },
+                  {
+                    "rank": 2,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "9076706ea6d770dabab7cb356394b8358a1fc710970326899812df6afb4437cd",
+                    "first_sample_id": "area_2/camera_123cfbc146e64135ab01c0db428363e2_office_6_frame_57",
+                    "last_sample_id": "area_4/camera_20ecf18c1e624ae79130f46b9f16e4af_lobby_1_frame_1"
+                  },
+                  {
+                    "rank": 3,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "201ba8c0e37b7e857d5bf950692ff0d67cb916cde9c89c5dc270deda8c1f9c54",
+                    "first_sample_id": "area_4/camera_e3150308698b46cb9657912be7efdec0_hallway_7_frame_51",
+                    "last_sample_id": "area_6/camera_31f0030b31a8419282da58dd6d507591_office_31_frame_9"
+                  },
+                  {
+                    "rank": 4,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "f2fd7d3cab4aa972b46121bb5d44086867d00f64d595e642ac5c812b4b41a99c",
+                    "first_sample_id": "area_2/camera_812070554de14a099d97bc59b6e09053_hallway_5_frame_34",
+                    "last_sample_id": "area_6/camera_5da1cb2dec07459c9e90e4705dbacd47_office_24_frame_25"
+                  },
+                  {
+                    "rank": 5,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "d48c515ab80a81d36eb47ac34b761d4a705fd008c5283ad8bc8c2f1c8328cb50",
+                    "first_sample_id": "area_4/camera_49a328878f014288a6ea197dcd095253_conferenceRoom_3_frame_29",
+                    "last_sample_id": "area_3/camera_fafa0629e8774618ac6e362d0416fba1_hallway_1_frame_31"
+                  },
+                  {
+                    "rank": 6,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "ad18f1e911ae141b4f32f8a2c1b66f17f0e4daf9947e587a7662e243fbf09303",
+                    "first_sample_id": "area_3/camera_13b1127055454af5afd1d00a3b56eed8_hallway_4_frame_34",
+                    "last_sample_id": "area_4/camera_59a7ec63764d4a87a52d56d98021fe83_office_16_frame_33"
+                  },
+                  {
+                    "rank": 7,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "0aa7501b2e3341ee48e5548bfdd926b9220054a720cd3e36b41e2594d2f2783d",
+                    "first_sample_id": "area_2/camera_d40845c4b7e94e2b93b5f467c359bfb4_hallway_8_frame_24",
+                    "last_sample_id": "area_1/camera_86bc7dabe0794deea23ffb07f2d979bf_hallway_1_frame_49"
+                  }
+                ],
+                "logical_count": 52920,
+                "real_unique_count": 52903,
+                "padding_occurrences": 17,
+                "complete_real_sample_coverage": true
+              },
+              "2": {
+                "rank_sequences": [
+                  {
+                    "rank": 0,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "e07c065a22c2bbb0942c1d4377391e90dbab9183611742ab8066014e539e9dbf",
+                    "first_sample_id": "area_4/camera_2ff75407ac9d45b3b50c38291aae222b_office_3_frame_7",
+                    "last_sample_id": "area_1/camera_54ca9cb6c3aa40779491ee273d287ebc_conferenceRoom_1_frame_4"
+                  },
+                  {
+                    "rank": 1,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "24979e67b48ef81b5837844a62e55ff8975eefdb88be4ef3057316631c53d4ad",
+                    "first_sample_id": "area_2/camera_3b9426427d284ba0b9bb7b2a025064f6_auditorium_2_frame_20",
+                    "last_sample_id": "area_4/camera_3acb38c8fb0c416caa58fe3f9fd7a596_hallway_3_frame_20"
+                  },
+                  {
+                    "rank": 2,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "9dc750007c1337c9632fea60ecbd8dbfe76167fe131c34557b72a8a99dbebcba",
+                    "first_sample_id": "area_1/camera_a2226e3d54bc4881a5e5723f74fa4734_office_19_frame_9",
+                    "last_sample_id": "area_1/camera_7b3a7e644d0540fabc575052ad765b33_hallway_6_frame_36"
+                  },
+                  {
+                    "rank": 3,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "0b36eced7c02c4d0509d7d8a619dc52491452fef3e5a183ef28587f89bae2d49",
+                    "first_sample_id": "area_4/camera_c9f9c2377da749ecb09b15dd7f363a84_office_10_frame_57",
+                    "last_sample_id": "area_1/camera_4de69cf4bb0d4ebe80b426faefdfe7ec_hallway_8_frame_4"
+                  },
+                  {
+                    "rank": 4,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "35634e6ef9e2247381c280ede3d8c10ea1c626a62f93c8ecc73f3fa4f057b654",
+                    "first_sample_id": "area_2/camera_d56395681871465d9fafebb702b45872_auditorium_1_frame_16",
+                    "last_sample_id": "area_4/camera_fadcd8771b934b3abb18c0221b1d5cc2_office_10_frame_8"
+                  },
+                  {
+                    "rank": 5,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "3f80fe8a0297e06d33dca7411a01ba46a1bf46c4c1329c696baae605e442ee43",
+                    "first_sample_id": "area_1/camera_dc252cd8fb914bc78e01f7bcaa7876ea_pantry_1_frame_43",
+                    "last_sample_id": "area_6/camera_dda2a587499c4376abc616e6766149d6_office_5_frame_15"
+                  },
+                  {
+                    "rank": 6,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "111f63ba2d079172dd28ba3454e99acf766dc801f151ca8e86dab2d97b1b79e8",
+                    "first_sample_id": "area_2/camera_b3466275965b4ce98768fcb030742182_auditorium_1_frame_14",
+                    "last_sample_id": "area_2/camera_d81b32087e7a409cb5bf6228631c2149_auditorium_1_frame_34"
+                  },
+                  {
+                    "rank": 7,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "9bfe59c6337552a321b158fa75bda03899a336dcecaa6a582c90757de5385069",
+                    "first_sample_id": "area_2/camera_f048ffdffd0f4143bbb9dbdd1571dd2a_auditorium_2_frame_50",
+                    "last_sample_id": "area_1/camera_a223e73ba60140b8ac0c72841a70a772_conferenceRoom_2_frame_35"
+                  }
+                ],
+                "logical_count": 52920,
+                "real_unique_count": 52903,
+                "padding_occurrences": 17,
+                "complete_real_sample_coverage": true
+              }
+            },
+            "sequence_digest": "b18c4a683575fefcc2eed2cddc670e9ca233cc111f18ff3350b2c16f1fe551a2",
+            "image_decoding_performed": false
+          },
+          "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+          "integration_protocol_id": "CMX_S2D_THREE_ARM_V1"
+        },
+        "relplus": {
+          "status": "PASS",
+          "resolved_config": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/configs/relplus.json",
+          "baseline_comparison": {
+            "status": "PASS_ONLY_FOCAL_GAMMA_CHANGED",
+            "arm": "relplus",
+            "baseline_sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01",
+            "resolved_field_count": 122,
+            "differences": {
+              "root_dir": {
+                "before": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+                "after": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source"
+              },
+              "abs_dir": {
+                "before": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+                "after": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source"
+              },
+              "experiment_name": {
+                "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920_relplus",
+                "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924_relplus"
+              },
+              "focal_gamma": {
+                "before": 1.0,
+                "after": 1.5
+              },
+              "output_dir": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus"
+              },
+              "log_dir": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs"
+              },
+              "tb_dir": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/tensorboard",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/tensorboard"
+              },
+              "log_dir_link": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/latest_logs",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/latest_logs"
+              },
+              "checkpoint_dir": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/checkpoints",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/checkpoints"
+              },
+              "log_file": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs/train.log",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs/train.log"
+              },
+              "link_log_file": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs/train_last.log",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs/train_last.log"
+              },
+              "val_log_file": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs/val.log",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs/val.log"
+              },
+              "link_val_log_file": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs/val_last.log",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs/val_last.log"
+              },
+              "ddp_smoke_report": {
+                "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/smoke/relplus/ddp_optimizer_smoke_summary.json",
+                "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/ddp_optimizer_smoke_summary.json"
+              },
+              "experiment_protocol_id": {
+                "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+                "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924"
+              },
+              "comparison_protocol_id": {
+                "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+                "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924"
+              }
+            },
+            "semantic_changes": [
+              "focal_gamma"
+            ]
+          },
+          "resolved_config_sha256": "568099fd30acbcae606d1825d6db17cd9a34fe2196c0e92c73e2b131beaaa9f0",
+          "train_count": 52903,
+          "test_count": 17593,
+          "train_test_disjoint": true,
+          "train_ordered_ids_sha256": "e0f166edfe72ed1bba5d071d6a241caeaf99e0746835f2530ff235643b20588b",
+          "test_ordered_ids_sha256": "34daacba2b6d3d6535dd7bfeed39706d6f932f22b7ff2279dfd42eca0a7223ad",
+          "data_contract_checks": [
+            "assert_training_ready",
+            "assert_runtime_dataset_contract"
+          ],
+          "data_evidence_files": {
+            "cache_audit_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/audit/cache_audit_summary.json",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 1444,
+              "sha256": "d5c89f0be2a564b8be1e42a7547e4baac4aa4a0ec40993c2b72afcdb43a40935"
+            },
+            "cache_generation_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/cache_generation_summary.json",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 1146,
+              "sha256": "2251b638832667dd0491c8b72fd6eda09b36c23ba32df7e41aebb56437ec31e8"
+            },
+            "class_mapping": {
+              "path": "/data/zhuzhaoziao/cmx/datasets/Stanford2D3D_480/class_mapping.json",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 343,
+              "sha256": "21ccecf9e9772ee9cc4bb1e3296a742e594f9e31a31d2f4ca12748a2ae87b0d7"
+            },
+            "ddp_smoke_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/ddp_optimizer_smoke_summary.json",
+              "exists": false,
+              "required_for_data_preflight": false
+            },
+            "eval_source": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/test.txt",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 1179828,
+              "sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a"
+            },
+            "full_manifest": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 48307082,
+              "sha256": "afb6912545a59645e0104d081e9078a3d296e0c4f6cababf8a541e1e8156a65e"
+            },
+            "generation_resolved_manifest_path": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/cache_manifest_resolved.csv",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 69232533,
+              "sha256": "c603ece954d9d08d8bdda058e66c82da2673e019d4e2a5f7531077315e42c76f"
+            },
+            "resolved_manifest_path": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/audit/cache_manifest_resolved.csv",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 68880053,
+              "sha256": "0150a30a567aa89c322d21eb9bf42212145869ce3cd18c9bf4a15f9056a19c77"
+            },
+            "train_source": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/train.txt",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 3502204,
+              "sha256": "96788184f2a1b318a05395a2c6b3867759526e0adb612a90eb6af59b1491b011"
+            },
+            "training_data_preflight_report": {
+              "path": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/preflight/cmx_training_data_preflight_summary.json",
+              "exists": true,
+              "required_for_data_preflight": true,
+              "size_bytes": 1520,
+              "sha256": "c9db3da8153133ede89d252f21630b003d1098ccaccee26a02c08c322b0bff84"
+            }
+          },
+          "sampler": {
+            "status": "PASS",
+            "world_size": 8,
+            "epochs": {
+              "1": {
+                "rank_sequences": [
+                  {
+                    "rank": 0,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "762e49e0319433369ece8906704fab44ac8ac7705e1a48efe7ca4c65ab02ffa5",
+                    "first_sample_id": "area_2/camera_52d9534af45345c4928bc23e73933cf6_hallway_12_frame_32",
+                    "last_sample_id": "area_4/camera_d3953b1c7b8c421ab7abd79a09e2eb2d_office_4_frame_46"
+                  },
+                  {
+                    "rank": 1,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "eb8b218fcd70b3e2e1e41b51a97da5df3cd4e6c975ff0fae561f0a8e9c4f2c7e",
+                    "first_sample_id": "area_2/camera_e5c3d07d3c284daea1c0aacfd2cbe9af_auditorium_1_frame_20",
+                    "last_sample_id": "area_6/camera_6e253b2eef4544d38aaa2d11b9e0fd63_office_24_frame_17"
+                  },
+                  {
+                    "rank": 2,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "9076706ea6d770dabab7cb356394b8358a1fc710970326899812df6afb4437cd",
+                    "first_sample_id": "area_2/camera_123cfbc146e64135ab01c0db428363e2_office_6_frame_57",
+                    "last_sample_id": "area_4/camera_20ecf18c1e624ae79130f46b9f16e4af_lobby_1_frame_1"
+                  },
+                  {
+                    "rank": 3,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "201ba8c0e37b7e857d5bf950692ff0d67cb916cde9c89c5dc270deda8c1f9c54",
+                    "first_sample_id": "area_4/camera_e3150308698b46cb9657912be7efdec0_hallway_7_frame_51",
+                    "last_sample_id": "area_6/camera_31f0030b31a8419282da58dd6d507591_office_31_frame_9"
+                  },
+                  {
+                    "rank": 4,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "f2fd7d3cab4aa972b46121bb5d44086867d00f64d595e642ac5c812b4b41a99c",
+                    "first_sample_id": "area_2/camera_812070554de14a099d97bc59b6e09053_hallway_5_frame_34",
+                    "last_sample_id": "area_6/camera_5da1cb2dec07459c9e90e4705dbacd47_office_24_frame_25"
+                  },
+                  {
+                    "rank": 5,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "d48c515ab80a81d36eb47ac34b761d4a705fd008c5283ad8bc8c2f1c8328cb50",
+                    "first_sample_id": "area_4/camera_49a328878f014288a6ea197dcd095253_conferenceRoom_3_frame_29",
+                    "last_sample_id": "area_3/camera_fafa0629e8774618ac6e362d0416fba1_hallway_1_frame_31"
+                  },
+                  {
+                    "rank": 6,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "ad18f1e911ae141b4f32f8a2c1b66f17f0e4daf9947e587a7662e243fbf09303",
+                    "first_sample_id": "area_3/camera_13b1127055454af5afd1d00a3b56eed8_hallway_4_frame_34",
+                    "last_sample_id": "area_4/camera_59a7ec63764d4a87a52d56d98021fe83_office_16_frame_33"
+                  },
+                  {
+                    "rank": 7,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "0aa7501b2e3341ee48e5548bfdd926b9220054a720cd3e36b41e2594d2f2783d",
+                    "first_sample_id": "area_2/camera_d40845c4b7e94e2b93b5f467c359bfb4_hallway_8_frame_24",
+                    "last_sample_id": "area_1/camera_86bc7dabe0794deea23ffb07f2d979bf_hallway_1_frame_49"
+                  }
+                ],
+                "logical_count": 52920,
+                "real_unique_count": 52903,
+                "padding_occurrences": 17,
+                "complete_real_sample_coverage": true
+              },
+              "2": {
+                "rank_sequences": [
+                  {
+                    "rank": 0,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "e07c065a22c2bbb0942c1d4377391e90dbab9183611742ab8066014e539e9dbf",
+                    "first_sample_id": "area_4/camera_2ff75407ac9d45b3b50c38291aae222b_office_3_frame_7",
+                    "last_sample_id": "area_1/camera_54ca9cb6c3aa40779491ee273d287ebc_conferenceRoom_1_frame_4"
+                  },
+                  {
+                    "rank": 1,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "24979e67b48ef81b5837844a62e55ff8975eefdb88be4ef3057316631c53d4ad",
+                    "first_sample_id": "area_2/camera_3b9426427d284ba0b9bb7b2a025064f6_auditorium_2_frame_20",
+                    "last_sample_id": "area_4/camera_3acb38c8fb0c416caa58fe3f9fd7a596_hallway_3_frame_20"
+                  },
+                  {
+                    "rank": 2,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "9dc750007c1337c9632fea60ecbd8dbfe76167fe131c34557b72a8a99dbebcba",
+                    "first_sample_id": "area_1/camera_a2226e3d54bc4881a5e5723f74fa4734_office_19_frame_9",
+                    "last_sample_id": "area_1/camera_7b3a7e644d0540fabc575052ad765b33_hallway_6_frame_36"
+                  },
+                  {
+                    "rank": 3,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "0b36eced7c02c4d0509d7d8a619dc52491452fef3e5a183ef28587f89bae2d49",
+                    "first_sample_id": "area_4/camera_c9f9c2377da749ecb09b15dd7f363a84_office_10_frame_57",
+                    "last_sample_id": "area_1/camera_4de69cf4bb0d4ebe80b426faefdfe7ec_hallway_8_frame_4"
+                  },
+                  {
+                    "rank": 4,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "35634e6ef9e2247381c280ede3d8c10ea1c626a62f93c8ecc73f3fa4f057b654",
+                    "first_sample_id": "area_2/camera_d56395681871465d9fafebb702b45872_auditorium_1_frame_16",
+                    "last_sample_id": "area_4/camera_fadcd8771b934b3abb18c0221b1d5cc2_office_10_frame_8"
+                  },
+                  {
+                    "rank": 5,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "3f80fe8a0297e06d33dca7411a01ba46a1bf46c4c1329c696baae605e442ee43",
+                    "first_sample_id": "area_1/camera_dc252cd8fb914bc78e01f7bcaa7876ea_pantry_1_frame_43",
+                    "last_sample_id": "area_6/camera_dda2a587499c4376abc616e6766149d6_office_5_frame_15"
+                  },
+                  {
+                    "rank": 6,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "111f63ba2d079172dd28ba3454e99acf766dc801f151ca8e86dab2d97b1b79e8",
+                    "first_sample_id": "area_2/camera_b3466275965b4ce98768fcb030742182_auditorium_1_frame_14",
+                    "last_sample_id": "area_2/camera_d81b32087e7a409cb5bf6228631c2149_auditorium_1_frame_34"
+                  },
+                  {
+                    "rank": 7,
+                    "sample_count": 6615,
+                    "complete_batches": 945,
+                    "ordered_sample_ids_sha256": "9bfe59c6337552a321b158fa75bda03899a336dcecaa6a582c90757de5385069",
+                    "first_sample_id": "area_2/camera_f048ffdffd0f4143bbb9dbdd1571dd2a_auditorium_2_frame_50",
+                    "last_sample_id": "area_1/camera_a223e73ba60140b8ac0c72841a70a772_conferenceRoom_2_frame_35"
+                  }
+                ],
+                "logical_count": 52920,
+                "real_unique_count": 52903,
+                "padding_occurrences": 17,
+                "complete_real_sample_coverage": true
+              }
+            },
+            "sequence_digest": "b18c4a683575fefcc2eed2cddc670e9ca233cc111f18ff3350b2c16f1fe551a2",
+            "image_decoding_performed": false
+          },
+          "representation_protocol_id": "RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT",
+          "integration_protocol_id": "CMX_RELPLUS_V2_3"
+        }
+      },
+      "environment": {
+        "python": "3.8.16",
+        "python_executable": "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+        "pytorch": "1.8.2",
+        "cuda_build": "11.1",
+        "cudnn": 8005,
+        "opencv": "4.5.5",
+        "numpy": "1.21.6",
+        "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.10",
+        "training_protocol_source": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source/utils/training_protocol.py"
+      }
+    },
+    "smoke_status.json": {
+      "status": "PASS",
+      "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+      "phase": "smoke",
+      "started_at": 1790218412.4182758,
+      "supervisor_pid": 2052814,
+      "suite_sha256": "ccd10368db7f700eb06c846e0d65a12367f5b0b5b6c71dbb54ae189639dd7e64",
+      "arms": [
+        "hha",
+        "relplus"
+      ],
+      "completed": [
+        {
+          "status": "PASS",
+          "arm": "hha",
+          "phase": "smoke",
+          "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+          "started_at": 1790218412.4188783,
+          "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+          "rank_initialization_count": 8,
+          "smoke_summary_sha256": "a172e02951b04aa686234ce16ba558f6a188d785eec0592901e32b7744ed63cc",
+          "finished_at": 1790218478.3059926
+        },
+        {
+          "status": "PASS",
+          "arm": "relplus",
+          "phase": "smoke",
+          "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+          "started_at": 1790218478.3102272,
+          "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+          "rank_initialization_count": 8,
+          "smoke_summary_sha256": "11ba9b4904826c8f02792a3560eb6a56050474e8895c74b335ad8de7c7decbcb",
+          "finished_at": 1790218544.1544218
+        }
+      ],
+      "active_arm": null,
+      "finished_at": 1790218544.155853
+    },
+    "prepare_supervisor_launch.json": {
+      "status": "LAUNCHED",
+      "pid": 2052814,
+      "starttime": "1088264944",
+      "pgid": 2052814,
+      "argv": [
+        "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+        "-B",
+        "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/pipeline.py",
+        "--phase",
+        "prepare"
+      ],
+      "cwd": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924",
+      "phase": "prepare",
+      "started_at": 1790218399.4733434,
+      "detached_session": true,
+      "suite_sha256": "ccd10368db7f700eb06c846e0d65a12367f5b0b5b6c71dbb54ae189639dd7e64",
+      "bundle_manifest_sha256": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f"
+    }
+  },
+  "smoke/hha": {
+    "files": {
+      "arm_status.json": {
+        "status": "PASS",
+        "arm": "hha",
+        "phase": "smoke",
+        "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+        "started_at": 1790218412.4188783,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "rank_initialization_count": 8,
+        "smoke_summary_sha256": "a172e02951b04aa686234ce16ba558f6a188d785eec0592901e32b7744ed63cc",
+        "finished_at": 1790218478.3059926
+      },
+      "ddp_optimizer_smoke_summary.json": {
+        "status": "PASS",
+        "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+        "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+        "comparison_arm": "hha",
+        "gpu_count": 8,
+        "rank_count": 8,
+        "iterations": 20,
+        "resume_iterations": 2,
+        "optimizer_step_executed": true,
+        "checkpoint_saved": true,
+        "checkpoint_resumed": true,
+        "checkpoint_restore_path": "Engine.restore_checkpoint",
+        "rank_runtime_state_restored": true,
+        "sampler_epoch_restored": true,
+        "parameters_match_after_restore": true,
+        "parameter_groups_changed": {
+          "rgb_encoder": true,
+          "x_encoder": true,
+          "fusion": true,
+          "decoder": true
+        },
+        "parameter_groups_changed_after_resume": {
+          "rgb_encoder": true,
+          "x_encoder": true,
+          "fusion": true,
+          "decoder": true
+        },
+        "loss_finite": true,
+        "logits_finite": true,
+        "gradients_finite": true,
+        "lr_continuous_across_restore": true,
+        "lr_updated_after_resume": true,
+        "pretrained_model_loaded": true,
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/runtime/checkpoints/recovery_epoch_odd.pth",
+        "checkpoint_epoch": 5,
+        "checkpoint_iteration": 20,
+        "checkpoint_kind": "DISPOSABLE_DDP_SMOKE_REAL_ENGINE_RECOVERY",
+        "pretrained_model": "/data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth",
+        "input_audit_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/reports/three_arm_data_contract.json",
+        "cache_generation_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/cache_generation_summary.json",
+        "cache_audit_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/audit/cache_audit_summary.json",
+        "training_data_preflight_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/preflight/cmx_training_data_preflight_summary.json",
+        "ranks": [
+          {
+            "status": "PASS",
+            "rank": 0,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2052946
+          },
+          {
+            "status": "PASS",
+            "rank": 1,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2052947
+          },
+          {
+            "status": "PASS",
+            "rank": 2,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2052948
+          },
+          {
+            "status": "PASS",
+            "rank": 3,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2052949
+          },
+          {
+            "status": "PASS",
+            "rank": 4,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2052950
+          },
+          {
+            "status": "PASS",
+            "rank": 5,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2052953
+          },
+          {
+            "status": "PASS",
+            "rank": 6,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2052955
+          },
+          {
+            "status": "PASS",
+            "rank": 7,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2052956
+          }
+        ],
+        "file_hash_written": false
+      },
+      "exitcode": 0
+    },
+    "rank_init_count": 8,
+    "rank_done_count": 8,
+    "errors": {},
+    "initializations": [
+      {
+        "rank": 0,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 1,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 2,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 3,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 4,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 5,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 6,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 7,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      }
+    ]
+  },
+  "smoke/relplus": {
+    "files": {
+      "arm_status.json": {
+        "status": "PASS",
+        "arm": "relplus",
+        "phase": "smoke",
+        "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+        "started_at": 1790218478.3102272,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "rank_initialization_count": 8,
+        "smoke_summary_sha256": "11ba9b4904826c8f02792a3560eb6a56050474e8895c74b335ad8de7c7decbcb",
+        "finished_at": 1790218544.1544218
+      },
+      "ddp_optimizer_smoke_summary.json": {
+        "status": "PASS",
+        "integration_protocol_id": "CMX_RELPLUS_V2_3",
+        "representation_protocol_id": "RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT",
+        "comparison_arm": "relplus",
+        "gpu_count": 8,
+        "rank_count": 8,
+        "iterations": 20,
+        "resume_iterations": 2,
+        "optimizer_step_executed": true,
+        "checkpoint_saved": true,
+        "checkpoint_resumed": true,
+        "checkpoint_restore_path": "Engine.restore_checkpoint",
+        "rank_runtime_state_restored": true,
+        "sampler_epoch_restored": true,
+        "parameters_match_after_restore": true,
+        "parameter_groups_changed": {
+          "rgb_encoder": true,
+          "x_encoder": true,
+          "fusion": true,
+          "decoder": true
+        },
+        "parameter_groups_changed_after_resume": {
+          "rgb_encoder": true,
+          "x_encoder": true,
+          "fusion": true,
+          "decoder": true
+        },
+        "loss_finite": true,
+        "logits_finite": true,
+        "gradients_finite": true,
+        "lr_continuous_across_restore": true,
+        "lr_updated_after_resume": true,
+        "pretrained_model_loaded": true,
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/runtime/checkpoints/recovery_epoch_odd.pth",
+        "checkpoint_epoch": 5,
+        "checkpoint_iteration": 20,
+        "checkpoint_kind": "DISPOSABLE_DDP_SMOKE_REAL_ENGINE_RECOVERY",
+        "pretrained_model": "/data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth",
+        "input_audit_report": null,
+        "cache_generation_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/cache_generation_summary.json",
+        "cache_audit_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/audit/cache_audit_summary.json",
+        "training_data_preflight_report": "/data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v2_3/formal_cache/preflight/cmx_training_data_preflight_summary.json",
+        "ranks": [
+          {
+            "status": "PASS",
+            "rank": 0,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2055125
+          },
+          {
+            "status": "PASS",
+            "rank": 1,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2055126
+          },
+          {
+            "status": "PASS",
+            "rank": 2,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2055127
+          },
+          {
+            "status": "PASS",
+            "rank": 3,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2055128
+          },
+          {
+            "status": "PASS",
+            "rank": 4,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2055129
+          },
+          {
+            "status": "PASS",
+            "rank": 5,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2055131
+          },
+          {
+            "status": "PASS",
+            "rank": 6,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2055134
+          },
+          {
+            "status": "PASS",
+            "rank": 7,
+            "world_size": 8,
+            "iterations_before_checkpoint": 20,
+            "iterations_after_resume": 2,
+            "optimizer_step_executed": true,
+            "checkpoint_saved": true,
+            "checkpoint_resumed": true,
+            "checkpoint_restore_path": "Engine.restore_checkpoint",
+            "rank_runtime_state_restored": true,
+            "sampler_epoch_restored": 5,
+            "parameters_match_after_restore": true,
+            "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/runtime/checkpoints/recovery_epoch_odd.pth",
+            "checkpoint_epoch": 5,
+            "checkpoint_iteration": 20,
+            "restored_state_epoch": 6,
+            "parameter_groups_changed": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "parameter_groups_changed_after_resume": {
+              "rgb_encoder": true,
+              "x_encoder": true,
+              "fusion": true,
+              "decoder": true
+            },
+            "loss_finite": true,
+            "logits_finite": true,
+            "gradients_finite": true,
+            "lr_before_restore": 2.4126984126984124e-07,
+            "lr_after_restore": 2.4126984126984124e-07,
+            "lr_after_resume": 2.6666666666666667e-07,
+            "lr_continuous_across_restore": true,
+            "lr_updated_after_resume": true,
+            "pretrained_model_loaded": true,
+            "author_nan_replacement_count": 0,
+            "pid": 2055137
+          }
+        ],
+        "file_hash_written": false
+      },
+      "exitcode": 0
+    },
+    "rank_init_count": 8,
+    "rank_done_count": 8,
+    "errors": {},
+    "initializations": [
+      {
+        "rank": 0,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 1,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 2,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 3,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 4,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 5,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 6,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      },
+      {
+        "rank": 7,
+        "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+        "actual_criterion": {
+          "type": "FocalLoss2d",
+          "focal_gamma": 1.5,
+          "reduction": "none",
+          "ignore_index": 255
+        },
+        "local_batch": 7,
+        "global_batch": 56,
+        "initial_optimizer_lrs": [
+          0.00012,
+          0.00012
+        ]
+      }
+    ]
+  },
+  "gpus": "0, 1 MiB, 37, 0 %\n1, 1 MiB, 39, 0 %\n2, 1 MiB, 36, 0 %\n3, 1 MiB, 40, 0 %\n4, 1 MiB, 37, 0 %\n5, 1 MiB, 36, 0 %\n6, 1 MiB, 36, 0 %\n7, 1 MiB, 37, 0 %\n",
+  "prepare_process": {
+    "pid": 2052814,
+    "exists": false
+  }
+}

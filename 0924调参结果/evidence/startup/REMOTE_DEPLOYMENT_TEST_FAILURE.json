@@ -1,0 +1,11 @@
+{
+  "status": "TEST_COMPATIBILITY_FAILURE_BEFORE_LAUNCH",
+  "training_tests": 27,
+  "evaluation_tests_passed": 13,
+  "evaluation_tests_error": 1,
+  "error": "math.nextafter is unavailable in remote Python 3.8",
+  "affected_file": "evaluation/test_evaluation_contract.py",
+  "production_logic_failure": false,
+  "formal_training_launched": false,
+  "remediation": "use Python3.8-compatible next-representable positive float in test; re-run evaluation tests"
+}

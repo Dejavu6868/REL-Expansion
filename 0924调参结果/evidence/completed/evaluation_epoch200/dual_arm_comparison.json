@@ -1,0 +1,492 @@
+{
+  "status": "PASS_FIXED_EPOCH200_DESCRIPTIVE_COMPARISON",
+  "seed": 12345,
+  "training_batch_size": 56,
+  "training_lr": 0.00012,
+  "training_focal_gamma": 1.5,
+  "primary_baseline_focal_gamma": 1,
+  "historical_baseline_focal_gamma": 2,
+  "checkpoint_epoch": 200,
+  "evaluation_samples_per_arm": 17593,
+  "class_names": [
+    "beam",
+    "board",
+    "bookcase",
+    "ceiling",
+    "chair",
+    "clutter",
+    "column",
+    "door",
+    "floor",
+    "sofa",
+    "table",
+    "wall",
+    "window"
+  ],
+  "arms": {
+    "hha": {
+      "status": "PASS",
+      "metrics": {
+        "metric_unit": "fraction_0_to_1",
+        "mIoU": 0.6047034660962765,
+        "pixel_accuracy": 0.8234337649196739,
+        "mean_accuracy": 0.6876393518402721,
+        "mIoU_percent": 60.47034660962765,
+        "pixel_accuracy_percent": 82.34337649196739,
+        "mean_accuracy_percent": 68.76393518402722,
+        "per_class_iou": [
+          0.045830533059216465,
+          0.7698460010777418,
+          0.6671823553829368,
+          0.91771270714125,
+          0.8291690534288946,
+          0.5176275193914417,
+          0.21231610685700927,
+          0.41778607151946534,
+          0.9660814536812822,
+          0.34959293799063773,
+          0.7639701912208835,
+          0.7675616874073361,
+          0.6364684410935002
+        ],
+        "per_class_iou_percent": [
+          4.583053305921647,
+          76.98460010777418,
+          66.71823553829368,
+          91.771270714125,
+          82.91690534288946,
+          51.76275193914417,
+          21.23161068570093,
+          41.77860715194653,
+          96.60814536812822,
+          34.95929379906377,
+          76.39701912208835,
+          76.75616874073361,
+          63.64684410935002
+        ],
+        "valid_pixel_count": 3973620198,
+        "status": "PASS",
+        "scientific_metric_reported": true,
+        "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+        "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/checkpoints/epoch-200.pth",
+        "checkpoint_epoch": 200,
+        "evaluation_sample_count": 17593,
+        "class_count": 13,
+        "ignore_index": 255,
+        "eval_scale_array": [
+          1
+        ],
+        "eval_flip": false,
+        "eval_crop_size": [
+          480,
+          480
+        ],
+        "eval_align_corners": false,
+        "world_size": 8,
+        "file_hash_written": false
+      },
+      "gt_histogram": [
+        1847860,
+        119677520,
+        490228389,
+        305645486,
+        62043298,
+        410165825,
+        75956637,
+        389388075,
+        322981046,
+        8229986,
+        147588579,
+        1466019722,
+        173847775
+      ],
+      "rank_counts": [
+        2200,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199
+      ],
+      "checkpoint_sha256": "cb5d1d9a456a32f98952f9b1eb429e1393493988f17218511436042e889ac405",
+      "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+      "checks": {
+        "exitcode_zero": true,
+        "fixed_epoch_200": true,
+        "ordered_rank_shards_match": true,
+        "unique_test_samples": 17593,
+        "manifest_matches_rank_shards": true,
+        "rank_confusions_match_csv": true,
+        "nonnegative_integer_confusions": true,
+        "metrics_independently_recomputed": true,
+        "valid_pixel_count": 3973620198,
+        "class_order_matches": true,
+        "checkpoint_path_size_mtime_sha256_unchanged": true
+      }
+    },
+    "relplus": {
+      "status": "PASS",
+      "metrics": {
+        "metric_unit": "fraction_0_to_1",
+        "mIoU": 0.6116096760491045,
+        "pixel_accuracy": 0.8343638356954013,
+        "mean_accuracy": 0.6932064280830565,
+        "mIoU_percent": 61.160967604910454,
+        "pixel_accuracy_percent": 83.43638356954013,
+        "mean_accuracy_percent": 69.32064280830565,
+        "per_class_iou": [
+          0.032201237896485,
+          0.7258384581727294,
+          0.6815875011091633,
+          0.9263402369577449,
+          0.8253272736055068,
+          0.5195393074952225,
+          0.25223770444901,
+          0.5035928597507494,
+          0.9653857723584823,
+          0.31598812394595455,
+          0.7661288902393804,
+          0.7884429472069842,
+          0.648315475450946
+        ],
+        "per_class_iou_percent": [
+          3.2201237896485,
+          72.58384581727294,
+          68.15875011091633,
+          92.63402369577449,
+          82.53272736055068,
+          51.95393074952225,
+          25.223770444901,
+          50.35928597507494,
+          96.53857723584824,
+          31.598812394595456,
+          76.61288902393804,
+          78.84429472069841,
+          64.83154754509461
+        ],
+        "valid_pixel_count": 3973620198,
+        "status": "PASS",
+        "scientific_metric_reported": true,
+        "integration_protocol_id": "CMX_RELPLUS_V2_3",
+        "representation_protocol_id": "RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT",
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/checkpoints/epoch-200.pth",
+        "checkpoint_epoch": 200,
+        "evaluation_sample_count": 17593,
+        "class_count": 13,
+        "ignore_index": 255,
+        "eval_scale_array": [
+          1
+        ],
+        "eval_flip": false,
+        "eval_crop_size": [
+          480,
+          480
+        ],
+        "eval_align_corners": false,
+        "world_size": 8,
+        "file_hash_written": false
+      },
+      "gt_histogram": [
+        1847860,
+        119677520,
+        490228389,
+        305645486,
+        62043298,
+        410165825,
+        75956637,
+        389388075,
+        322981046,
+        8229986,
+        147588579,
+        1466019722,
+        173847775
+      ],
+      "rank_counts": [
+        2200,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199
+      ],
+      "checkpoint_sha256": "1812ce2f4c1109b1ce5308a51e5a3aa06376a9f6abc8ffc43194ac6658358be6",
+      "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+      "checks": {
+        "exitcode_zero": true,
+        "fixed_epoch_200": true,
+        "ordered_rank_shards_match": true,
+        "unique_test_samples": 17593,
+        "manifest_matches_rank_shards": true,
+        "rank_confusions_match_csv": true,
+        "nonnegative_integer_confusions": true,
+        "metrics_independently_recomputed": true,
+        "valid_pixel_count": 3973620198,
+        "class_order_matches": true,
+        "checkpoint_path_size_mtime_sha256_unchanged": true
+      }
+    }
+  },
+  "baseline_gamma1": {
+    "status": "PASS",
+    "focal_gamma": 1,
+    "seed": 12345,
+    "source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/comparison.json",
+      "size": 9437,
+      "sha256": "5d535c50ef1c29fa55de00b3cb8069077f7dff0d117c9b6b8abf1324efd64125"
+    },
+    "suite_source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/suite.json",
+      "size": 3269,
+      "sha256": "319d3d63d207e1ca8c3594ed20eb119f954ecfcb24562262b313dd74eedb4731"
+    },
+    "config_sources": {
+      "hha": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/hha.json",
+        "size": 8651,
+        "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+      },
+      "relplus": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/relplus.json",
+        "size": 7818,
+        "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+      }
+    },
+    "frozen_config_comparisons": {
+      "hha": {
+        "status": "PASS_ONLY_FOCAL_GAMMA_AND_DERIVED_IDENTITIES_CHANGED",
+        "gamma2_config_source": {
+          "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline/gamma2_hha.json",
+          "size": 8589,
+          "sha256": "97bc3b5fd8e98a2663c0596685feda34a38804ac73a34b147376be5ea70f3b6d"
+        },
+        "gamma1_config_source": {
+          "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/hha.json",
+          "size": 8651,
+          "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+        }
+      },
+      "relplus": {
+        "status": "PASS_ONLY_FOCAL_GAMMA_AND_DERIVED_IDENTITIES_CHANGED",
+        "gamma2_config_source": {
+          "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline/gamma2_relplus.json",
+          "size": 7756,
+          "sha256": "dece975cbb673f4a543ea14b73ac8d6ee3f4dbb40d920b116a773e949947eb34"
+        },
+        "gamma1_config_source": {
+          "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/relplus.json",
+          "size": 7818,
+          "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+        }
+      }
+    },
+    "class_names": [
+      "beam",
+      "board",
+      "bookcase",
+      "ceiling",
+      "chair",
+      "clutter",
+      "column",
+      "door",
+      "floor",
+      "sofa",
+      "table",
+      "wall",
+      "window"
+    ],
+    "training_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920",
+    "training_output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2",
+    "metrics": {
+      "hha": {
+        "mIoU_percent": 60.182898850089714,
+        "pixel_accuracy_percent": 82.49702494591557,
+        "mean_accuracy_percent": 68.10313214153503
+      },
+      "relplus": {
+        "mIoU_percent": 61.40637239796889,
+        "pixel_accuracy_percent": 82.91289229550067,
+        "mean_accuracy_percent": 69.36485738988449
+      }
+    },
+    "checkpoint_sha256": {
+      "hha": "d4d210ea92a473cc700b1660dff7da644e8d1b9934be759b216c0d4931ae2b4d",
+      "relplus": "6506a922b9d31919576b3f998864993a24ca7f07baca868d71a5ff3b6a581831"
+    },
+    "gt_histogram": [
+      1847860,
+      119677520,
+      490228389,
+      305645486,
+      62043298,
+      410165825,
+      75956637,
+      389388075,
+      322981046,
+      8229986,
+      147588579,
+      1466019722,
+      173847775
+    ],
+    "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+    "relplus_minus_hha_pp": {
+      "mIoU_percent": 1.2234735478791734,
+      "pixel_accuracy_percent": 0.4158673495850991,
+      "mean_accuracy_percent": 1.2617252483494639
+    }
+  },
+  "baseline_gamma2": {
+    "status": "PASS",
+    "focal_gamma": 2,
+    "source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline/comparison_verified.json",
+      "size": 2320,
+      "sha256": "c5148dd245515fa1f97d15f0ad06c56c3d93c5f663af9edad0c34a3b3ba609af"
+    },
+    "seed": 12345,
+    "suite_source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline/suite.json",
+      "size": 2964,
+      "sha256": "a8f323e48d8b70fc2bb6f429a0450bbf47eaff1dfbb308edbfc2a458a2282090"
+    },
+    "training_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915",
+    "training_output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1",
+    "metrics": {
+      "hha": {
+        "mIoU_percent": 60.98827182233775,
+        "pixel_accuracy_percent": 82.42028293615998,
+        "mean_accuracy_percent": 69.20157179544748
+      },
+      "relplus": {
+        "mIoU_percent": 61.016897597503004,
+        "pixel_accuracy_percent": 83.01789966389737,
+        "mean_accuracy_percent": 69.13876764179273
+      }
+    },
+    "checkpoint_sha256": {
+      "hha": "c5cf78b12d2458a48fe5505a4b7099ef84308dd4790f8283c02a605ba05ccd03",
+      "relplus": "bf17b065bbbedf01f78c698b039c384c9b220a2332b24b930ca685db552e1232"
+    },
+    "gt_histogram": [
+      1847860,
+      119677520,
+      490228389,
+      305645486,
+      62043298,
+      410165825,
+      75956637,
+      389388075,
+      322981046,
+      8229986,
+      147588579,
+      1466019722,
+      173847775
+    ],
+    "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+    "relplus_minus_hha_pp": {
+      "mIoU_percent": 0.028625775165252776,
+      "pixel_accuracy_percent": 0.5976167277373889,
+      "mean_accuracy_percent": -0.06280415365475278
+    }
+  },
+  "config_comparisons": {
+    "hha": {
+      "status": "PASS_ONLY_FOCAL_GAMMA_AND_DERIVED_IDENTITIES_CHANGED",
+      "baseline_focal_gamma": 1,
+      "training_focal_gamma": 1.5,
+      "resolved_field_count": 129,
+      "baseline_config_source": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/hha.json",
+        "size": 8651,
+        "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+      }
+    },
+    "relplus": {
+      "status": "PASS_ONLY_FOCAL_GAMMA_AND_DERIVED_IDENTITIES_CHANGED",
+      "baseline_focal_gamma": 1,
+      "training_focal_gamma": 1.5,
+      "resolved_field_count": 122,
+      "baseline_config_source": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/baseline_gamma1/relplus.json",
+        "size": 7818,
+        "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+      }
+    }
+  },
+  "differences_percentage_points": {
+    "relplus-hha": {
+      "mIoU_percent": 0.6906209952828064,
+      "pixel_accuracy_percent": 1.0930070775727359,
+      "mean_accuracy_percent": 0.556707624278431
+    }
+  },
+  "gamma1_5_minus_gamma1_percentage_points": {
+    "hha": {
+      "mIoU_percent": 0.2874477595379332,
+      "pixel_accuracy_percent": -0.15364845394817905,
+      "mean_accuracy_percent": 0.6608030424921907
+    },
+    "relplus": {
+      "mIoU_percent": -0.24540479305843377,
+      "pixel_accuracy_percent": 0.5234912740394577,
+      "mean_accuracy_percent": -0.04421458157884217
+    }
+  },
+  "gamma1_5_minus_gamma2_percentage_points": {
+    "hha": {
+      "mIoU_percent": -0.5179252127101037,
+      "pixel_accuracy_percent": -0.07690644419258774,
+      "mean_accuracy_percent": -0.43763661142025967
+    },
+    "relplus": {
+      "mIoU_percent": 0.1440700074074499,
+      "pixel_accuracy_percent": 0.41848390564275917,
+      "mean_accuracy_percent": 0.18187516651292412
+    }
+  },
+  "relplus_minus_hha_percentage_points": {
+    "gamma1_5": {
+      "mIoU_percent": 0.6906209952828064,
+      "pixel_accuracy_percent": 1.0930070775727359,
+      "mean_accuracy_percent": 0.556707624278431
+    },
+    "gamma1": {
+      "mIoU_percent": 1.2234735478791734,
+      "pixel_accuracy_percent": 0.4158673495850991,
+      "mean_accuracy_percent": 1.2617252483494639
+    },
+    "gamma2": {
+      "mIoU_percent": 0.028625775165252776,
+      "pixel_accuracy_percent": 0.5976167277373889,
+      "mean_accuracy_percent": -0.06280415365475278
+    }
+  },
+  "relplus_minus_hha_gap_change_percentage_points": {
+    "gamma1_5_minus_gamma1": {
+      "mIoU_percent": -0.532852552596367,
+      "pixel_accuracy_percent": 0.6771397279876368,
+      "mean_accuracy_percent": -0.7050176240710329
+    },
+    "gamma1_5_minus_gamma2": {
+      "mIoU_percent": 0.6619952201175536,
+      "pixel_accuracy_percent": 0.4953903498353469,
+      "mean_accuracy_percent": 0.6195117779331838
+    }
+  },
+  "candidate_screening": {
+    "status": "FAIL",
+    "checks": {
+      "relplus_mIoU_strictly_above_gamma1": false,
+      "hha_mIoU_at_least_gamma1": true
+    },
+    "metric": "mIoU_percent",
+    "comparison_precision": "full stored float precision; no rounding before comparison",
+    "scope": "Single-seed descriptive candidate screening; not a statistical superiority claim."
+  },
+  "scientific_boundary": "Single seed, fixed epoch 200; gamma is the sole changed shared control. Differences are descriptive and do not establish stable superiority."
+}

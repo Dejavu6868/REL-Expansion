@@ -1,0 +1,23 @@
+{
+  "status": "PASS_CPU_ONLY",
+  "test_command": "python3 -B evaluation/test_evaluation_contract.py",
+  "tests_run": 14,
+  "tests_failed": 0,
+  "syntax_check": "PASS",
+  "audit_eval_byte_identity": "PASS",
+  "audit_eval_sha256": "2c59e75f999ecd9e350dd1a75d19448f316d7dcf5f263d6cb94a8d125dfd6c07",
+  "input_adapter_only_source_path_changed": "PASS",
+  "eval_rank_main_AST_identity": "PASS",
+  "evaluate_arm_AST_identity": "PASS",
+  "baseline_gamma1_and_gamma2_sha_config_GT_seed_checks": "PASS",
+  "descriptive_candidate_precision_boundary_test": "PASS",
+  "real_training_or_evaluation_launched": false,
+  "synthetic_metrics_are_not_model_results": true,
+  "python38_test_compatibility_fix": {
+    "scope": "test_evaluation_contract.py only; production logic unchanged",
+    "change": "replace unavailable math.nextafter with struct binary64 adjacent positive floating point fixture",
+    "local_tests_run": 14,
+    "local_tests_failed": 0,
+    "remote_python38_rerun": "PENDING_PARENT_VALIDATION"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-09-25T15:56:17.286642+08:00",
+  "status": "BLOCKED_REMOTE_STATUS_ACCESS",
+  "control_socket_exists": false,
+  "direct_ssh_exit_code": 255,
+  "direct_ssh_error": "Permission denied (publickey,password).",
+  "current_training_status": "UNKNOWN_NOT_REFRESHED",
+  "last_verified_snapshot": "startup_snapshot.json",
+  "last_verified_at": "2026-09-24T10:58:18.965715+08:00",
+  "training_stop_or_restart_attempted": false,
+  "required_next_step": "User authenticates an SSH master connection; then read live pipeline, train, runtime, checkpoints, logs, GPU and supervisor identity."
+}

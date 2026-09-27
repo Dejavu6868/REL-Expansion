@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "source_file_count": 174,
+  "source_byte_identical_to_frozen": true,
+  "training_test_count": 27,
+  "training_test_exitcode": 0,
+  "unchanged_outer_files": [
+    "launch_phase.py",
+    "resource_guard.py",
+    "pipeline.py",
+    "run_suite.py",
+    "preflight.py"
+  ],
+  "changed_training_files": [
+    "suite_common.py",
+    "run_arm.py"
+  ],
+  "training_changes": "gamma1 -> 1.5; exact FG15 source/output identity; pinned gamma1 baseline config hashes",
+  "baseline_archive_commit": "c8ff74502cf6717fc554adc47db4d14e9ddd42a9"
+}

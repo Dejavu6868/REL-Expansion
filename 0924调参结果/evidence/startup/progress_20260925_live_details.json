@@ -1,0 +1,71 @@
+{
+  "queried_at": 1790324671.462791,
+  "arms": {
+    "hha": {
+      "runtime": {
+        "status": "RUNNING",
+        "epoch": 162,
+        "iteration_in_epoch": 230,
+        "global_iteration": 152375,
+        "loss": 0.007252750918269157,
+        "learning_rate": 2.740161526339456e-05,
+        "optimizer_step_executed": true,
+        "author_nan_replacement_count": 0,
+        "world_size": 8
+      },
+      "runtime_age_seconds": 0.8915836811065674,
+      "arm_status": {
+        "status": "RUNNING",
+        "arm": "hha",
+        "phase": "train",
+        "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+        "started_at": 1790218643.1793783
+      },
+      "latest_checkpoint": {
+        "name": "epoch-160.pth",
+        "size": 799760393,
+        "mtime": 1790323846.4594426
+      },
+      "last_log_lines": [
+        "Epoch 162/200 Iter 231/945: lr=2.7401e-05 loss=0.0088 total_loss=0.0080: [02:45<08:13, 1.45it/s]",
+        "Epoch 162/200 Iter 231/945: lr=2.7401e-05 loss=0.0088 total_loss=0.0080: [02:45<08:13, 1.45it/s]",
+        "Epoch 162/200 Iter 231/945: lr=2.7401e-05 loss=0.0088 total_loss=0.0080: [02:45<08:13, 1.45it/s]",
+        "Epoch 162/200 Iter 231/945: lr=2.7401e-05 loss=0.0088 total_loss=0.0080: [02:45<08:13, 1.45it/s]",
+        "Epoch 162/200 Iter 231/945: lr=2.7401e-05 loss=0.0088 total_loss=0.0080: [02:45<08:13, 1.45it/s]",
+        "Epoch 162/200 Iter 231/945: lr=2.7401e-05 loss=0.0088 total_loss=0.0080: [02:45<08:13, 1.45it/s]",
+        "Epoch 162/200 Iter 231/945: lr=2.7401e-05 loss=0.0088 total_loss=0.0080: [02:45<08:13, 1.45it/s]",
+        "Epoch 162/200 Iter 231/945: lr=2.7401e-05 loss=0.0088 total_loss=0.0080: [02:45<08:16, 1.44it/s]"
+      ],
+      "exitcode": null,
+      "rank_errors": []
+    },
+    "relplus": {
+      "state": "QUEUED",
+      "directory_exists": false
+    }
+  },
+  "supervisor": {
+    "pid": 2057311,
+    "recorded_starttime": "1088289304",
+    "exists": true,
+    "actual_starttime": "1088289304",
+    "cmdline": "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python -B /home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/pipeline.py --phase execute "
+  },
+  "gpu_csv": "0, 17684 MiB, 24576 MiB, 65, 92 %\n1, 17684 MiB, 24576 MiB, 67, 88 %\n2, 17684 MiB, 24576 MiB, 62, 88 %\n3, 17684 MiB, 24576 MiB, 68, 100 %\n4, 17684 MiB, 24576 MiB, 67, 100 %\n5, 17684 MiB, 24576 MiB, 64, 100 %\n6, 17684 MiB, 24576 MiB, 65, 100 %\n7, 17684 MiB, 24576 MiB, 66, 100 %\n",
+  "previous_gamma1_durations": [
+    {
+      "arm": "hha",
+      "status": "PASS",
+      "started_at": 1789918375.2515886,
+      "finished_at": 1790049426.4791694,
+      "hours": 36.403118772440486
+    },
+    {
+      "arm": "relplus",
+      "status": "PASS",
+      "started_at": 1790049426.4866621,
+      "finished_at": 1790180529.0515249,
+      "hours": 36.417379128535586
+    }
+  ]
+}

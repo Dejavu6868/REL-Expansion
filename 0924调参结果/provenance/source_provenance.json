@@ -1,0 +1,16 @@
+{
+  "remote_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924",
+  "remote_output": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1",
+  "source_snapshot_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source",
+  "training_entrypoint": "pipeline.py --phase execute -> run_suite.py -> run_arm.py -> source/train.py",
+  "evaluation_entrypoint": "evaluation/run_evaluation.py -> evaluation/eval_rank.py",
+  "bundle_manifest_sha256": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f",
+  "suite_sha256": "ccd10368db7f700eb06c846e0d65a12367f5b0b5b6c71dbb54ae189639dd7e64",
+  "bundle_files": 206,
+  "source_python_files": 174,
+  "source_identity": "Exact executed snapshot bytes identified by SHA256; repository HEAD is not claimed as remote execution checkout.",
+  "baseline_repository_commit": "c8ff74502cf6717fc554adc47db4d14e9ddd42a9",
+  "supplementary_notices": "code/reference_notices comes from the prior frozen archives, outside the executed 206-file manifest.",
+  "report_derivation": "REPORT.md preserves results, adapts evidence links and the freeze/publication wording; original is evidence/local_original/RESULTS.md.",
+  "historical_audit_script": "evidence/completed/independent_offline_audit.py is preserved unchanged for provenance and refers to original workspace paths; use root verify_archive.py for portable read-only verification."
+}

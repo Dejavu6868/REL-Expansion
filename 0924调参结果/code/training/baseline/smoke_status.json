@@ -1,0 +1,50 @@
+{
+  "status": "PASS",
+  "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+  "phase": "smoke",
+  "started_at": 1789487339.3349943,
+  "supervisor_pid": 810843,
+  "suite_sha256": "a8f323e48d8b70fc2bb6f429a0450bbf47eaff1dfbb308edbfc2a458a2282090",
+  "arms": [
+    "rgbd",
+    "hha",
+    "relplus"
+  ],
+  "completed": [
+    {
+      "status": "PASS",
+      "arm": "rgbd",
+      "phase": "smoke",
+      "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+      "started_at": 1789487339.335635,
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "rank_initialization_count": 8,
+      "smoke_summary_sha256": "0ee72270976e893daa48b45d06afeff0358a750a6c92bff6661d094ba87c36ac",
+      "finished_at": 1789487404.9988947
+    },
+    {
+      "status": "PASS",
+      "arm": "hha",
+      "phase": "smoke",
+      "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+      "started_at": 1789487405.0226626,
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "rank_initialization_count": 8,
+      "smoke_summary_sha256": "a2181fffad4e4d4f4a25c87168d59d0b878140d4ae6d271fed4ed3e9081b9f13",
+      "finished_at": 1789487470.6597178
+    },
+    {
+      "status": "PASS",
+      "arm": "relplus",
+      "phase": "smoke",
+      "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+      "started_at": 1789487470.661709,
+      "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+      "rank_initialization_count": 8,
+      "smoke_summary_sha256": "093c6bf6f0f64bc55df61b41cec6d7b88424ebab654e9fb25ce994d13df7f1a5",
+      "finished_at": 1789487541.2978513
+    }
+  ],
+  "active_arm": null,
+  "finished_at": 1789487541.2991633
+}

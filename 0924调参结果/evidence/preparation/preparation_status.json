@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "phase": "prepare",
+  "suite_id": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924",
+  "started_at": 1790218399.5562706,
+  "supervisor_pid": 2052814,
+  "supervisor_starttime": "1088264944",
+  "completed_stages": [
+    "preflight",
+    "smoke"
+  ],
+  "active_stage": null,
+  "bundle_integrity": {
+    "status": "PASS",
+    "file_count": 206,
+    "manifest_sha256": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f"
+  },
+  "final_bundle_integrity": {
+    "status": "PASS",
+    "file_count": 206,
+    "manifest_sha256": "e488b4974ccf70095a3be6010a3c6ecc4f488e38b6d136475e690850c1a5605f"
+  },
+  "finished_at": 1790218544.1867547
+}

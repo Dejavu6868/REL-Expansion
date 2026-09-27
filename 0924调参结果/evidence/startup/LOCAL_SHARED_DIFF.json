@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "baseline_commit": "c8ff74502cf6717fc554adc47db4d14e9ddd42a9",
+  "shared_diff": {
+    "focal_gamma": {
+      "before": 1.0,
+      "after": 1.5
+    }
+  },
+  "baseline_unchanged": true
+}

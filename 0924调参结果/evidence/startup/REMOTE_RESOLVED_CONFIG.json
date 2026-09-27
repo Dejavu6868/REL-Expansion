@@ -1,0 +1,155 @@
+{
+  "status": "PASS",
+  "arms": {
+    "hha": {
+      "status": "PASS_ONLY_FOCAL_GAMMA_CHANGED",
+      "arm": "hha",
+      "baseline_sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120",
+      "resolved_field_count": 129,
+      "differences": {
+        "root_dir": {
+          "before": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+          "after": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source"
+        },
+        "abs_dir": {
+          "before": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+          "after": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source"
+        },
+        "experiment_name": {
+          "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920_hha",
+          "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924_hha"
+        },
+        "focal_gamma": {
+          "before": 1.0,
+          "after": 1.5
+        },
+        "output_dir": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha"
+        },
+        "log_dir": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs"
+        },
+        "tb_dir": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/tensorboard",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/tensorboard"
+        },
+        "log_dir_link": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/latest_logs",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/latest_logs"
+        },
+        "checkpoint_dir": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/checkpoints",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/checkpoints"
+        },
+        "log_file": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs/train.log",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs/train.log"
+        },
+        "link_log_file": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs/train_last.log",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs/train_last.log"
+        },
+        "val_log_file": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs/val.log",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs/val.log"
+        },
+        "link_val_log_file": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/logs/val_last.log",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/hha/logs/val_last.log"
+        },
+        "ddp_smoke_report": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/smoke/hha/ddp_optimizer_smoke_summary.json",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/hha/ddp_optimizer_smoke_summary.json"
+        },
+        "comparison_protocol_id": {
+          "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+          "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924"
+        },
+        "experiment_protocol_id": {
+          "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+          "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924"
+        }
+      },
+      "semantic_changes": [
+        "focal_gamma"
+      ]
+    },
+    "relplus": {
+      "status": "PASS_ONLY_FOCAL_GAMMA_CHANGED",
+      "arm": "relplus",
+      "baseline_sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01",
+      "resolved_field_count": 122,
+      "differences": {
+        "root_dir": {
+          "before": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+          "after": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source"
+        },
+        "abs_dir": {
+          "before": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+          "after": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG15-20260924/source"
+        },
+        "experiment_name": {
+          "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920_relplus",
+          "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924_relplus"
+        },
+        "focal_gamma": {
+          "before": 1.0,
+          "after": 1.5
+        },
+        "output_dir": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus"
+        },
+        "log_dir": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs"
+        },
+        "tb_dir": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/tensorboard",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/tensorboard"
+        },
+        "log_dir_link": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/latest_logs",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/latest_logs"
+        },
+        "checkpoint_dir": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/checkpoints",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/checkpoints"
+        },
+        "log_file": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs/train.log",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs/train.log"
+        },
+        "link_log_file": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs/train_last.log",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs/train_last.log"
+        },
+        "val_log_file": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs/val.log",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs/val.log"
+        },
+        "link_val_log_file": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/logs/val_last.log",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/runs/relplus/logs/val_last.log"
+        },
+        "ddp_smoke_report": {
+          "before": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/smoke/relplus/ddp_optimizer_smoke_summary.json",
+          "after": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG15_20260924/attempt1/smoke/relplus/ddp_optimizer_smoke_summary.json"
+        },
+        "experiment_protocol_id": {
+          "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+          "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924"
+        },
+        "comparison_protocol_id": {
+          "before": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+          "after": "CMX_S2D_B56_LR12_FG15_SEED12345_20260924"
+        }
+      },
+      "semantic_changes": [
+        "focal_gamma"
+      ]
+    }
+  }
+}

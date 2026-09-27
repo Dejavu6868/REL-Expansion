@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-09-27T14:38:22.485022+08:00",
+  "status": "BLOCKED_REMOTE_STATUS_ACCESS",
+  "control_socket_exists": false,
+  "ssh_error": "zhuzhaoziao@172.20.50.33: Permission denied (publickey,password).",
+  "current_training_status": "UNKNOWN_NOT_REFRESHED",
+  "last_verified_at": "2026-09-25T16:24:31.462791+08:00",
+  "last_verified_summary": "HHA epoch162/200,152375/189000 updates;REL+ queued;no evaluation yet",
+  "training_stop_or_restart_attempted": false
+}
