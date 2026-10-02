@@ -38,6 +38,10 @@ DEFAULT_THRESHOLDS = {
     "egvia_angle_deg_median": 2.0,
     "loa_deg_median": 2.0,
 }
+HHA_THRESHOLDS = {
+    "angle_deg_median": 2.0,
+    "height_cm_median": 2.0,
+}
 
 
 def import_frozen_source(source_root):
@@ -52,13 +56,19 @@ def import_frozen_source(source_root):
     from rel_plus.camera import CameraGeometry
     from rel_plus.generator import generate_rel_plus_v2_1
     from third_party.rel_original.rel import getREL
-    from third_party.rel_original.rgbd_util import processDepthImage_ERP
+    from third_party.rel_original.rgbd_util import (
+        computeNormalsSquareSupport_ERP,
+        getPointCloud_ERP,
+        processDepthImage_ERP,
+    )
 
     return {
         "CameraGeometry": CameraGeometry,
         "generate_rel_plus_v2_1": generate_rel_plus_v2_1,
         "getREL": getREL,
         "processDepthImage_ERP": processDepthImage_ERP,
+        "getPointCloud_ERP": getPointCloud_ERP,
+        "computeNormalsSquareSupport_ERP": computeNormalsSquareSupport_ERP,
     }
 
 
@@ -201,14 +211,22 @@ def summarize(values):
     }
 
 
-def compare_crop(depth_erp_m, reference, frozen, yaw, pitch, size, fov):
-    """Generate one crop through the perspective path and compare it."""
+def render_crop(depth_erp_m, yaw, pitch, size, fov):
+    """Crop geometry and its Stanford-encoded z-depth, sampled from the ERP."""
     height, width = depth_erp_m.shape
     k_json = crop_intrinsics(size, fov)
     camera_to_world = crop_camera_to_world(yaw, pitch)
     rays_camera, rays_world = crop_rays(size, k_json, camera_to_world)
     rows, columns = erp_indices_for_directions(rays_world, height, width)
     raw_crop = render_crop_raw_depth(depth_erp_m, rows, columns, rays_camera)
+    return k_json, camera_to_world, rows, columns, raw_crop
+
+
+def compare_crop(depth_erp_m, reference, frozen, yaw, pitch, size, fov):
+    """Generate one crop through the perspective path and compare it."""
+    k_json, camera_to_world, rows, columns, raw_crop = render_crop(
+        depth_erp_m, yaw, pitch, size, fov
+    )
     camera = frozen["CameraGeometry"].from_json_k(
         k_json,
         (size, size),
@@ -275,7 +293,79 @@ def compare_crop(depth_erp_m, reference, frozen, yaw, pitch, size, fov):
     return report
 
 
-def check_panorama(raw_depth, frozen, *, yaws, pitches, size, fov, thresholds):
+def compare_crop_hha(depth_erp_m, reference, yaw, pitch, size, fov):
+    """Depth2HHA on one crop against the ERP HHA sampled at the same rays."""
+    import hha
+
+    k_json, camera_to_world, rows, columns, raw_crop = render_crop(
+        depth_erp_m, yaw, pitch, size, fov
+    )
+    crop_valid = (raw_crop != 0) & (raw_crop != 65535)
+    encoded, debug = hha.pinhole_hha(raw_crop / 512.0, crop_valid, k_json)
+    sampled_range = depth_erp_m[rows, columns]
+    mask = crop_valid & reference["valid"][rows, columns]
+    mask &= stable_mask(sampled_range, mask)
+    mask &= np.isfinite(debug["normals"]).all(axis=2)
+    mask &= np.isfinite(reference["normals"][rows, columns]).all(axis=2)
+    sample = lambda name: reference[name][rows, columns]
+    gravity_world = camera_to_world @ debug["gravity_camera"]
+    encoded_erp = reference["encoded"][rows, columns].astype(np.int16)
+    return {
+        "yaw_deg": yaw,
+        "pitch_deg": pitch,
+        "compared_pixels": int(mask.sum()),
+        "crop_valid_pixels": int(crop_valid.sum()),
+        "crop_gravity_error_deg": float(
+            np.degrees(np.arccos(np.clip(-gravity_world[2], -1.0, 1.0)))
+        ),
+        "raw": {
+            "angle_deg": summarize(debug["angle_deg"][mask] - sample("angle_deg")[mask]),
+            "height_cm": summarize(debug["height_cm"][mask] - sample("height_cm")[mask]),
+        },
+        "disparity_depth_ratio_crop_over_erp": summarize(
+            debug["disparity_depth_cm"][mask] / sample("disparity_depth_cm")[mask]
+        ),
+        "encoded_bytes": {
+            channel: summarize(
+                encoded.astype(np.int16)[:, :, index][mask]
+                - encoded_erp[:, :, index][mask]
+            )
+            for index, channel in enumerate(("angle", "height", "disparity"))
+        },
+    }
+
+
+def check_panorama_hha(depth_erp_m, frozen, *, yaws, pitches, size, fov):
+    import hha
+
+    encoded, debug = hha.erp_hha(depth_erp_m, frozen)
+    reference = dict(debug, encoded=encoded, valid=depth_erp_m > 0)
+    crops = [
+        compare_crop_hha(depth_erp_m, reference, yaw, pitch, size, fov)
+        for yaw in yaws
+        for pitch in pitches
+    ]
+    failures = []
+    for crop in crops:
+        for key, limit in HHA_THRESHOLDS.items():
+            quantity = key[: -len("_median")]
+            median = crop["raw"][quantity]["median"]
+            if median is None or median > limit:
+                failures.append(
+                    "HHA yaw={yaw_deg:g} pitch={pitch_deg:g}: ".format(**crop)
+                    + "{} median {} > {}".format(quantity, median, limit)
+                )
+    return {
+        "status": "PASS" if not failures else "FAIL",
+        "failures": failures,
+        "erp_gravity_error_deg": float(
+            np.degrees(np.arccos(np.clip(-debug["gravity_erp"][2], -1.0, 1.0)))
+        ),
+        "crops": crops,
+    }
+
+
+def check_panorama(raw_depth, frozen, *, yaws, pitches, size, fov, thresholds, with_hha=False):
     depth_erp_m = decode_erp_depth(raw_depth)
     reference = erp_reference(depth_erp_m, frozen)
     crops = [
@@ -295,9 +385,16 @@ def check_panorama(raw_depth, frozen, *, yaws, pitches, size, fov, thresholds):
                 )
     points = reference["height_cm"][reference["valid"]]
     radius = reference["radius_cm"][reference["valid"]]
+    hha_report = None
+    if with_hha:
+        hha_report = check_panorama_hha(
+            depth_erp_m, frozen, yaws=yaws, pitches=pitches, size=size, fov=fov
+        )
+        failures += hha_report["failures"]
     return {
         "status": "PASS" if not failures else "FAIL",
         "failures": failures,
+        "hha": hha_report,
         "erp_estimated_gravity_rotation_deg": reference[
             "estimated_gravity_rotation_deg"
         ],
@@ -328,6 +425,7 @@ def main():
     parser.add_argument("--fov", type=float, default=90.0)
     parser.add_argument("--yaws", type=float, nargs="+", default=DEFAULT_YAWS)
     parser.add_argument("--pitches", type=float, nargs="+", default=DEFAULT_PITCHES)
+    parser.add_argument("--hha", action="store_true", help="also check ERP HHA")
     args = parser.parse_args()
 
     frozen = import_frozen_source(args.source_root)
@@ -344,6 +442,7 @@ def main():
             size=args.crop_size,
             fov=args.fov,
             thresholds=DEFAULT_THRESHOLDS,
+            with_hha=args.hha,
         )
         print("{}: {}".format(path.name, results[str(path)]["status"]))
     summary = {
@@ -351,6 +450,7 @@ def main():
         if all(item["status"] == "PASS" for item in results.values())
         else "FAIL",
         "thresholds": DEFAULT_THRESHOLDS,
+        "hha_thresholds": HHA_THRESHOLDS if args.hha else None,
         "crop_size": args.crop_size,
         "fov_deg": args.fov,
         "panoramas": results,

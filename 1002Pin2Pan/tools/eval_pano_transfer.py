@@ -15,8 +15,13 @@ normalisation are the frozen training ones; only the input images change.
 * Inference is one whole-panorama pass with circular padding on the left and
   right edges, so the 180-degree seam sees context from both sides.
 
-HHA and raw-depth arms are refused: their frozen inputs are defined only for
-pinhole cameras, and no ERP version exists in this repository.
+* The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
+  geometry, range instead of z-depth for disparity). It runs only with a
+  ``check_hha_cache.py`` report whose status is MATCH, and uses that report's
+  channel order, so the panorama HHA is the modality the checkpoint saw.
+
+The raw-depth (RGBD) arm is refused: a Stanford pinhole z-depth byte has no
+ERP equivalent.
 """
 
 import argparse
@@ -38,7 +43,7 @@ EXPECTED_CLASSES = [
     "<UNK>", "beam", "board", "bookcase", "ceiling", "chair", "clutter",
     "column", "door", "floor", "sofa", "table", "wall", "window",
 ]
-SUPPORTED_X_MODE = "rel_plus_v2_1"
+SUPPORTED_X_MODES = ("rel_plus_v2_1", "hha_frozen_cache")
 
 
 def label_lookup(semantic_labels_path):
@@ -94,7 +99,7 @@ def list_panoramas(stanford_root, areas):
     return samples
 
 
-def load_sample(sample, size, lookup, frozen):
+def load_sample(sample, size, lookup, frozen, x_mode, hha_order=None):
     height, width = size
     rgb = frozen["open_image"](str(sample["rgb"]), frozen["rgb_flag"])
     if rgb.ndim != 3 or rgb.shape[2] != 3:
@@ -106,7 +111,13 @@ def load_sample(sample, size, lookup, frozen):
         raise ValueError("{} is not a uint16 depth map".format(sample["depth"]))
     raw_depth = cv2.resize(raw_depth, (width, height), interpolation=cv2.INTER_NEAREST)
     depth_m = (raw_depth + np.uint16(1)).astype(np.float32) / 512.0  # rel.getImage
-    modal_x = frozen["getREL"](depth_m)
+    if x_mode == "rel_plus_v2_1":
+        modal_x = frozen["getREL"](depth_m)
+    else:
+        import hha
+
+        modal_x, _ = hha.erp_hha(depth_m, frozen)
+        modal_x = np.ascontiguousarray(modal_x[:, :, hha_order])
 
     semantic = cv2.imread(str(sample["semantic"]), cv2.IMREAD_COLOR)
     if semantic is None:
@@ -142,6 +153,10 @@ def import_frozen(source_root):
     from engine.relplus_evaluator import _normalized_bchw, metrics_from_confusion
     from models.builder import EncoderDecoder
     from third_party.rel_original.rel import getREL
+    from third_party.rel_original.rgbd_util import (
+        computeNormalsSquareSupport_ERP,
+        getPointCloud_ERP,
+    )
     from tools.eval_rel_plus_v2_3_full import load_checkpoint_once
     from utils.metric import hist_info
 
@@ -152,6 +167,8 @@ def import_frozen(source_root):
         "metrics_from_confusion": metrics_from_confusion,
         "EncoderDecoder": EncoderDecoder,
         "getREL": getREL,
+        "getPointCloud_ERP": getPointCloud_ERP,
+        "computeNormalsSquareSupport_ERP": computeNormalsSquareSupport_ERP,
         "load_checkpoint_once": load_checkpoint_once,
         "hist_info": hist_info,
     }
@@ -161,16 +178,28 @@ def load_config(path):
     from easydict import EasyDict
 
     config = EasyDict(json.loads(Path(path).read_text(encoding="utf-8")))
-    if config.x_mode != SUPPORTED_X_MODE:
+    if config.x_mode not in SUPPORTED_X_MODES:
         raise ValueError(
-            "x_mode {} has no panorama input: only {} (ERP getREL) is supported; "
-            "HHA and raw depth are defined for pinhole cameras only".format(
-                config.x_mode, SUPPORTED_X_MODE
+            "x_mode {} has no panorama input; supported: {}".format(
+                config.x_mode, ", ".join(SUPPORTED_X_MODES)
             )
         )
     config.norm_mean = np.asarray(config.norm_mean, dtype=np.float64)
     config.norm_std = np.asarray(config.norm_std, dtype=np.float64)
     return config
+
+
+def hha_channel_order(report_path):
+    """Channel order from a MATCH report of tools/check_hha_cache.py."""
+    if report_path is None:
+        raise ValueError("the HHA arm needs --hha-cache-report (tools/check_hha_cache.py)")
+    report = json.loads(Path(report_path).read_text(encoding="utf-8"))
+    if report.get("status") != "MATCH":
+        raise ValueError(
+            "HHA cache report is {}: the cached HHA is not Depth2HHA output, so "
+            "the ERP HHA would be a different modality".format(report.get("status"))
+        )
+    return [0, 1, 2] if report["best"]["channel_order"] == "as_stored" else [2, 1, 0]
 
 
 def main():
@@ -188,6 +217,7 @@ def main():
     parser.add_argument("--wrap-pad", type=int, default=128)
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
+    parser.add_argument("--hha-cache-report", type=Path, default=None)
     args = parser.parse_args()
 
     import torch
@@ -198,6 +228,9 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     frozen = import_frozen(args.source_root)
     config = load_config(args.config)
+    hha_order = None
+    if config.x_mode == "hha_frozen_cache":
+        hha_order = hha_channel_order(args.hha_cache_report)
     lookup = label_lookup(args.semantic_labels)
     samples = list_panoramas(args.stanford_root, args.areas)[: args.limit]
 
@@ -212,7 +245,9 @@ def main():
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
     for index, sample in enumerate(samples, start=1):
-        rgb, modal_x, label = load_sample(sample, (args.height, args.width), lookup, frozen)
+        rgb, modal_x, label = load_sample(
+            sample, (args.height, args.width), lookup, frozen, config.x_mode, hha_order
+        )
         logits = predict_with_wrap(
             network,
             frozen["normalized_bchw"](rgb, config.norm_mean, config.norm_std),
@@ -234,7 +269,12 @@ def main():
         "checkpoint_epoch": epoch,
         "config": str(args.config),
         "x_mode": config.x_mode,
-        "panorama_x_input": "ERP getREL on nearest-resized depth",
+        "panorama_x_input": (
+            "ERP getREL on nearest-resized depth"
+            if hha_order is None
+            else "ERP HHA (hha.erp_hha) on nearest-resized depth, channel order {}".format(hha_order)
+        ),
+        "hha_cache_report": None if hha_order is None else str(args.hha_cache_report),
         "areas": args.areas,
         "eval_size": [args.height, args.width],
         "wrap_pad": args.wrap_pad,

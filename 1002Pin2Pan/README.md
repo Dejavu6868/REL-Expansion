@@ -1,6 +1,6 @@
 # 1002Pin2Pan：针孔→全景迁移的准备工具
 
-本目录用于 Pin2Pan 实验的第2步和第3步：先检查透视 REL+ 与全景 REL 两条代码路径是否描述同一几何，再把已冻结的 S2D（针孔）权重直接用于 Stanford2D3D 全景测试（source-only，不训练）。两者都直接调用 `0927调参结果/selected_recipe/code/training/source` 中的冻结代码，没有复制或修改其中任何文件。
+本目录用于 Pin2Pan 实验的第2步和第3步。先检查透视与全景两条代码路径是否描述同一几何（REL+ 与 HHA 各自检查），再把已冻结的 S2D（针孔）权重直接用于 Stanford2D3D 全景测试（source-only，不训练）。两者都直接调用 `0927调参结果/selected_recipe/code/training/source` 中的冻结代码，没有复制或修改其中任何文件。
 
 ## 1. 跨投影一致性检查 `tools/cross_projection.py`
 
@@ -24,7 +24,7 @@ python3 1002Pin2Pan/tools/cross_projection.py \
 - 编码字节差异明显。ReD 中位差 7–44（共 255 级），EGVIA 中位差最高为 5，均来自逐图归一化。
 - 负对照通过：给裁剪相机提供错误重力（忽略 20° pitch）时，检查判为 FAIL。
 
-真实数据仍需在服务器上用 Stanford2D3D 全景运行。
+真实数据仍需在服务器上用 Stanford2D3D 全景运行。加 `--hha` 可同时检查全景 HHA（见第3节）。
 
 ## 2. 全景 source-only 评估 `tools/eval_pano_transfer.py`
 
@@ -45,11 +45,43 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py \
   --output <输出目录>/relplus_pano_eval
 ```
 
+HHA 臂：把 `--config` 换成 `0927调参结果/configs/hha.json`，并加上 `--hha-cache-report <hha_cache_check.json>`（见第3节）。
+
 输出包括 `metrics.json`、`per_class_iou.csv`、`confusion_matrix.csv` 和 `samples.txt`。加 `--limit 3` 可先做冒烟测试。
 
-## 3. 已知限制
+## 3. 全景 HHA `tools/hha.py` 与缓存核对 `tools/check_hha_cache.py`
 
-- **HHA 和原始深度两臂暂不能在全景上评估。** 它们的冻结输入只针对针孔相机定义，仓库中没有 ERP 版本，脚本会直接拒绝。要比较 HHA 与 REL+ 的迁移差距，需要先确定全景 HHA 的定义。
+CMX README 指定用 [Depth2HHA-python](https://github.com/charlesCXK/Depth2HHA-python) 生成 HHA，已原样收录于 `vendor/depth2hha`（MIT；改动见其 `SOURCE_NOTICE.md`）。
+
+全景 HHA 沿用 Depth2HHA 中与相机模型无关的全部定义：
+
+- 角度通道：法向用 3 邻域窗口，重力由 10 邻域法向经 `getYDir` 估计（阈值 45°/15°，迭代 5+5 次），通道值为 `angle+128−90`。
+- 高度通道：`h−yMin`，并保留 `yMin>−90` 时取 `−130` 的规则。
+- 视差通道：`31000/max(depth_cm,100)`。
+
+点云与法向来自原始 REL 的 ERP 函数。唯一的定义改动是视差：ERP 没有 z-depth，因此改用射线距离（range）。
+
+**合成场景结果**：
+
+- 角度差中位数 ≤0.37°，高度差 ≤0.77 cm。
+- 角度、高度两个字节通道的中位差为 0–2。
+- 视差字节中位差为 23–37，因为同一点的 z/range 中位数约为 0.78。这一差异来自 ERP 本身，无法消除，与 REL+ 的 ReD 归一化差异属于同一类域差。
+
+**使用前必须先核对缓存。** 训练用 HHA 缓存（`Stanford2D3D_480/HHA`）的生成参数没有记录。`check_hha_cache.py` 从原始 Depth16 和位姿 K 重新计算 HHA，并与缓存逐字节比较；它会尝试两种分辨率顺序和两种通道顺序：
+
+```bash
+python3 1002Pin2Pan/tools/check_hha_cache.py \
+  --manifest /data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv \
+  --hha-root /data/zhuzhaoziao/cmx/datasets/Stanford2D3D_480/HHA \
+  --output <输出目录>/hha_cache_check.json
+```
+
+只有结果为 MATCH 时，全景 HHA 才与 HHA 权重训练时见到的是同一模态。评估脚本的 HHA 臂必须提供该报告（`--hha-cache-report`），并按报告中的通道顺序输入；结果为 NO_MATCH 时脚本拒绝运行。
+
+## 4. 已知限制
+
+- **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
+- **HHA 的视差通道在两种投影之间存在系统差异**（见第3节）。
 - **全景 REL 的重力来自 `getGDir` 估计；透视 REL+ 使用位姿真值重力。** 一致性报告中给出了每张全景的重力估计角，可用来判断这一差异的影响。
 - **逐图归一化造成的编码差异仍保留在评估输入中。** 如果第1节真实数据也显示 ReD/EGVIA 字节差异很大，应考虑在 Pin2Pan 研究中增加固定物理单位归一化的 REL+ 臂。
 

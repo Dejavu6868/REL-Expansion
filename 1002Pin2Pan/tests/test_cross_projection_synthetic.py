@@ -92,3 +92,21 @@ def test_check_detects_a_wrong_gravity(frozen):
         thresholds=cp.DEFAULT_THRESHOLDS,
     )
     assert result["status"] == "FAIL"
+
+
+def test_erp_hha_matches_pinhole_hha_on_crops(frozen):
+    result = cp.check_panorama_hha(
+        cp.decode_erp_depth(render_erp_raw_depth(512, 1024)),
+        frozen,
+        yaws=(0.0, 225.0),
+        pitches=(-20.0, 20.0),
+        size=160,
+        fov=90.0,
+    )
+    assert result["status"] == "PASS", result["failures"]
+    assert result["erp_gravity_error_deg"] < 1.0
+    for crop in result["crops"]:
+        assert crop["crop_gravity_error_deg"] < 1.0
+        # Angle and height bytes agree; disparity cannot (z-depth vs range).
+        assert crop["encoded_bytes"]["angle"]["median"] <= 1
+        assert crop["encoded_bytes"]["height"]["median"] <= 2
