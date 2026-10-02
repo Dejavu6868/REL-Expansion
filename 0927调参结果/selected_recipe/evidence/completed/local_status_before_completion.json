@@ -1,0 +1,42 @@
+{
+  "status": "FORMAL_TRAINING_RUNNING",
+  "checked_at": "2026-09-20T23:34:14.589889+08:00",
+  "active_arm": "hha",
+  "hha_runtime": {
+    "status": "RUNNING",
+    "epoch": 1,
+    "iteration_in_epoch": 70,
+    "global_iteration": 70,
+    "loss": 1.912390112876892,
+    "learning_rate": 8.761904761904763e-07,
+    "optimizer_step_executed": true,
+    "author_nan_replacement_count": 0,
+    "world_size": 8
+  },
+  "relplus": "QUEUED",
+  "evaluation": "QUEUED_AFTER_BOTH_TRAINING_PASS",
+  "focal_gamma": 1,
+  "baseline": "0915调参结果 batch56 lr1.2e-4",
+  "source_root": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920",
+  "output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2",
+  "supervisor": {
+    "status": "LAUNCHED",
+    "pid": 1563106,
+    "starttime": "1058262511",
+    "pgid": 1563106,
+    "argv": [
+      "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+      "-B",
+      "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/pipeline.py",
+      "--phase",
+      "execute"
+    ],
+    "cwd": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920",
+    "phase": "execute",
+    "started_at": 1789918375.1458833,
+    "detached_session": true,
+    "suite_sha256": "319d3d63d207e1ca8c3594ed20eb119f954ecfcb24562262b313dd74eedb4731",
+    "bundle_manifest_sha256": "42df431764b0c0aad2f2a71214bda28dfc6a34d9d06eea2ab9bebad6b342892c"
+  },
+  "new_metrics": null
+}

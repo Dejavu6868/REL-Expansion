@@ -1,0 +1,52 @@
+{
+  "metric": "fixed_epoch200_mIoU_percent",
+  "seed": 12345,
+  "selected_recipe": "gamma1_lr12",
+  "rows": [
+    {
+      "recipe": "gamma1_lr12",
+      "focal_gamma": 1,
+      "lr": 0.00012,
+      "weight_decay": 0.01,
+      "hha_mIoU_percent": 60.182898850089714,
+      "relplus_mIoU_percent": 61.40637239796889,
+      "relplus_minus_hha_pp": 1.2234735478791734,
+      "status": "SELECTED_FROZEN",
+      "evidence": "selected_recipe/results/dual_arm_comparison.json"
+    },
+    {
+      "recipe": "gamma1_lr10",
+      "focal_gamma": 1,
+      "lr": 0.0001,
+      "weight_decay": 0.01,
+      "hha_mIoU_percent": 61.18139160268547,
+      "relplus_mIoU_percent": 61.3538787024773,
+      "relplus_minus_hha_pp": 0.1724870997918302,
+      "status": "COMPLETED_CANDIDATE_FAIL",
+      "evidence": "comparisons/gamma1_lr10/comparison.json"
+    },
+    {
+      "recipe": "gamma15_lr12",
+      "focal_gamma": 1.5,
+      "lr": 0.00012,
+      "weight_decay": 0.01,
+      "hha_mIoU_percent": 60.47034660962765,
+      "relplus_mIoU_percent": 61.160967604910454,
+      "relplus_minus_hha_pp": 0.6906209952828064,
+      "status": "COMPLETED_CANDIDATE_FAIL",
+      "evidence": "comparisons/gamma15_lr12/comparison.json"
+    },
+    {
+      "recipe": "gamma2_lr12",
+      "focal_gamma": 2,
+      "lr": 0.00012,
+      "weight_decay": 0.01,
+      "hha_mIoU_percent": 60.98827182233775,
+      "relplus_mIoU_percent": 61.016897597503004,
+      "relplus_minus_hha_pp": 0.028625775165252776,
+      "status": "HISTORICAL_REFERENCE",
+      "evidence": "selected_recipe/baseline_gamma2/comparison_verified.json"
+    }
+  ],
+  "boundary": "Highest observed REL+ mIoU among these four completed recipes; not a stable superiority claim."
+}

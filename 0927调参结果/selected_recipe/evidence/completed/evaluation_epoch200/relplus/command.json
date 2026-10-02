@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+    "-B",
+    "-m",
+    "torch.distributed.launch",
+    "--nproc_per_node=8",
+    "--master_addr=127.0.0.1",
+    "--master_port=51241",
+    "--use_env",
+    "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/evaluation/eval_rank.py",
+    "--arm",
+    "relplus",
+    "--output",
+    "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/evaluation_epoch200/relplus"
+  ],
+  "cwd": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/source",
+  "environment_overrides": {
+    "CUDA_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONUNBUFFERED": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "metric_unit": "fraction_0_to_1",
+  "mIoU": 0.6118139160268548,
+  "pixel_accuracy": 0.8297070154463716,
+  "mean_accuracy": 0.6955025327227351,
+  "mIoU_percent": 61.18139160268547,
+  "pixel_accuracy_percent": 82.97070154463717,
+  "mean_accuracy_percent": 69.55025327227351,
+  "per_class_iou": [
+    0.03551785974811439,
+    0.7465144893898925,
+    0.665959828600522,
+    0.9125379372028983,
+    0.8308986808212632,
+    0.5271125743692223,
+    0.21387336472980106,
+    0.49426532149567926,
+    0.9661660337541248,
+    0.3780352470779298,
+    0.7680544344061492,
+    0.7753466402138727,
+    0.6392984965396423
+  ],
+  "per_class_iou_percent": [
+    3.551785974811439,
+    74.65144893898925,
+    66.5959828600522,
+    91.25379372028983,
+    83.08986808212632,
+    52.71125743692223,
+    21.387336472980106,
+    49.426532149567926,
+    96.61660337541248,
+    37.80352470779298,
+    76.80544344061492,
+    77.53466402138727,
+    63.92984965396423
+  ],
+  "valid_pixel_count": 3973620198,
+  "status": "PASS",
+  "scientific_metric_reported": true,
+  "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+  "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+  "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR10_FG1_20260927/attempt1/runs/hha/checkpoints/epoch-200.pth",
+  "checkpoint_epoch": 200,
+  "evaluation_sample_count": 17593,
+  "class_count": 13,
+  "ignore_index": 255,
+  "eval_scale_array": [
+    1
+  ],
+  "eval_flip": false,
+  "eval_crop_size": [
+    480,
+    480
+  ],
+  "eval_align_corners": false,
+  "world_size": 8,
+  "file_hash_written": false
+}

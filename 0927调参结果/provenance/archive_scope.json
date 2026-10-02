@@ -1,0 +1,20 @@
+{
+  "status": "SEALED_SELECTED_RECIPE_WITH_COMPARISON_SUMMARIES",
+  "selected_archive_policy": "All 459 files from published 0920 archive copied byte-for-byte, including original dates, historical records and its standalone verifier.",
+  "comparison_policy": "LR10 and gamma1.5 include complete resolved configs, aggregate/per-class metrics, confusion matrices, evaluation preflight and prior completion audit records. Their full execution bundles and per-rank sample logs are not duplicated here.",
+  "included": [
+    "Selected executed source/bundle",
+    "Selected full configs",
+    "Selected preparation and completion evidence",
+    "Selected weight identity records",
+    "Four-recipe score table",
+    "Two comparison metric and completion-evidence summaries"
+  ],
+  "excluded": [
+    "Raw data/cache images",
+    "Pretrained/trained weight bytes",
+    "Unexecuted parameter grids or recommendations",
+    "Authentication material"
+  ],
+  "offline_scope": "Selected archive fully verified offline; comparison matrices independently recomputed. Historical server hash checks are preserved, not claimed as newly rerun on archive date."
+}

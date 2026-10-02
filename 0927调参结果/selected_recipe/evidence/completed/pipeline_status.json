@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "phase": "execute",
+  "suite_id": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+  "started_at": 1789918375.2277606,
+  "supervisor_pid": 1563106,
+  "supervisor_starttime": "1058262511",
+  "completed_stages": [
+    "training",
+    "evaluation_epoch200"
+  ],
+  "active_stage": null,
+  "bundle_integrity": {
+    "status": "PASS",
+    "file_count": 200,
+    "manifest_sha256": "42df431764b0c0aad2f2a71214bda28dfc6a34d9d06eea2ab9bebad6b342892c"
+  },
+  "evaluation_status": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/evaluation_epoch200/status.json",
+  "final_bundle_integrity": {
+    "status": "PASS",
+    "file_count": 200,
+    "manifest_sha256": "42df431764b0c0aad2f2a71214bda28dfc6a34d9d06eea2ab9bebad6b342892c"
+  },
+  "finished_at": 1790180867.2722323
+}

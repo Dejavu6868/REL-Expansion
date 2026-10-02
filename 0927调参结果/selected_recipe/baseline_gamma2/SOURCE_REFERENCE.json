@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/Dejavu6868/REL-Expansion",
+  "commit": "791f11db670239a19e78f3956c6f3d4466f17dc3",
+  "path": "0915调参结果",
+  "focal_gamma": 2,
+  "policy": "Exact byte copies; no new baseline training/evaluation."
+}

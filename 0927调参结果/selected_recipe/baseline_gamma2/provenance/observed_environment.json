@@ -1,0 +1,15 @@
+{
+  "source": "evidence/training/startup_20260915/remote/preflight.json",
+  "environment": {
+    "python": "3.8.16",
+    "python_executable": "/data/zhuzhaoziao/cmx/envs/cmx-py38/bin/python",
+    "pytorch": "1.8.2",
+    "cuda_build": "11.1",
+    "cudnn": 8005,
+    "opencv": "4.5.5",
+    "numpy": "1.21.6",
+    "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.10",
+    "training_protocol_source": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915/source/utils/training_protocol.py"
+  },
+  "evaluation_rank_runtime_source": "evidence/evaluation/<arm>/rank_00_runtime.json"
+}

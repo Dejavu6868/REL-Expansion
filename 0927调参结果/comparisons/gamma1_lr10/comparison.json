@@ -1,0 +1,504 @@
+{
+  "status": "PASS_FIXED_EPOCH200_DESCRIPTIVE_COMPARISON",
+  "seed": 12345,
+  "training_batch_size": 56,
+  "training_lr": 0.0001,
+  "training_focal_gamma": 1,
+  "primary_baseline_focal_gamma": 1,
+  "primary_baseline_lr": 0.00012,
+  "historical_baseline_lr": 0.00012,
+  "changed_scientific_factor": "lr",
+  "historical_baseline_focal_gamma": 2,
+  "checkpoint_epoch": 200,
+  "evaluation_samples_per_arm": 17593,
+  "class_names": [
+    "beam",
+    "board",
+    "bookcase",
+    "ceiling",
+    "chair",
+    "clutter",
+    "column",
+    "door",
+    "floor",
+    "sofa",
+    "table",
+    "wall",
+    "window"
+  ],
+  "arms": {
+    "hha": {
+      "status": "PASS",
+      "metrics": {
+        "metric_unit": "fraction_0_to_1",
+        "mIoU": 0.6118139160268548,
+        "pixel_accuracy": 0.8297070154463716,
+        "mean_accuracy": 0.6955025327227351,
+        "mIoU_percent": 61.18139160268547,
+        "pixel_accuracy_percent": 82.97070154463717,
+        "mean_accuracy_percent": 69.55025327227351,
+        "per_class_iou": [
+          0.03551785974811439,
+          0.7465144893898925,
+          0.665959828600522,
+          0.9125379372028983,
+          0.8308986808212632,
+          0.5271125743692223,
+          0.21387336472980106,
+          0.49426532149567926,
+          0.9661660337541248,
+          0.3780352470779298,
+          0.7680544344061492,
+          0.7753466402138727,
+          0.6392984965396423
+        ],
+        "per_class_iou_percent": [
+          3.551785974811439,
+          74.65144893898925,
+          66.5959828600522,
+          91.25379372028983,
+          83.08986808212632,
+          52.71125743692223,
+          21.387336472980106,
+          49.426532149567926,
+          96.61660337541248,
+          37.80352470779298,
+          76.80544344061492,
+          77.53466402138727,
+          63.92984965396423
+        ],
+        "valid_pixel_count": 3973620198,
+        "status": "PASS",
+        "scientific_metric_reported": true,
+        "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+        "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR10_FG1_20260927/attempt1/runs/hha/checkpoints/epoch-200.pth",
+        "checkpoint_epoch": 200,
+        "evaluation_sample_count": 17593,
+        "class_count": 13,
+        "ignore_index": 255,
+        "eval_scale_array": [
+          1
+        ],
+        "eval_flip": false,
+        "eval_crop_size": [
+          480,
+          480
+        ],
+        "eval_align_corners": false,
+        "world_size": 8,
+        "file_hash_written": false
+      },
+      "gt_histogram": [
+        1847860,
+        119677520,
+        490228389,
+        305645486,
+        62043298,
+        410165825,
+        75956637,
+        389388075,
+        322981046,
+        8229986,
+        147588579,
+        1466019722,
+        173847775
+      ],
+      "rank_counts": [
+        2200,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199
+      ],
+      "checkpoint_sha256": "13e9046f978299b416ecf13ec88288e37ae18f679648315abefc118b7f4b30e7",
+      "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+      "checks": {
+        "exitcode_zero": true,
+        "fixed_epoch_200": true,
+        "ordered_rank_shards_match": true,
+        "unique_test_samples": 17593,
+        "manifest_matches_rank_shards": true,
+        "rank_confusions_match_csv": true,
+        "nonnegative_integer_confusions": true,
+        "metrics_independently_recomputed": true,
+        "valid_pixel_count": 3973620198,
+        "class_order_matches": true,
+        "checkpoint_path_size_mtime_sha256_unchanged": true
+      }
+    },
+    "relplus": {
+      "status": "PASS",
+      "metrics": {
+        "metric_unit": "fraction_0_to_1",
+        "mIoU": 0.613538787024773,
+        "pixel_accuracy": 0.8308441037373648,
+        "mean_accuracy": 0.6927004315061308,
+        "mIoU_percent": 61.3538787024773,
+        "pixel_accuracy_percent": 83.08441037373649,
+        "mean_accuracy_percent": 69.27004315061308,
+        "per_class_iou": [
+          0.019685057059917604,
+          0.7377885908115014,
+          0.6746032086651701,
+          0.9188748385093213,
+          0.8320852552360835,
+          0.5076563894963881,
+          0.2421600966181617,
+          0.4723975468881798,
+          0.9652849363074575,
+          0.40321207245574164,
+          0.7704950836684765,
+          0.7901512092923096,
+          0.6416099463133398
+        ],
+        "per_class_iou_percent": [
+          1.9685057059917606,
+          73.77885908115015,
+          67.46032086651701,
+          91.88748385093213,
+          83.20852552360834,
+          50.76563894963881,
+          24.21600966181617,
+          47.23975468881798,
+          96.52849363074574,
+          40.321207245574165,
+          77.04950836684765,
+          79.01512092923096,
+          64.16099463133398
+        ],
+        "valid_pixel_count": 3973620198,
+        "status": "PASS",
+        "scientific_metric_reported": true,
+        "integration_protocol_id": "CMX_RELPLUS_V2_3",
+        "representation_protocol_id": "RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT",
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR10_FG1_20260927/attempt1/runs/relplus/checkpoints/epoch-200.pth",
+        "checkpoint_epoch": 200,
+        "evaluation_sample_count": 17593,
+        "class_count": 13,
+        "ignore_index": 255,
+        "eval_scale_array": [
+          1
+        ],
+        "eval_flip": false,
+        "eval_crop_size": [
+          480,
+          480
+        ],
+        "eval_align_corners": false,
+        "world_size": 8,
+        "file_hash_written": false
+      },
+      "gt_histogram": [
+        1847860,
+        119677520,
+        490228389,
+        305645486,
+        62043298,
+        410165825,
+        75956637,
+        389388075,
+        322981046,
+        8229986,
+        147588579,
+        1466019722,
+        173847775
+      ],
+      "rank_counts": [
+        2200,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199
+      ],
+      "checkpoint_sha256": "a6111a5d17e9f2ddb584755a6cc264809513d442844e39f4c9b547c9b53a2a09",
+      "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+      "checks": {
+        "exitcode_zero": true,
+        "fixed_epoch_200": true,
+        "ordered_rank_shards_match": true,
+        "unique_test_samples": 17593,
+        "manifest_matches_rank_shards": true,
+        "rank_confusions_match_csv": true,
+        "nonnegative_integer_confusions": true,
+        "metrics_independently_recomputed": true,
+        "valid_pixel_count": 3973620198,
+        "class_order_matches": true,
+        "checkpoint_path_size_mtime_sha256_unchanged": true
+      }
+    }
+  },
+  "baseline_gamma1": {
+    "status": "PASS",
+    "focal_gamma": 1,
+    "training_lr": 0.00012,
+    "comparison_role": "primary_frozen_single_factor_LR_control",
+    "seed": 12345,
+    "source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline_gamma1/comparison.json",
+      "size": 9437,
+      "sha256": "5d535c50ef1c29fa55de00b3cb8069077f7dff0d117c9b6b8abf1324efd64125"
+    },
+    "suite_source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline_gamma1/suite.json",
+      "size": 3269,
+      "sha256": "319d3d63d207e1ca8c3594ed20eb119f954ecfcb24562262b313dd74eedb4731"
+    },
+    "config_sources": {
+      "hha": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline_gamma1/hha.json",
+        "size": 8651,
+        "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+      },
+      "relplus": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline_gamma1/relplus.json",
+        "size": 7818,
+        "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+      }
+    },
+    "frozen_config_comparisons": {
+      "hha": {
+        "status": "PASS_ONLY_FOCAL_GAMMA_AND_DERIVED_IDENTITIES_CHANGED",
+        "gamma2_config_source": {
+          "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline/gamma2_hha.json",
+          "size": 8589,
+          "sha256": "97bc3b5fd8e98a2663c0596685feda34a38804ac73a34b147376be5ea70f3b6d"
+        },
+        "gamma1_config_source": {
+          "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline_gamma1/hha.json",
+          "size": 8651,
+          "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+        }
+      },
+      "relplus": {
+        "status": "PASS_ONLY_FOCAL_GAMMA_AND_DERIVED_IDENTITIES_CHANGED",
+        "gamma2_config_source": {
+          "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline/gamma2_relplus.json",
+          "size": 7756,
+          "sha256": "dece975cbb673f4a543ea14b73ac8d6ee3f4dbb40d920b116a773e949947eb34"
+        },
+        "gamma1_config_source": {
+          "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline_gamma1/relplus.json",
+          "size": 7818,
+          "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+        }
+      }
+    },
+    "class_names": [
+      "beam",
+      "board",
+      "bookcase",
+      "ceiling",
+      "chair",
+      "clutter",
+      "column",
+      "door",
+      "floor",
+      "sofa",
+      "table",
+      "wall",
+      "window"
+    ],
+    "training_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920",
+    "training_output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2",
+    "metrics": {
+      "hha": {
+        "mIoU_percent": 60.182898850089714,
+        "pixel_accuracy_percent": 82.49702494591557,
+        "mean_accuracy_percent": 68.10313214153503
+      },
+      "relplus": {
+        "mIoU_percent": 61.40637239796889,
+        "pixel_accuracy_percent": 82.91289229550067,
+        "mean_accuracy_percent": 69.36485738988449
+      }
+    },
+    "checkpoint_sha256": {
+      "hha": "d4d210ea92a473cc700b1660dff7da644e8d1b9934be759b216c0d4931ae2b4d",
+      "relplus": "6506a922b9d31919576b3f998864993a24ca7f07baca868d71a5ff3b6a581831"
+    },
+    "gt_histogram": [
+      1847860,
+      119677520,
+      490228389,
+      305645486,
+      62043298,
+      410165825,
+      75956637,
+      389388075,
+      322981046,
+      8229986,
+      147588579,
+      1466019722,
+      173847775
+    ],
+    "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+    "relplus_minus_hha_pp": {
+      "mIoU_percent": 1.2234735478791734,
+      "pixel_accuracy_percent": 0.4158673495850991,
+      "mean_accuracy_percent": 1.2617252483494639
+    }
+  },
+  "baseline_gamma2": {
+    "status": "PASS",
+    "focal_gamma": 2,
+    "training_lr": 0.00012,
+    "comparison_role": "historical_context_not_single_factor_LR_control",
+    "source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline/comparison_verified.json",
+      "size": 2320,
+      "sha256": "c5148dd245515fa1f97d15f0ad06c56c3d93c5f663af9edad0c34a3b3ba609af"
+    },
+    "seed": 12345,
+    "suite_source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline/suite.json",
+      "size": 2964,
+      "sha256": "a8f323e48d8b70fc2bb6f429a0450bbf47eaff1dfbb308edbfc2a458a2282090"
+    },
+    "training_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915",
+    "training_output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1",
+    "metrics": {
+      "hha": {
+        "mIoU_percent": 60.98827182233775,
+        "pixel_accuracy_percent": 82.42028293615998,
+        "mean_accuracy_percent": 69.20157179544748
+      },
+      "relplus": {
+        "mIoU_percent": 61.016897597503004,
+        "pixel_accuracy_percent": 83.01789966389737,
+        "mean_accuracy_percent": 69.13876764179273
+      }
+    },
+    "checkpoint_sha256": {
+      "hha": "c5cf78b12d2458a48fe5505a4b7099ef84308dd4790f8283c02a605ba05ccd03",
+      "relplus": "bf17b065bbbedf01f78c698b039c384c9b220a2332b24b930ca685db552e1232"
+    },
+    "gt_histogram": [
+      1847860,
+      119677520,
+      490228389,
+      305645486,
+      62043298,
+      410165825,
+      75956637,
+      389388075,
+      322981046,
+      8229986,
+      147588579,
+      1466019722,
+      173847775
+    ],
+    "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+    "relplus_minus_hha_pp": {
+      "mIoU_percent": 0.028625775165252776,
+      "pixel_accuracy_percent": 0.5976167277373889,
+      "mean_accuracy_percent": -0.06280415365475278
+    }
+  },
+  "config_comparisons": {
+    "hha": {
+      "status": "PASS_ONLY_LR_AND_DERIVED_IDENTITIES_CHANGED",
+      "baseline_focal_gamma": 1,
+      "training_focal_gamma": 1,
+      "baseline_lr": 0.00012,
+      "training_lr": 0.0001,
+      "resolved_field_count": 129,
+      "baseline_config_source": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline_gamma1/hha.json",
+        "size": 8651,
+        "sha256": "b2c73d1297ded7e3b3dc2aef3da4b26e5b1b50b62bc24f460006f225b90c1120"
+      }
+    },
+    "relplus": {
+      "status": "PASS_ONLY_LR_AND_DERIVED_IDENTITIES_CHANGED",
+      "baseline_focal_gamma": 1,
+      "training_focal_gamma": 1,
+      "baseline_lr": 0.00012,
+      "training_lr": 0.0001,
+      "resolved_field_count": 122,
+      "baseline_config_source": {
+        "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR10-FG1-20260927/baseline_gamma1/relplus.json",
+        "size": 7818,
+        "sha256": "a6ef3a63391b6d11a65726e2f753bfcc71898cfe956774fca73edab8d7728e01"
+      }
+    }
+  },
+  "differences_percentage_points": {
+    "relplus-hha": {
+      "mIoU_percent": 0.1724870997918302,
+      "pixel_accuracy_percent": 0.11370882909932334,
+      "mean_accuracy_percent": -0.28021012166043135
+    }
+  },
+  "lr10_minus_lr12_gamma1_percentage_points": {
+    "hha": {
+      "mIoU_percent": 0.9984927525957588,
+      "pixel_accuracy_percent": 0.47367659872159606,
+      "mean_accuracy_percent": 1.4471211307384806
+    },
+    "relplus": {
+      "mIoU_percent": -0.05249369549158445,
+      "pixel_accuracy_percent": 0.17151807823582033,
+      "mean_accuracy_percent": -0.09481423927141464
+    }
+  },
+  "lr10_gamma1_minus_lr12_gamma2_percentage_points": {
+    "hha": {
+      "mIoU_percent": 0.19311978034772181,
+      "pixel_accuracy_percent": 0.5504186084771874,
+      "mean_accuracy_percent": 0.34868147682603023
+    },
+    "relplus": {
+      "mIoU_percent": 0.33698110497429923,
+      "pixel_accuracy_percent": 0.06651070983912177,
+      "mean_accuracy_percent": 0.13127550882035166
+    }
+  },
+  "relplus_minus_hha_percentage_points": {
+    "lr10_gamma1": {
+      "mIoU_percent": 0.1724870997918302,
+      "pixel_accuracy_percent": 0.11370882909932334,
+      "mean_accuracy_percent": -0.28021012166043135
+    },
+    "lr12_gamma1": {
+      "mIoU_percent": 1.2234735478791734,
+      "pixel_accuracy_percent": 0.4158673495850991,
+      "mean_accuracy_percent": 1.2617252483494639
+    },
+    "lr12_gamma2": {
+      "mIoU_percent": 0.028625775165252776,
+      "pixel_accuracy_percent": 0.5976167277373889,
+      "mean_accuracy_percent": -0.06280415365475278
+    }
+  },
+  "relplus_minus_hha_gap_change_percentage_points": {
+    "lr10_gamma1_minus_lr12_gamma1": {
+      "mIoU_percent": -1.0509864480873432,
+      "pixel_accuracy_percent": -0.30215852048577574,
+      "mean_accuracy_percent": -1.5419353700098952
+    },
+    "lr10_gamma1_minus_lr12_gamma2": {
+      "mIoU_percent": 0.1438613246265774,
+      "pixel_accuracy_percent": -0.4839078986380656,
+      "mean_accuracy_percent": -0.21740596800567857
+    }
+  },
+  "candidate_screening": {
+    "status": "FAIL",
+    "checks": {
+      "relplus_mIoU_strictly_above_gamma1_lr12": false,
+      "hha_mIoU_at_least_gamma1_lr12": true
+    },
+    "metric": "mIoU_percent",
+    "comparison_precision": "full stored float precision; no rounding before comparison",
+    "scope": "Single-seed descriptive candidate screening; not a statistical superiority claim."
+  },
+  "historical_comparison_scope": "Gamma-2 LR0.00012 differs in both gamma and LR from the current run; its deltas are historical context, not a single-factor LR causal comparison.",
+  "scientific_boundary": "Single seed, fixed epoch 200; LR 0.00012 -> 0.00010 is the sole changed shared control relative to the frozen gamma-1 baseline. Differences are descriptive and do not establish stable superiority."
+}

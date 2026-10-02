@@ -1,0 +1,11 @@
+{
+  "status": "PASS_STATIC_REVIEW",
+  "training_source_unchanged_files": 174,
+  "training_checks": 26,
+  "evaluation_checks": 9,
+  "fixed_review_findings": [
+    "bind prepare manifest to execute manifest",
+    "separate newly created smoke report from static data fingerprints"
+  ],
+  "remote_smoke": "PENDING"
+}

@@ -1,0 +1,133 @@
+{
+  "status": "PASS",
+  "started_at": 1790180529.0890877,
+  "completed": [
+    "hha",
+    "relplus"
+  ],
+  "scope": "Gamma1 HHA/REL+; fixed epoch200; full17593; no checkpoint sweep.",
+  "active_arm": null,
+  "metrics": {
+    "hha": {
+      "metric_unit": "fraction_0_to_1",
+      "mIoU": 0.6018289885008972,
+      "pixel_accuracy": 0.8249702494591558,
+      "mean_accuracy": 0.6810313214153503,
+      "mIoU_percent": 60.182898850089714,
+      "pixel_accuracy_percent": 82.49702494591557,
+      "mean_accuracy_percent": 68.10313214153503,
+      "per_class_iou": [
+        0.0252752330606374,
+        0.7401302381728803,
+        0.6583285302435163,
+        0.917723802646352,
+        0.8305055317412661,
+        0.514753568850595,
+        0.1913110305126889,
+        0.46457339224813776,
+        0.9648937148752571,
+        0.34480864407329254,
+        0.7718794135721233,
+        0.7725954243341674,
+        0.6269983261807486
+      ],
+      "per_class_iou_percent": [
+        2.52752330606374,
+        74.01302381728803,
+        65.83285302435164,
+        91.7723802646352,
+        83.0505531741266,
+        51.4753568850595,
+        19.13110305126889,
+        46.45733922481378,
+        96.48937148752572,
+        34.48086440732926,
+        77.18794135721232,
+        77.25954243341674,
+        62.69983261807486
+      ],
+      "valid_pixel_count": 3973620198,
+      "status": "PASS",
+      "scientific_metric_reported": true,
+      "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+      "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+      "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/checkpoints/epoch-200.pth",
+      "checkpoint_epoch": 200,
+      "evaluation_sample_count": 17593,
+      "class_count": 13,
+      "ignore_index": 255,
+      "eval_scale_array": [
+        1
+      ],
+      "eval_flip": false,
+      "eval_crop_size": [
+        480,
+        480
+      ],
+      "eval_align_corners": false,
+      "world_size": 8,
+      "file_hash_written": false
+    },
+    "relplus": {
+      "metric_unit": "fraction_0_to_1",
+      "mIoU": 0.6140637239796889,
+      "pixel_accuracy": 0.8291289229550066,
+      "mean_accuracy": 0.6936485738988449,
+      "mIoU_percent": 61.40637239796889,
+      "pixel_accuracy_percent": 82.91289229550067,
+      "mean_accuracy_percent": 69.36485738988449,
+      "per_class_iou": [
+        0.03470764804424046,
+        0.7492307683566491,
+        0.6661219350494576,
+        0.9183918486267807,
+        0.8275258739229548,
+        0.4982972389784342,
+        0.2511310818442015,
+        0.45153329111059615,
+        0.9644773343906601,
+        0.41926787862750625,
+        0.7688971233809136,
+        0.7923347400936639,
+        0.6409116493098963
+      ],
+      "per_class_iou_percent": [
+        3.470764804424046,
+        74.92307683566492,
+        66.61219350494576,
+        91.83918486267807,
+        82.75258739229548,
+        49.82972389784342,
+        25.113108184420152,
+        45.15332911105961,
+        96.44773343906601,
+        41.92678786275062,
+        76.88971233809137,
+        79.23347400936639,
+        64.09116493098963
+      ],
+      "valid_pixel_count": 3973620198,
+      "status": "PASS",
+      "scientific_metric_reported": true,
+      "integration_protocol_id": "CMX_RELPLUS_V2_3",
+      "representation_protocol_id": "RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT",
+      "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/checkpoints/epoch-200.pth",
+      "checkpoint_epoch": 200,
+      "evaluation_sample_count": 17593,
+      "class_count": 13,
+      "ignore_index": 255,
+      "eval_scale_array": [
+        1
+      ],
+      "eval_flip": false,
+      "eval_crop_size": [
+        480,
+        480
+      ],
+      "eval_align_corners": false,
+      "world_size": 8,
+      "file_hash_written": false
+    }
+  },
+  "finished_at": 1790180867.260301
+}

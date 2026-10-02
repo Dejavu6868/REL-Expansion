@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "arm": "hha",
+  "phase": "train",
+  "suite_id": "CMX_S2D_B56_LR12_FG1_SEED12345_20260920",
+  "started_at": 1789918375.2515886,
+  "epoch": 200,
+  "global_iteration": 189000,
+  "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/checkpoints/epoch-200.pth",
+  "checkpoint_size": 799760393,
+  "checkpoint_sha256": "d4d210ea92a473cc700b1660dff7da644e8d1b9934be759b216c0d4931ae2b4d",
+  "rank_done_count": 8,
+  "model_sha256": "87254603a9898e551964e4a92c561a6d74273d678ee4ed631c3fc5fc223c25fa",
+  "finished_at": 1790049426.4791694
+}

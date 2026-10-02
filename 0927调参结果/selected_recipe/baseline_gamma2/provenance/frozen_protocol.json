@@ -1,0 +1,178 @@
+{
+  "status": "FROZEN_FIXED_EPOCH200_SINGLE_SEED",
+  "archive_date": "2026-09-20",
+  "suite_id": "CMX_S2D_B56_LR12_SEED12345_20260915",
+  "folder_name": "0915调参结果",
+  "folder_date_meaning": "0915 is the recipe/start date; evaluation and freeze completed 2026-09-20",
+  "dataset": {
+    "name": "Stanford2D3D_S2D",
+    "train_areas": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "6"
+    ],
+    "test_areas": [
+      "5a",
+      "5b"
+    ],
+    "train_count": 52903,
+    "test_count": 17593,
+    "image_size": [
+      480,
+      480
+    ],
+    "classes": [
+      "beam",
+      "board",
+      "bookcase",
+      "ceiling",
+      "chair",
+      "clutter",
+      "column",
+      "door",
+      "floor",
+      "sofa",
+      "table",
+      "wall",
+      "window"
+    ],
+    "ignore_index": 255,
+    "train_list_sha256": "96788184f2a1b318a05395a2c6b3867759526e0adb612a90eb6af59b1491b011",
+    "test_list_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a"
+  },
+  "model": {
+    "architecture": "Original CMX-derived",
+    "backbone": "dual_mit_b2",
+    "decoder": "MLPDecoder",
+    "decoder_embed_dim": 512,
+    "gate": false,
+    "smmf": false,
+    "dymm": false,
+    "sga": false,
+    "pretrained_path": "/data/zhuzhaoziao/cmx/raw/pretrained/segformer/mit_b2.pth",
+    "pretrained_sha256": "ced22617efb7bae3c34ad0a80f20a9b8afb4d27368cb0835a23456baa9d0e092"
+  },
+  "training": {
+    "batch_size": 56,
+    "lr": 0.00012,
+    "nepochs": 200,
+    "num_train_imgs": 52903,
+    "num_eval_imgs": 17593,
+    "niters_per_epoch": 945,
+    "logical_samples_per_epoch": 52920,
+    "sampler_padding_count": 17,
+    "warm_up_epoch": 10,
+    "lr_power": 0.9,
+    "optimizer": "AdamW",
+    "weight_decay": 0.01,
+    "criterion": "Focal",
+    "focal_gamma": 2,
+    "loss_reduction": "none_then_mean",
+    "seed": 12345,
+    "num_workers": 16,
+    "image_height": 480,
+    "image_width": 480,
+    "num_classes": 13,
+    "background": 255,
+    "backbone": "mit_b2",
+    "decoder": "MLPDecoder",
+    "decoder_embed_dim": 512,
+    "amp": false,
+    "sync_bn": true,
+    "bn_eps": 0.001,
+    "bn_momentum": 0.1,
+    "train_horizontal_flip": false,
+    "train_vertical_flip": false,
+    "train_arbitrary_rotation": false,
+    "train_perspective_warp": false,
+    "train_scale_array": [
+      0.5,
+      0.75,
+      1.0,
+      1.25,
+      1.5,
+      1.75
+    ],
+    "scheduler": "WarmUpPolyLR",
+    "checkpoint_start_epoch": 100,
+    "checkpoint_step": 5,
+    "recovery_checkpoint_step": 5,
+    "recovery_checkpoint_before_epoch": 100,
+    "primary_endpoint": "epoch_200",
+    "eval_scale_array": [
+      1
+    ],
+    "eval_flip": false
+  },
+  "budget": {
+    "optimizer_updates_per_arm": 189000,
+    "warmup_updates": 9450,
+    "estimated_pure_training_hours_per_arm": 35.77,
+    "estimated_three_arm_hours": 107.31,
+    "estimate_basis": "historical HHA batch56 engineering throughput only; not a deadline"
+  },
+  "evaluation": {
+    "status": "AUTHORIZED_FIXED_PROTOCOL",
+    "authorized_request": "进行评估",
+    "recorded_at": "2026-09-20T18:41:59.429341+08:00",
+    "arms": [
+      "rgbd",
+      "hha",
+      "relplus"
+    ],
+    "checkpoint_epoch": 200,
+    "test_samples": 17593,
+    "seed": 12345,
+    "scale": [
+      1
+    ],
+    "flip": false,
+    "crop": [
+      480,
+      480
+    ],
+    "align_corners": false,
+    "eval_batch_per_rank": 1,
+    "world_size": 8,
+    "num_workers_per_rank": 16,
+    "precision": "FP32; inherited frozen PyTorch defaults, runtime flags recorded",
+    "bn_policy": "Keep frozen criterion=None constructor: decoder eps1e-5; training uses1e-3. Preserve0915 comparison semantics; impact unknown.",
+    "scientific_endpoint": "fixed_epoch200 mIoU and per-class IoU; report REL+-HHA and REL+-RGBD; compare against frozen0915; no test checkpoint selection",
+    "output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1/evaluation_epoch200_20260920_attempt1",
+    "expected_runtime_minutes": "about10 for three arms based on past2.5min/arm; data cache may affect runtime",
+    "operational_timeout_per_arm_minutes": 30,
+    "resource_guard": "existing75percent allocator,20percent device free,85C,host32GiB,SHM2GiB; only owned process group cleanup",
+    "source_snapshot": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915/source",
+    "input_adapter_change": "Only SOURCE_ROOT relocated to the new frozen source snapshot; normalization and computations unchanged.",
+    "runtime_wrapper_changes": [
+      "actual B56 config injected",
+      "OpenCV/Torch/OMP/MKL threads1",
+      "GPU allocator cap75percent",
+      "finite model tensor check after unchanged checkpoint loader",
+      "rank runtime metadata and sample count every100 images; unchanged forward/argmax/metrics"
+    ],
+    "failure_action": "retain failed attempt, stop queue; no automatic retry or metric substitution",
+    "scientific_scope": "Single seed; batch and learning rate jointly changed; no attribution to either alone."
+  },
+  "actual_optimizer_updates_per_arm": 189000,
+  "actual_warmup_updates": 9450,
+  "baseline_optimizer_updates_per_arm": 1322600,
+  "training_completion": "evidence/training/completion.json",
+  "resolved_config_files": {
+    "rgbd": "configs/rgbd.json",
+    "hha": "configs/hha.json",
+    "relplus": "configs/relplus.json"
+  },
+  "known_boundaries": [
+    "One seed 12345; no claim of statistical significance or stable superiority.",
+    "Batch and learning rate changed together; update budget also changed.",
+    "Execution differences also include threads and early recovery-checkpoint policy; see original training PROTOCOL.md.",
+    "Fixed epoch200 on original test split; no validation tuning or checkpoint sweep.",
+    "Decoder BN eps training=1e-3, evaluation=1e-5; unchanged old evaluator semantics, impact unknown.",
+    "FP32 tensors and no AMP; TF32 flags retain observed original environment defaults.",
+    "HHA physical channel and K/gravity provenance gaps are unresolved historical limitations.",
+    "CMX-derived model body plus project adapters; not a claim of full official CMX training protocol reproduction."
+  ]
+}

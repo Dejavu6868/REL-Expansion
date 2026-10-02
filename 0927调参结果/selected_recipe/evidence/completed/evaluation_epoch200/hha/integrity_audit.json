@@ -1,0 +1,103 @@
+{
+  "status": "PASS",
+  "metrics": {
+    "metric_unit": "fraction_0_to_1",
+    "mIoU": 0.6018289885008972,
+    "pixel_accuracy": 0.8249702494591558,
+    "mean_accuracy": 0.6810313214153503,
+    "mIoU_percent": 60.182898850089714,
+    "pixel_accuracy_percent": 82.49702494591557,
+    "mean_accuracy_percent": 68.10313214153503,
+    "per_class_iou": [
+      0.0252752330606374,
+      0.7401302381728803,
+      0.6583285302435163,
+      0.917723802646352,
+      0.8305055317412661,
+      0.514753568850595,
+      0.1913110305126889,
+      0.46457339224813776,
+      0.9648937148752571,
+      0.34480864407329254,
+      0.7718794135721233,
+      0.7725954243341674,
+      0.6269983261807486
+    ],
+    "per_class_iou_percent": [
+      2.52752330606374,
+      74.01302381728803,
+      65.83285302435164,
+      91.7723802646352,
+      83.0505531741266,
+      51.4753568850595,
+      19.13110305126889,
+      46.45733922481378,
+      96.48937148752572,
+      34.48086440732926,
+      77.18794135721232,
+      77.25954243341674,
+      62.69983261807486
+    ],
+    "valid_pixel_count": 3973620198,
+    "status": "PASS",
+    "scientific_metric_reported": true,
+    "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+    "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+    "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/checkpoints/epoch-200.pth",
+    "checkpoint_epoch": 200,
+    "evaluation_sample_count": 17593,
+    "class_count": 13,
+    "ignore_index": 255,
+    "eval_scale_array": [
+      1
+    ],
+    "eval_flip": false,
+    "eval_crop_size": [
+      480,
+      480
+    ],
+    "eval_align_corners": false,
+    "world_size": 8,
+    "file_hash_written": false
+  },
+  "gt_histogram": [
+    1847860,
+    119677520,
+    490228389,
+    305645486,
+    62043298,
+    410165825,
+    75956637,
+    389388075,
+    322981046,
+    8229986,
+    147588579,
+    1466019722,
+    173847775
+  ],
+  "rank_counts": [
+    2200,
+    2199,
+    2199,
+    2199,
+    2199,
+    2199,
+    2199,
+    2199
+  ],
+  "checkpoint_sha256": "d4d210ea92a473cc700b1660dff7da644e8d1b9934be759b216c0d4931ae2b4d",
+  "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+  "checks": {
+    "exitcode_zero": true,
+    "fixed_epoch_200": true,
+    "ordered_rank_shards_match": true,
+    "unique_test_samples": 17593,
+    "manifest_matches_rank_shards": true,
+    "rank_confusions_match_csv": true,
+    "nonnegative_integer_confusions": true,
+    "metrics_independently_recomputed": true,
+    "valid_pixel_count": 3973620198,
+    "class_order_matches": true,
+    "checkpoint_path_size_mtime_sha256_unchanged": true
+  }
+}

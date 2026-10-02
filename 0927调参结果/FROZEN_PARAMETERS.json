@@ -1,0 +1,113 @@
+{
+  "status": "FROZEN_SELECTED_EXISTING_RECIPE",
+  "archive_folder": "0927调参结果",
+  "archived_at": "2026-10-02T21:51:59.196944+08:00",
+  "folder_name_meaning": "User-requested label 0927; this is not the selected experiment start/completion date.",
+  "selected_recipe_id": "gamma1_lr12",
+  "selection_metric": "REL+ fixed-epoch200 mIoU",
+  "selected_parameters": {
+    "optimizer": "AdamW",
+    "lr": 0.00012,
+    "focal_gamma": 1.0,
+    "weight_decay": 0.01,
+    "batch_size": 56,
+    "warm_up_epoch": 10,
+    "lr_power": 0.9,
+    "nepochs": 200,
+    "seed": 12345
+  },
+  "full_shared_training_config": {
+    "batch_size": 56,
+    "lr": 0.00012,
+    "nepochs": 200,
+    "num_train_imgs": 52903,
+    "num_eval_imgs": 17593,
+    "niters_per_epoch": 945,
+    "logical_samples_per_epoch": 52920,
+    "sampler_padding_count": 17,
+    "warm_up_epoch": 10,
+    "lr_power": 0.9,
+    "optimizer": "AdamW",
+    "weight_decay": 0.01,
+    "criterion": "Focal",
+    "focal_gamma": 1.0,
+    "loss_reduction": "none_then_mean",
+    "seed": 12345,
+    "num_workers": 16,
+    "image_height": 480,
+    "image_width": 480,
+    "num_classes": 13,
+    "background": 255,
+    "backbone": "mit_b2",
+    "decoder": "MLPDecoder",
+    "decoder_embed_dim": 512,
+    "amp": false,
+    "sync_bn": true,
+    "bn_eps": 0.001,
+    "bn_momentum": 0.1,
+    "train_horizontal_flip": false,
+    "train_vertical_flip": false,
+    "train_arbitrary_rotation": false,
+    "train_perspective_warp": false,
+    "train_scale_array": [
+      0.5,
+      0.75,
+      1.0,
+      1.25,
+      1.5,
+      1.75
+    ],
+    "scheduler": "WarmUpPolyLR",
+    "checkpoint_start_epoch": 100,
+    "checkpoint_step": 5,
+    "recovery_checkpoint_step": 5,
+    "recovery_checkpoint_before_epoch": 100,
+    "primary_endpoint": "epoch_200",
+    "eval_scale_array": [
+      1
+    ],
+    "eval_flip": false
+  },
+  "adamw_betas": [
+    0.9,
+    0.999
+  ],
+  "optimizer_group_weight_decays": [
+    0.01,
+    0.0
+  ],
+  "world_size": 8,
+  "updates_per_arm": 189000,
+  "integration_protocol_id": "CMX_RELPLUS_V2_3",
+  "representation_protocol_id": "RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT",
+  "selected_metrics_percent": {
+    "hha": {
+      "mIoU_percent": 60.182898850089714,
+      "pixel_accuracy_percent": 82.49702494591557,
+      "mean_accuracy_percent": 68.10313214153503
+    },
+    "relplus": {
+      "mIoU_percent": 61.40637239796889,
+      "pixel_accuracy_percent": 82.91289229550067,
+      "mean_accuracy_percent": 69.36485738988449
+    }
+  },
+  "selected_config_paths": {
+    "hha": "configs/hha.json",
+    "relplus": "configs/relplus.json"
+  },
+  "source_archive": {
+    "repository": "https://github.com/Dejavu6868/REL-Expansion",
+    "commit": "c8ff74502cf6717fc554adc47db4d14e9ddd42a9",
+    "path": "0920调参结果",
+    "copied_to": "selected_recipe",
+    "file_count": 459,
+    "manifest_sha256": "26be6da003118b90cb7309e7104894dd830e3725dd9a6fc400b800d44253c937",
+    "matches_git_commit": true
+  },
+  "selected_training_started_date": "2026-09-20",
+  "selected_pipeline_completed_beijing": "2026-09-24 00:27:47",
+  "retrained_for_this_archive": false,
+  "new_training_started": false,
+  "scientific_boundary": "Single-seed development result on the existing Area-5 holdout. No claim of stable or global optimality."
+}

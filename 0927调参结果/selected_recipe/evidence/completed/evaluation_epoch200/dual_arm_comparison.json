@@ -1,0 +1,311 @@
+{
+  "status": "PASS_FIXED_EPOCH200_DESCRIPTIVE_COMPARISON",
+  "seed": 12345,
+  "training_batch_size": 56,
+  "training_lr": 0.00012,
+  "training_focal_gamma": 1,
+  "baseline_focal_gamma": 2,
+  "checkpoint_epoch": 200,
+  "evaluation_samples_per_arm": 17593,
+  "class_names": [
+    "beam",
+    "board",
+    "bookcase",
+    "ceiling",
+    "chair",
+    "clutter",
+    "column",
+    "door",
+    "floor",
+    "sofa",
+    "table",
+    "wall",
+    "window"
+  ],
+  "arms": {
+    "hha": {
+      "status": "PASS",
+      "metrics": {
+        "metric_unit": "fraction_0_to_1",
+        "mIoU": 0.6018289885008972,
+        "pixel_accuracy": 0.8249702494591558,
+        "mean_accuracy": 0.6810313214153503,
+        "mIoU_percent": 60.182898850089714,
+        "pixel_accuracy_percent": 82.49702494591557,
+        "mean_accuracy_percent": 68.10313214153503,
+        "per_class_iou": [
+          0.0252752330606374,
+          0.7401302381728803,
+          0.6583285302435163,
+          0.917723802646352,
+          0.8305055317412661,
+          0.514753568850595,
+          0.1913110305126889,
+          0.46457339224813776,
+          0.9648937148752571,
+          0.34480864407329254,
+          0.7718794135721233,
+          0.7725954243341674,
+          0.6269983261807486
+        ],
+        "per_class_iou_percent": [
+          2.52752330606374,
+          74.01302381728803,
+          65.83285302435164,
+          91.7723802646352,
+          83.0505531741266,
+          51.4753568850595,
+          19.13110305126889,
+          46.45733922481378,
+          96.48937148752572,
+          34.48086440732926,
+          77.18794135721232,
+          77.25954243341674,
+          62.69983261807486
+        ],
+        "valid_pixel_count": 3973620198,
+        "status": "PASS",
+        "scientific_metric_reported": true,
+        "integration_protocol_id": "CMX_S2D_THREE_ARM_V1",
+        "representation_protocol_id": "HHA_FROZEN_CACHE_EXECUTABLE_ORDER",
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/hha/checkpoints/epoch-200.pth",
+        "checkpoint_epoch": 200,
+        "evaluation_sample_count": 17593,
+        "class_count": 13,
+        "ignore_index": 255,
+        "eval_scale_array": [
+          1
+        ],
+        "eval_flip": false,
+        "eval_crop_size": [
+          480,
+          480
+        ],
+        "eval_align_corners": false,
+        "world_size": 8,
+        "file_hash_written": false
+      },
+      "gt_histogram": [
+        1847860,
+        119677520,
+        490228389,
+        305645486,
+        62043298,
+        410165825,
+        75956637,
+        389388075,
+        322981046,
+        8229986,
+        147588579,
+        1466019722,
+        173847775
+      ],
+      "rank_counts": [
+        2200,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199
+      ],
+      "checkpoint_sha256": "d4d210ea92a473cc700b1660dff7da644e8d1b9934be759b216c0d4931ae2b4d",
+      "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+      "checks": {
+        "exitcode_zero": true,
+        "fixed_epoch_200": true,
+        "ordered_rank_shards_match": true,
+        "unique_test_samples": 17593,
+        "manifest_matches_rank_shards": true,
+        "rank_confusions_match_csv": true,
+        "nonnegative_integer_confusions": true,
+        "metrics_independently_recomputed": true,
+        "valid_pixel_count": 3973620198,
+        "class_order_matches": true,
+        "checkpoint_path_size_mtime_sha256_unchanged": true
+      }
+    },
+    "relplus": {
+      "status": "PASS",
+      "metrics": {
+        "metric_unit": "fraction_0_to_1",
+        "mIoU": 0.6140637239796889,
+        "pixel_accuracy": 0.8291289229550066,
+        "mean_accuracy": 0.6936485738988449,
+        "mIoU_percent": 61.40637239796889,
+        "pixel_accuracy_percent": 82.91289229550067,
+        "mean_accuracy_percent": 69.36485738988449,
+        "per_class_iou": [
+          0.03470764804424046,
+          0.7492307683566491,
+          0.6661219350494576,
+          0.9183918486267807,
+          0.8275258739229548,
+          0.4982972389784342,
+          0.2511310818442015,
+          0.45153329111059615,
+          0.9644773343906601,
+          0.41926787862750625,
+          0.7688971233809136,
+          0.7923347400936639,
+          0.6409116493098963
+        ],
+        "per_class_iou_percent": [
+          3.470764804424046,
+          74.92307683566492,
+          66.61219350494576,
+          91.83918486267807,
+          82.75258739229548,
+          49.82972389784342,
+          25.113108184420152,
+          45.15332911105961,
+          96.44773343906601,
+          41.92678786275062,
+          76.88971233809137,
+          79.23347400936639,
+          64.09116493098963
+        ],
+        "valid_pixel_count": 3973620198,
+        "status": "PASS",
+        "scientific_metric_reported": true,
+        "integration_protocol_id": "CMX_RELPLUS_V2_3",
+        "representation_protocol_id": "RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT",
+        "checkpoint": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2/runs/relplus/checkpoints/epoch-200.pth",
+        "checkpoint_epoch": 200,
+        "evaluation_sample_count": 17593,
+        "class_count": 13,
+        "ignore_index": 255,
+        "eval_scale_array": [
+          1
+        ],
+        "eval_flip": false,
+        "eval_crop_size": [
+          480,
+          480
+        ],
+        "eval_align_corners": false,
+        "world_size": 8,
+        "file_hash_written": false
+      },
+      "gt_histogram": [
+        1847860,
+        119677520,
+        490228389,
+        305645486,
+        62043298,
+        410165825,
+        75956637,
+        389388075,
+        322981046,
+        8229986,
+        147588579,
+        1466019722,
+        173847775
+      ],
+      "rank_counts": [
+        2200,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199,
+        2199
+      ],
+      "checkpoint_sha256": "6506a922b9d31919576b3f998864993a24ca7f07baca868d71a5ff3b6a581831",
+      "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+      "checks": {
+        "exitcode_zero": true,
+        "fixed_epoch_200": true,
+        "ordered_rank_shards_match": true,
+        "unique_test_samples": 17593,
+        "manifest_matches_rank_shards": true,
+        "rank_confusions_match_csv": true,
+        "nonnegative_integer_confusions": true,
+        "metrics_independently_recomputed": true,
+        "valid_pixel_count": 3973620198,
+        "class_order_matches": true,
+        "checkpoint_path_size_mtime_sha256_unchanged": true
+      }
+    }
+  },
+  "baseline_gamma2": {
+    "status": "PASS",
+    "focal_gamma": 2,
+    "source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/baseline/comparison_verified.json",
+      "size": 2320,
+      "sha256": "c5148dd245515fa1f97d15f0ad06c56c3d93c5f663af9edad0c34a3b3ba609af"
+    },
+    "suite_source": {
+      "path": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-FG1-20260920/baseline/suite.json",
+      "size": 2964,
+      "sha256": "a8f323e48d8b70fc2bb6f429a0450bbf47eaff1dfbb308edbfc2a458a2282090"
+    },
+    "training_bundle": "/home/zhuzhaoziao/RELPlus/CMX-S2D-B56-LR12-20260915",
+    "training_output_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_20260915/attempt1",
+    "metrics": {
+      "hha": {
+        "mIoU_percent": 60.98827182233775,
+        "pixel_accuracy_percent": 82.42028293615998,
+        "mean_accuracy_percent": 69.20157179544748
+      },
+      "relplus": {
+        "mIoU_percent": 61.016897597503004,
+        "pixel_accuracy_percent": 83.01789966389737,
+        "mean_accuracy_percent": 69.13876764179273
+      }
+    },
+    "checkpoint_sha256": {
+      "hha": "c5cf78b12d2458a48fe5505a4b7099ef84308dd4790f8283c02a605ba05ccd03",
+      "relplus": "bf17b065bbbedf01f78c698b039c384c9b220a2332b24b930ca685db552e1232"
+    },
+    "gt_histogram": [
+      1847860,
+      119677520,
+      490228389,
+      305645486,
+      62043298,
+      410165825,
+      75956637,
+      389388075,
+      322981046,
+      8229986,
+      147588579,
+      1466019722,
+      173847775
+    ],
+    "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+    "relplus_minus_hha_pp": {
+      "mIoU_percent": 0.028625775165252776,
+      "pixel_accuracy_percent": 0.5976167277373889,
+      "mean_accuracy_percent": -0.06280415365475278
+    }
+  },
+  "differences_percentage_points": {
+    "relplus-hha": {
+      "mIoU_percent": 1.2234735478791734,
+      "pixel_accuracy_percent": 0.4158673495850991,
+      "mean_accuracy_percent": 1.2617252483494639
+    }
+  },
+  "gamma1_minus_gamma2_percentage_points": {
+    "hha": {
+      "mIoU_percent": -0.805372972248037,
+      "pixel_accuracy_percent": 0.07674200975559131,
+      "mean_accuracy_percent": -1.0984396539124504
+    },
+    "relplus": {
+      "mIoU_percent": 0.3894748004658837,
+      "pixel_accuracy_percent": -0.10500736839669855,
+      "mean_accuracy_percent": 0.2260897480917663
+    }
+  },
+  "relplus_minus_hha_gap_change_percentage_points": {
+    "mIoU_percent": 1.1948477727139206,
+    "pixel_accuracy_percent": -0.18174937815228986,
+    "mean_accuracy_percent": 1.3245294020042166
+  },
+  "scientific_boundary": "Single seed, fixed epoch 200; gamma is the sole changed shared control. Differences are descriptive and do not establish stable superiority."
+}

@@ -1,0 +1,5 @@
+﻿recipe,focal_gamma,lr,weight_decay,hha_mIoU_percent,relplus_mIoU_percent,relplus_minus_hha_pp,status,evidence
+gamma1_lr12,1,0.00012,0.01,60.182898850089714,61.40637239796889,1.2234735478791734,SELECTED_FROZEN,selected_recipe/results/dual_arm_comparison.json
+gamma1_lr10,1,0.00010,0.01,61.18139160268547,61.3538787024773,0.1724870997918302,COMPLETED_CANDIDATE_FAIL,comparisons/gamma1_lr10/comparison.json
+gamma15_lr12,1.5,0.00012,0.01,60.47034660962765,61.160967604910454,0.6906209952828064,COMPLETED_CANDIDATE_FAIL,comparisons/gamma15_lr12/comparison.json
+gamma2_lr12,2,0.00012,0.01,60.98827182233775,61.016897597503004,0.028625775165252776,HISTORICAL_REFERENCE,selected_recipe/baseline_gamma2/comparison_verified.json

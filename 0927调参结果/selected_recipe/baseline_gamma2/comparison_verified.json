@@ -1,0 +1,75 @@
+{
+  "status": "PASS_LOCAL_INDEPENDENT_COMPARISON",
+  "new_evaluation_status": "PASS",
+  "rows": [
+    {
+      "arm": "RGBD",
+      "old_mIoU_percent": 54.835780430705185,
+      "new_mIoU_percent": 55.41120158998274,
+      "delta_mIoU_pp": 0.5754211592775533,
+      "pixel_accuracy_percent": 79.40777713451718,
+      "mean_accuracy_percent": 63.45112232002759
+    },
+    {
+      "arm": "HHA",
+      "old_mIoU_percent": 59.155781562327384,
+      "new_mIoU_percent": 60.98827182233775,
+      "delta_mIoU_pp": 1.832490260010367,
+      "pixel_accuracy_percent": 82.42028293615998,
+      "mean_accuracy_percent": 69.20157179544748
+    },
+    {
+      "arm": "RELPlus",
+      "old_mIoU_percent": 59.58536567805432,
+      "new_mIoU_percent": 61.016897597503004,
+      "delta_mIoU_pp": 1.4315319194486804,
+      "pixel_accuracy_percent": 83.01789966389737,
+      "mean_accuracy_percent": 69.13876764179273
+    }
+  ],
+  "new_pairwise_differences_pp": {
+    "relplus-hha": {
+      "mIoU_percent": 0.028625775165252776,
+      "pixel_accuracy_percent": 0.5976167277373889,
+      "mean_accuracy_percent": -0.06280415365475278
+    },
+    "relplus-rgbd": {
+      "mIoU_percent": 5.605696007520265,
+      "pixel_accuracy_percent": 3.6101225293801917,
+      "mean_accuracy_percent": 5.687645321765139
+    },
+    "hha-rgbd": {
+      "mIoU_percent": 5.5770702323550125,
+      "pixel_accuracy_percent": 3.012505801642803,
+      "mean_accuracy_percent": 5.750449475419892
+    }
+  },
+  "old_and_new_gt_histogram_equal": true,
+  "gt_histogram": [
+    1847860,
+    119677520,
+    490228389,
+    305645486,
+    62043298,
+    410165825,
+    75956637,
+    389388075,
+    322981046,
+    8229986,
+    147588579,
+    1466019722,
+    173847775
+  ],
+  "test_source_sha256": "b9de196c6c1aa8f9ac37926910af0806ce59b91eb068998711ddbb78eb24423a",
+  "new_checkpoint_sha256": {
+    "rgbd": "8a9fe5f6509dfd068f00c06968d1eae15f97d2fc13c0056d57b03744cf57210b",
+    "hha": "c5cf78b12d2458a48fe5505a4b7099ef84308dd4790f8283c02a605ba05ccd03",
+    "relplus": "bf17b065bbbedf01f78c698b039c384c9b220a2332b24b930ca685db552e1232"
+  },
+  "summary": "三臂mIoU均高于旧0915配方。",
+  "single_seed": 12345,
+  "batch_and_lr_changed_together": true,
+  "decoder_BN_eps_eval": 1e-05,
+  "decoder_BN_eps_training": 0.001,
+  "evaluation_elapsed_seconds": 512.4281842708588
+}

@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "file_count": 114,
+  "total_bytes": 8005685,
+  "manifest_sha256": "68480595e39904a90db5f05ebe258e778982cc852260f19fe32d03150fba73d1",
+  "captured_at": "2026-09-24T02:05:07.509323+00:00",
+  "remote_root": "/data/zhuzhaoziao/RELPlus/outputs/CMX_S2D_B56_LR12_FG1_20260920/attempt2",
+  "local_root": "/Users/maxzhu/Documents/Codex/old-projects/windows/REL Expansion/work/CMX_S2D_FOCAL_DUAL_20260920/evidence/completed_20260924"
+}
