@@ -74,7 +74,9 @@ def test_nonpositive_smoke_limit_is_rejected_before_loading(monkeypatch, tmp_pat
     assert not (tmp_path / "output").exists()
 
 
-@pytest.mark.parametrize("variant", ["native_then_resize", "resize_then_hha"])
+@pytest.mark.parametrize(
+    "variant", ["native_then_resize", "native_then_resize_linear", "resize_then_hha"]
+)
 def test_hha_input_uses_the_verified_resolution_recipe(tmp_path, variant):
     import cv2
     import cross_projection as cp
@@ -93,9 +95,10 @@ def test_hha_input_uses_the_verified_resolution_recipe(tmp_path, variant):
         sample, (32, 64), np.array([0], dtype=np.uint8), frozen,
         "hha_frozen_cache", recipe,
     )
-    generation_depth = raw if variant == "native_then_resize" else cv2.resize(
+    generation_depth = raw if variant.startswith("native_then_resize") else cv2.resize(
         raw, (64, 32), interpolation=cv2.INTER_NEAREST
     )
     expected, _ = hha.erp_hha(cp.decode_erp_depth(generation_depth), frozen)
-    expected = cv2.resize(expected, (64, 32), interpolation=cv2.INTER_NEAREST)
+    interpolation = cv2.INTER_LINEAR if variant.endswith("linear") else cv2.INTER_NEAREST
+    expected = cv2.resize(expected, (64, 32), interpolation=interpolation)
     assert np.array_equal(actual, expected[:, :, ::-1])
