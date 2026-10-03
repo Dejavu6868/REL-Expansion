@@ -36,6 +36,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+import relplus_variant as rv
 from cross_projection import decode_erp_depth
 
 
@@ -310,6 +311,10 @@ def main():
         "--accept-hha-near-match", action="store_true",
         help="also accept a NEAR_MATCH cache report (recorded in metrics.json)",
     )
+    parser.add_argument(
+        "--relplus-variant", choices=sorted(rv.VARIANT_ALPHA), default="v2_1",
+        help="REL+ EGVIA encoding; must match the checkpoint's training cache (relplus_variant.py)",
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
         parser.error("--limit must be positive; omit it for full evaluation")
@@ -326,6 +331,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     frozen = import_frozen(args.source_root)
     config = load_config(args.config)
+    relplus_variant = rv.select_for_eval(args.relplus_variant, config, frozen)
     hha_recipe = None
     if config.x_mode == "hha_frozen_cache":
         hha_recipe = hha_cache_recipe(
@@ -376,12 +382,13 @@ def main():
         "config": str(args.config),
         "x_mode": config.x_mode,
         "panorama_x_input": (
-            "ERP getREL on nearest-resized depth"
+            "ERP getREL (alpha {}) on nearest-resized depth".format(rv.VARIANT_ALPHA[relplus_variant])
             if hha_recipe is None
             else "ERP HHA (hha.erp_hha), {}, channel order {}".format(
                 hha_recipe["variant"], hha_recipe["channel_order"]
             )
         ),
+        "relplus_variant": relplus_variant,
         "hha_cache_report": None if hha_recipe is None else str(args.hha_cache_report),
         "hha_recipe": hha_recipe,
         "areas": args.areas,

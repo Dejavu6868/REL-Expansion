@@ -127,12 +127,52 @@ REL+ 臂换成 `relplus.json` 与 REL+ 权重，去掉两个 HHA 参数。
 
 **合成测试**：全景按方位角（每 45° 一区）和仰角（±30°、±70°）分区着色，用逐像素按颜色分类的网络推理并拼接。当前布局要求 ERP 标签复原率超过 99%，两极所在的首末行全部正确；把拼接的 yaw 或 pitch 偏移 5°，复原率必须下降超过 1 个百分点。另检查 60°、训练中位视场、75° 在 64×128 与 1024×2048 上的完整覆盖，以及旧 16 切片布局在训练中位视场下会留下空洞。
 
-## 5. 已知限制
+## 5. REL+ 高度变体 `tools/relplus_variant.py`、`tools/relplus_variant_cache.py`
+
+全景底部极区（−60° 到 −90°）里，REL+ 把地板大量判成桌子：整图评估 5.04M 像素，22 切片评估 16.26M 像素；HHA 只有 15k。切片按训练方式逐个归一化反而更差，所以原因不是全景 ReD 的归一化。冻结编码中，EGVIA 只对偏离水平超过 alpha = 45° 的表面混入高度（`rel_plus/encoding.py:95-102`，ERP `getREL` 规则相同）。地板和桌面都是水平面，EGVIA 相同，LOA 都约为 90，几何通道里只有 ReD（水平距离）能区分二者。
+
+变体 `height_everywhere` 对所有表面混入高度。两个冻结编码器都先把角度截到 [0, 255]，再判断 `angle <= t or angle >= 255 - t`，其中 `t = alpha * 255 / 180`；取 alpha = −1 时没有像素被判为水平。LOA、ReD、有效掩码和无效值 255 都不变。合成房间（相机离地 1.4 m，桌面高 0.75 m）上，地板仍约为 0，天花板约为 254，桌面从约 0 变为 32（ERP）或 45（pitch −20° 切片）。
+
+**1. 生成缓存。** `generate` 原样调用冻结的 `tools/generate_full_relplus_cache.py`，其余参数照传。清单用现有 `formal_cache/cache_generation_summary.json` 里记录的 `manifest_path`。工具先在输出目录写入 `relplus_variant.json`，再开始生成图像；如果目录里已有另一种变体，或者有 REL+ 图像却没有标记，就拒绝运行（冻结的 `--resume` 只检查 PNG 能否解码）。缓存进程用 fork 启动，以继承变体设置：
+
+```bash
+python3 1002Pin2Pan/tools/relplus_variant_cache.py generate \
+  --manifest <manifest_path> \
+  --output-root /data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_height_everywhere/formal_cache \
+  --workers 32 --authorize-full-cache
+```
+
+**2. 审计缓存。** `audit` 原样调用冻结的 `tools/audit_full_relplus_cache.py`，变体从缓存标记读取，70 个样本按该变体逐字节重新生成并比对：
+
+```bash
+python3 1002Pin2Pan/tools/relplus_variant_cache.py audit \
+  --manifest <manifest_path> \
+  --cache-root /data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_height_everywhere/formal_cache \
+  --output-dir /data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_height_everywhere/formal_cache/audit
+```
+
+**3. 训练。** 复制 `relplus.json`，把所有指向 `CMX_RELPlus_v2_3/formal_cache` 的路径（包括 `x_root_folder`、`x_valid_root_folder`、split 列表、缓存报告、审计报告、预检报告，以及嵌套块中的同名字段）改成新缓存。配方与种子不变（gamma 1、lr 1.2e-4、seed 12345）。之后按原流程跑预检和 DDP smoke：启动器会核对 smoke 报告里的缓存审计路径（`tools/launch_formal_training_v2_3.py:102-113`），所以 smoke 也要针对新缓存重跑。第 200 轮的针孔测试集评估读取新缓存的 `test.txt`，可以直接与 61.41 比较。
+
+**4. 全景评估。** 第2、4节的两个评估都新增了 `--relplus-variant`，默认 `v2_1`。该值必须与检查点配置所用训练缓存的标记一致（`x_root_folder` 的上一级目录；没有标记即为 `v2_1`），否则拒绝运行；HHA 臂只接受 `v2_1`。所用变体和 alpha 会写入 metrics.json。
+
+```bash
+python3 1002Pin2Pan/tools/eval_pano_transfer.py \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --config <变体配置.json> --checkpoint <变体 epoch-200.pth> \
+  --relplus-variant height_everywhere \
+  --output <输出目录>/relplus_height_whole
+```
+
+**对照指标**：针孔 mIoU（v2.1 为 61.41），整图全景 mIoU（53.47），底部极区地板→桌子像素数（5.04M）与桌子 IoU（4.96），以及各仰角带在两臂共有类别上与 HHA 的差值。
+
+## 6. 已知限制
 
 - **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
 - **HHA 的视差通道在两种投影之间存在系统差异**（见第3节）。
 - **全景 REL 的重力来自 `getGDir` 估计；透视 REL+ 使用位姿真值重力。** 一致性报告中给出了每张全景的重力估计角，可用来判断这一差异的影响。
 - **逐图归一化造成的编码差异仍保留在评估输入中。** 如果第1节真实数据也显示 ReD/EGVIA 字节差异很大，应考虑在 Pin2Pan 研究中增加固定物理单位归一化的 REL+ 臂。
+- **高度变体的高度仍按每张图 1–99 分位数归一化。** 几乎全是地板的切片会把很小的高度起伏拉伸到整个范围；这对切片评估的影响大于整图评估。
 
 ## 测试
 
@@ -140,4 +180,4 @@ REL+ 臂换成 `relplus.json` 与 REL+ 权重，去掉两个 HHA 参数。
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 高度变体（编码、评估门控、缓存工具的多进程生成）、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
