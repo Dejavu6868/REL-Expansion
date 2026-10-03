@@ -68,7 +68,7 @@ CMX README 指定用 [Depth2HHA-python](https://github.com/charlesCXK/Depth2HHA-
 - 角度、高度两个字节通道的中位差为 0–2。
 - 视差字节中位差为 23–37，因为同一点的 z/range 中位数约为 0.78。这一差异来自 ERP 本身，无法消除，与 REL+ 的 ReD 归一化差异属于同一类域差。
 
-**使用前必须先核对缓存。** 训练用 HHA 缓存（`Stanford2D3D_480/HHA`）的生成参数没有记录。`check_hha_cache.py` 从原始 Depth16 和位姿 K 重新计算 HHA，并与缓存逐字节比较；它会尝试两种分辨率顺序和两种通道顺序：
+**使用前必须先核对缓存。** 训练用 HHA 缓存（`Stanford2D3D_480/HHA`）的生成参数没有记录。`check_hha_cache.py` 从原始 Depth16 和位姿 K 重新计算 HHA，并与缓存逐字节比较；它会尝试两种分辨率顺序（先算后缩放时再分别尝试 OpenCV 最近邻、像素中心最近邻、双线性、area、双三次五种缩放核）和两种通道顺序：
 
 ```bash
 python3 1002Pin2Pan/tools/check_hha_cache.py \

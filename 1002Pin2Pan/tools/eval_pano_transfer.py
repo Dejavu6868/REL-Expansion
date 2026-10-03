@@ -124,14 +124,16 @@ def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None):
 
         if hha_recipe is None:
             raise ValueError("HHA input requires a verified cache recipe")
+        from check_hha_cache import NATIVE_RESIZES, resize_native_hha
+
         variant = hha_recipe["variant"]
         if variant == "resize_then_hha":
             raw_depth = cv2.resize(raw_depth, (width, height), interpolation=cv2.INTER_NEAREST)
-        elif variant != "native_then_resize":
+        elif variant not in NATIVE_RESIZES:
             raise ValueError("unsupported HHA resolution recipe: " + str(variant))
         modal_x, _ = hha.erp_hha(decode_erp_depth(raw_depth), frozen)
-        if variant == "native_then_resize":
-            modal_x = cv2.resize(modal_x, (width, height), interpolation=cv2.INTER_NEAREST)
+        if variant in NATIVE_RESIZES:
+            modal_x = resize_native_hha(modal_x, (height, width), variant)
         modal_x = np.ascontiguousarray(modal_x[:, :, hha_recipe["channel_order"]])
     else:
         raise ValueError("unsupported panorama x_mode: " + str(x_mode))

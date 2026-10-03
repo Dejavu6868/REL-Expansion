@@ -78,3 +78,39 @@ def test_evaluator_checks_report_evidence_and_cache_identity(tmp_path):
     path.write_text(json.dumps(report))
     with pytest.raises(ValueError, match="evidence"):
         ev.hha_cache_recipe(path)
+
+
+def test_cache_gate_reports_the_closest_recipe_when_none_is_exact():
+    cached = np.zeros((10, 10, 3), dtype=np.uint8)
+    close = cached.copy()
+    close[0, 0] = 250
+    far = cached + 30
+    result = {"sample_id": "s", "native_then_resize": check.compare(close, cached),
+              "resize_then_hha": check.compare(far, cached)}
+    report = check.summarize_results([result])
+    assert report["status"] == "NO_MATCH"
+    assert report["best"]["variant"] == "native_then_resize"
+    assert report["best"]["channel_order"] == "as_stored"
+
+
+def test_cache_gate_can_unlock_a_non_nearest_resize_kernel():
+    import cv2
+
+    native = np.random.default_rng(0).integers(0, 256, (27, 27, 3), dtype=np.uint8)
+    cached = cv2.resize(native, (12, 12), interpolation=cv2.INTER_AREA)
+    result = {"sample_id": "s"}
+    for variant in check.NATIVE_RESIZES:
+        result[variant] = check.compare(check.resize_native_hha(native, (12, 12), variant), cached)
+    result["resize_then_hha"] = check.compare(cached + 1, cached)
+    report = check.summarize_results([result])
+    assert report["status"] == "MATCH"
+    assert report["best"]["variant"] == "native_then_resize_area"
+
+
+def test_pixel_centre_nearest_differs_from_opencv_nearest():
+    import cv2
+
+    native = np.arange(9 * 9 * 3, dtype=np.uint8).reshape(9, 9, 3)
+    centre = check.resize_native_hha(native, (4, 4), "native_then_resize_nearest_center")
+    assert np.array_equal(centre, native[[1, 3, 5, 7]][:, [1, 3, 5, 7]])
+    assert not np.array_equal(centre, cv2.resize(native, (4, 4), interpolation=cv2.INTER_NEAREST))

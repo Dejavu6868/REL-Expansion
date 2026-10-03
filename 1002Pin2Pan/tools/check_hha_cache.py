@@ -5,8 +5,9 @@ The ERP HHA in ``hha.py`` follows Depth2HHA-python, the generator the CMX
 README names. It describes the same modality as the HHA checkpoint only if
 the cached training HHA is Depth2HHA output. This script recomputes HHA for a
 spread of S2D samples from native Depth16 + pose K and compares it with the
-cached 480x480 files. Two resolution orders and two channel orders are
-tried, because the cache's generation recipe is not recorded.
+cached 480x480 files. Two resolution orders, several resize kernels and two
+channel orders are tried, because the cache's generation recipe is not
+recorded.
 """
 
 import argparse
@@ -23,7 +24,14 @@ import cross_projection as cp  # noqa: E402
 import hha  # noqa: E402
 
 MATCH_RULE = "all_sampled_bytes_equal"
-VARIANTS = ("native_then_resize", "resize_then_hha")
+NATIVE_RESIZES = {
+    "native_then_resize": cv2.INTER_NEAREST,
+    "native_then_resize_nearest_center": None,
+    "native_then_resize_linear": cv2.INTER_LINEAR,
+    "native_then_resize_area": cv2.INTER_AREA,
+    "native_then_resize_cubic": cv2.INTER_CUBIC,
+}
+VARIANTS = tuple(NATIVE_RESIZES) + ("resize_then_hha",)
 CHANNEL_ORDERS = {"as_stored": [0, 1, 2], "reversed": [2, 1, 0]}
 
 
@@ -32,6 +40,18 @@ def decode(raw):
         raise ValueError("raw depth must be a 2D uint16 array")
     valid = (raw != 0) & (raw != 65535)
     return np.where(valid, raw.astype(np.float64) / 512.0, 0.0), valid
+
+
+def resize_native_hha(image, shape, variant):
+    """Resize native-resolution HHA to ``shape`` with the kernel ``variant`` names."""
+    height, width = shape
+    interpolation = NATIVE_RESIZES[variant]
+    if interpolation is not None:
+        return cv2.resize(image, (width, height), interpolation=interpolation)
+    # Pixel-centre nearest neighbour (PIL / skimage convention), unlike OpenCV's.
+    rows = np.minimum(((np.arange(height) + 0.5) * image.shape[0] / height).astype(int), image.shape[0] - 1)
+    columns = np.minimum(((np.arange(width) + 0.5) * image.shape[1] / width).astype(int), image.shape[1] - 1)
+    return image[rows][:, columns]
 
 
 def compare(candidate, cached):
@@ -63,6 +83,8 @@ def summarize_results(results):
     candidates = []
     for variant in VARIANTS:
         for order in CHANNEL_ORDERS:
+            if any(variant not in item for item in results):
+                continue
             channels = [c for item in results for c in item[variant][order]]
             if len(channels) != 3 * len(results):
                 raise ValueError("each HHA sample must report all three channels")
@@ -76,7 +98,7 @@ def summarize_results(results):
                     for item in results
                 ])),
             })
-    best = min(candidates, key=lambda c: (c["max_abs"], -c["min_exact_fraction"]))
+    best = min(candidates, key=lambda c: (-c["min_exact_fraction"], c["max_abs"]))
     exact = best["max_abs"] == 0 and best["min_exact_fraction"] == 1.0
     return {
         "status": "MATCH" if exact else "NO_MATCH",
@@ -124,20 +146,17 @@ def main():
         shape = cached.shape[:2]
 
         native, _ = hha.pinhole_hha(depth, valid, camera.K_json)
-        native = cv2.resize(native, (shape[1], shape[0]), interpolation=cv2.INTER_NEAREST)
 
         small_raw = resize_raw_depth_nearest(raw, shape)
         small_camera = resize_camera_geometry(camera, shape)
         depth, valid = decode(small_raw)
         resized, _ = hha.pinhole_hha(depth, valid, small_camera.K_json)
 
-        results.append(
-            {
-                "sample_id": row["sample_id"],
-                "native_then_resize": compare(native, cached),
-                "resize_then_hha": compare(resized, cached),
-            }
-        )
+        result = {"sample_id": row["sample_id"]}
+        for variant in NATIVE_RESIZES:
+            result[variant] = compare(resize_native_hha(native, shape, variant), cached)
+        result["resize_then_hha"] = compare(resized, cached)
+        results.append(result)
         print(row["sample_id"], flush=True)
 
     summary = summarize_results(results)
