@@ -63,7 +63,7 @@ def main(argv=None):
     )
     parser.add_argument("command", choices=sorted(FROZEN_TOOLS))
     parser.add_argument(
-        "--variant", choices=sorted(rv.VARIANT_ALPHA), default="height_everywhere",
+        "--variant", choices=sorted(rv.VARIANT_ALPHA), default="v3_0",
         help="generate only; audit uses the cache's marker",
     )
     parser.add_argument("--source-root", type=Path, default=DEFAULT_SOURCE_ROOT)

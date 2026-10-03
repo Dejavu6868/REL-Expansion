@@ -1,9 +1,9 @@
-"""REL+ EGVIA variants: frozen v2.1 and height mixed into every surface.
+"""REL+ EGVIA variants: frozen v2.1 and REL+ 3.0, which mixes height into every surface.
 
 Frozen v2.1 mixes normalised height into EGVIA only where the surface is
 more than alpha = 45 degrees from horizontal, so floor and table tops get the
-same EGVIA (and LOA ~90): only ReD tells them apart. ``height_everywhere``
-mixes height into every surface. Both frozen encoders
+same EGVIA (and LOA ~90): only ReD tells them apart. 3.0 (``v3_0``) mixes
+height into every surface. Both frozen encoders
 (``rel_plus.encoding.encode_rel_channels`` and the ERP ``getREL``) clip the
 angle to [0, 255] and then test ``angle <= t or angle >= 255 - t`` with
 ``t = alpha * 255 / 180``, so a negative alpha marks no pixel horizontal.
@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 
 
-VARIANT_ALPHA = {"v2_1": 45.0, "height_everywhere": -1.0}
+VARIANT_ALPHA = {"v2_1": 45.0, "v3_0": -1.0}
 MARKER_NAME = "relplus_variant.json"  # written into the cache root by relplus_variant_cache.py
 
 

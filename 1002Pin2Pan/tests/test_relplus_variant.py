@@ -1,4 +1,4 @@
-"""REL+ height-everywhere variant: encoders, eval gate and the cache wrapper."""
+"""REL+ 3.0 variant: encoders, eval gate and the cache wrapper."""
 
 import csv
 import json
@@ -66,7 +66,7 @@ def test_erp_getrel_variant_separates_table_tops(frozen, room, restore_v2_1):
     rv.apply_variant("v2_1", local)
     v2_1 = local["getREL"](depth)
     assert np.array_equal(v2_1, frozen["getREL"](depth))
-    rv.apply_variant("height_everywhere", local)
+    rv.apply_variant("v3_0", local)
     check_variant(v2_1, local["getREL"](depth), surfaces(height))
 
 
@@ -75,7 +75,7 @@ def test_crop_generator_variant_separates_table_tops(frozen, room, restore_v2_1)
     k_json, camera_to_world, rows, columns, raw = cp.render_crop(depth, 60.0, -20.0, 240, 62.48)
     camera = frozen["CameraGeometry"].from_json_k(k_json, (240, 240), camera_to_world.T)
     v2_1 = frozen["generate_rel_plus_v2_1"](raw, camera)
-    rv.apply_variant("height_everywhere")
+    rv.apply_variant("v3_0")
     variant = frozen["generate_rel_plus_v2_1"](raw, camera)
     check_variant(v2_1, variant, surfaces(height[rows, columns]))
 
@@ -91,31 +91,31 @@ def eval_config(tmp_path, x_mode="rel_plus_v2_1", marker=None):
 def test_eval_variant_must_match_the_training_cache(frozen, tmp_path, restore_v2_1):
     assert rv.select_for_eval("v2_1", eval_config(tmp_path / "a"), dict(frozen)) == "v2_1"
     with pytest.raises(ValueError, match="trained on the v2_1 cache"):
-        rv.select_for_eval("height_everywhere", eval_config(tmp_path / "b"), dict(frozen))
-    marked = eval_config(tmp_path / "c", marker="height_everywhere")
-    with pytest.raises(ValueError, match="trained on the height_everywhere cache"):
+        rv.select_for_eval("v3_0", eval_config(tmp_path / "b"), dict(frozen))
+    marked = eval_config(tmp_path / "c", marker="v3_0")
+    with pytest.raises(ValueError, match="trained on the v3_0 cache"):
         rv.select_for_eval("v2_1", marked, dict(frozen))
     local = dict(frozen)
-    assert rv.select_for_eval("height_everywhere", marked, local) == "height_everywhere"
+    assert rv.select_for_eval("v3_0", marked, local) == "v3_0"
     assert local["getREL"].keywords == {"alpha": -1.0}
     hha = EasyDict(x_mode="hha_frozen_cache", x_root_folder=str(tmp_path / "hha" / "HHA"))
     assert rv.select_for_eval("v2_1", hha, dict(frozen)) is None
     with pytest.raises(ValueError, match="REL\\+ arm only"):
-        rv.select_for_eval("height_everywhere", hha, dict(frozen))
+        rv.select_for_eval("v3_0", hha, dict(frozen))
 
 
 def test_output_root_keeps_one_variant(tmp_path):
     root = tmp_path / "cache"
-    rvc.prepare_output_root(root, "height_everywhere", cp.DEFAULT_SOURCE_ROOT)
+    rvc.prepare_output_root(root, "v3_0", cp.DEFAULT_SOURCE_ROOT)
     assert rv.read_marker(root)["egvia_alpha"] == -1.0
     (root / "RELPlus").mkdir()
-    rvc.prepare_output_root(root, "height_everywhere", cp.DEFAULT_SOURCE_ROOT)  # resume
-    with pytest.raises(FileExistsError, match="height_everywhere variant"):
+    rvc.prepare_output_root(root, "v3_0", cp.DEFAULT_SOURCE_ROOT)  # resume
+    with pytest.raises(FileExistsError, match="v3_0 variant"):
         rvc.prepare_output_root(root, "v2_1", cp.DEFAULT_SOURCE_ROOT)
     unmarked = tmp_path / "frozen_cache"
     (unmarked / "RELPlus").mkdir(parents=True)
     with pytest.raises(FileExistsError, match="without"):
-        rvc.prepare_output_root(unmarked, "height_everywhere", cp.DEFAULT_SOURCE_ROOT)
+        rvc.prepare_output_root(unmarked, "v3_0", cp.DEFAULT_SOURCE_ROOT)
 
 
 def write_frame(root, sample_id, depth, yaw, pitch):
@@ -156,14 +156,14 @@ def test_cache_workers_write_the_variant(frozen, room, tmp_path, restore_v2_1):
          "--manifest", str(manifest), "--output-root", str(output), "--workers", "2", "--limit", "2"],
         check=True, capture_output=True,
     )
-    assert rv.read_marker(output)["variant"] == "height_everywhere"
+    assert rv.read_marker(output)["variant"] == "v3_0"
     for row in rows:
         raw, camera, _ = load_canonical_frame(
             row["depth_path"], row["camera_metadata_path"], dataset_profile=STANFORD_S2D_PROFILE
         )
         rv.apply_variant("v2_1")
         v2_1 = frozen["generate_rel_plus_v2_1"](raw, camera)
-        rv.apply_variant("height_everywhere")
+        rv.apply_variant("v3_0")
         expected = frozen["generate_rel_plus_v2_1"](raw, camera)
         cached = cv2.imread(str(output / "RELPlus" / (row["sample_id"] + ".png")), cv2.IMREAD_UNCHANGED)
         assert np.array_equal(cached, expected)
