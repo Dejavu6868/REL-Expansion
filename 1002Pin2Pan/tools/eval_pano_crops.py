@@ -13,7 +13,11 @@ difference does not identify the effect of normalisation alone.
   camera intrinsics (the training range is 45 to 75 degrees).
 * Crop layout: 8 crops at pitch 0 (every 45 degrees of yaw), 6 each at
   pitch +45 and -45 (every 60 degrees), and one each at pitch +80 and -80.
-  These 22 crops cover every ERP pixel at the default FOV.
+  These 22 crops cover every ERP pixel at the default FOV. ``--layout level``
+  keeps only the 8 pitch-0 crops (Depth2HHA's gravity estimate fails on the
+  tilted ones) and scores only the pixels they see, which include the whole
+  +-25 degree elevation band at the default FOV.
+* Both evaluations also score each elevation band separately.
 * Each crop is rendered at the S2D native 1080x1080 from the native ERP:
   RGB bilinear (then resized like the panorama eval), z-depth from the
   nearest ERP range sample.
@@ -46,6 +50,9 @@ CROP_NATIVE_SIZE = 1080  # Stanford2D3D S2D native pinhole resolution
 CROP_LAYOUT = tuple((float(yaw), 0.0) for yaw in range(0, 360, 45)) + tuple(
     (float(yaw), pitch) for pitch in (45.0, -45.0) for yaw in range(0, 360, 60)
 ) + ((0.0, 80.0), (0.0, -80.0))  # avoid the frozen generator's 180-degree alignment singularity
+# "level": the 8 pitch-0 crops only, where Depth2HHA's gravity estimate holds; ERP pixels no
+# crop sees are left out of the score.
+LAYOUTS = {"full": CROP_LAYOUT, "level": tuple(crop for crop in CROP_LAYOUT if crop[1] == 0.0)}
 CROP_BATCH = 8
 _WORKER_STATE = {}
 
@@ -211,7 +218,11 @@ def main():
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument(
         "--crop-fov-deg", type=float, default=CROP_FOV_DEG,
-        help="pinhole horizontal/vertical FOV; default is the training median; full ERP coverage is required",
+        help="pinhole horizontal/vertical FOV; default is the training median; the full layout must cover every ERP pixel",
+    )
+    parser.add_argument(
+        "--layout", choices=sorted(LAYOUTS), default="full",
+        help="full: 22 crops covering the sphere; level: pitch-0 crops only, unseen pixels unscored",
     )
     parser.add_argument(
         "--workers", type=int, default=0,
@@ -247,14 +258,17 @@ def main():
     lookup = ev.label_lookup(args.semantic_labels)
     samples = ev.list_panoramas(args.stanford_root, args.areas)[: args.limit]
     eval_size = (args.height, args.width)
-    grids, inside = stitch_grids(eval_size, fov=args.crop_fov_deg)
+    layout = LAYOUTS[args.layout]
+    grids, inside = stitch_grids(eval_size, layout=layout, fov=args.crop_fov_deg)
     crops_per_pixel = inside.sum(axis=0)
-    if crops_per_pixel.min() == 0:
+    seen = crops_per_pixel > 0
+    if args.layout == "full" and not seen.all():
         raise ValueError("crop layout leaves ERP pixels uncovered")
 
     _WORKER_STATE.update(
         frozen=frozen, x_mode=config.x_mode, hha_recipe=hha_recipe, lookup=lookup,
         eval_size=eval_size, model_size=int(config.image_height), fov=args.crop_fov_deg,
+        layout=layout,
     )
     # Fork the workers before CUDA is initialised; they only run numpy/OpenCV.
     pool = multiprocessing.get_context("fork").Pool(args.workers) if args.workers else None
@@ -278,12 +292,17 @@ def main():
 
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
+    band_confusion = np.zeros((len(ev.ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
     for index, (rgb_crops, x_crops, label) in enumerate(prepared, start=1):
         prediction = predict_panorama(
             network, rgb_crops, x_crops, grids_device, inside_device, normalize, device
         ).cpu().numpy().astype(np.uint8)
+        label = np.where(seen, label, 255).astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
         confusion += hist.astype(np.int64)
+        band_confusion += ev.elevation_band_confusions(
+            config.num_classes, prediction, label, frozen["hist_info"]
+        )
         if index % 20 == 0 or index == len(samples):
             print("{}/{} panoramas".format(index, len(samples)), flush=True)
     if pool:
@@ -309,7 +328,9 @@ def main():
         ),
         "hha_cache_report": None if hha_recipe is None else str(args.hha_cache_report),
         "hha_recipe": hha_recipe,
-        "crop_layout_yaw_pitch_deg": [list(crop) for crop in CROP_LAYOUT],
+        "crop_layout": args.layout,
+        "crop_layout_yaw_pitch_deg": [list(crop) for crop in layout],
+        "scored_erp_pixel_fraction": float(seen.mean()),
         "crop_fov_deg": args.crop_fov_deg,
         "crop_native_size": CROP_NATIVE_SIZE,
         "crop_model_size": int(config.image_height),
@@ -319,6 +340,9 @@ def main():
         "sample_count": len(samples),
         "seconds": time.time() - started,
         "metrics": metrics,
+        "elevation_bands": ev.write_elevation_bands(
+            args.output, band_confusion, frozen["metrics_from_confusion"], config.class_names
+        ),
     }
     (args.output / "metrics.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     (args.output / "samples.txt").write_text(

@@ -48,6 +48,8 @@ EXPECTED_CLASSES = [
     "column", "door", "floor", "sofa", "table", "wall", "window",
 ]
 SUPPORTED_X_MODES = ("rel_plus_v2_1", "hha_frozen_cache")
+# Horizon band +-25: fully seen by the level crops of eval_pano_crops.py at the training FOV.
+ELEVATION_BAND_EDGES_DEG = (90, 60, 25, 0, -25, -60, -90)
 
 
 def label_lookup(semantic_labels_path):
@@ -105,6 +107,47 @@ def list_panoramas(stanford_root, areas):
                 }
             )
     return samples
+
+
+def elevation_band_confusions(num_classes, prediction, label, hist_info):
+    """One confusion matrix per elevation band (top edge included); row v is at 90 - 180 v / H degrees."""
+    elevation = 90.0 - np.arange(label.shape[0]) * 180.0 / label.shape[0]
+    edges = ELEVATION_BAND_EDGES_DEG
+    return np.stack([
+        hist_info(num_classes, prediction[rows], label[rows])[0]
+        for rows in (
+            (elevation <= top) & (elevation > bottom) for top, bottom in zip(edges[:-1], edges[1:])
+        )
+    ]).astype(np.int64)
+
+
+def write_elevation_bands(output, band_confusion, metrics_from_confusion, class_names):
+    """Save per-band confusions and metrics; return the per-band summary for metrics.json."""
+    np.save(output / "elevation_band_confusion.npy", band_confusion)
+    edges = ELEVATION_BAND_EDGES_DEG
+    summary = []
+    for top, bottom, confusion in zip(edges[:-1], edges[1:], band_confusion):
+        metrics = metrics_from_confusion(confusion) if confusion.sum() else None
+        summary.append({
+            "elevation_deg": [top, bottom],
+            "valid_pixels": int(confusion.sum()),
+            "mIoU_percent": metrics and metrics["mIoU_percent"],
+            "pixel_accuracy_percent": metrics and metrics["pixel_accuracy_percent"],
+            "per_class_iou_percent": metrics and metrics["per_class_iou_percent"],
+        })
+    with (output / "elevation_band_metrics.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(
+            ["elevation_top_deg", "elevation_bottom_deg", "valid_pixels", "mIoU_percent",
+             "pixel_accuracy_percent"] + list(class_names)
+        )
+        for band in summary:
+            writer.writerow(
+                band["elevation_deg"] + [band["valid_pixels"], band["mIoU_percent"],
+                band["pixel_accuracy_percent"]]
+                + (band["per_class_iou_percent"] or [None] * len(class_names))
+            )
+    return summary
 
 
 def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None):
@@ -301,6 +344,7 @@ def main():
 
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
+    band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
             sample, (args.height, args.width), lookup, frozen, config.x_mode, hha_recipe
@@ -315,6 +359,9 @@ def main():
         prediction = logits.argmax(dim=1)[0].cpu().numpy().astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
         confusion += hist.astype(np.int64)
+        band_confusion += elevation_band_confusions(
+            config.num_classes, prediction, label, frozen["hist_info"]
+        )
         if index % 20 == 0 or index == len(samples):
             print("{}/{} panoramas".format(index, len(samples)), flush=True)
 
@@ -343,6 +390,9 @@ def main():
         "sample_count": len(samples),
         "seconds": time.time() - started,
         "metrics": metrics,
+        "elevation_bands": write_elevation_bands(
+            args.output, band_confusion, frozen["metrics_from_confusion"], config.class_names
+        ),
     }
     (args.output / "metrics.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     (args.output / "samples.txt").write_text(
