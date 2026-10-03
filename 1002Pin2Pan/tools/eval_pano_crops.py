@@ -3,14 +3,17 @@
 
 The whole-panorama evaluation (``eval_pano_transfer.py``) feeds the network
 ERP inputs whose per-image normalisation spans 360 degrees. This tool instead
-cuts each panorama into 90-degree pinhole crops, builds every crop's input the
+cuts each panorama into pinhole crops, builds every crop's input the
 way the training cache was built, runs the network on each crop, and stitches
-the crop probabilities back onto the ERP label grid. If an arm's extra
-pinhole-to-panorama drop disappears here, that drop came from the ERP inputs,
-not from the panorama scenes.
+the crop probabilities back onto the ERP label grid. This changes projection,
+normalisation support, gravity and multi-view fusion together; the score
+difference does not identify the effect of normalisation alone.
 
-* Crop layout: 8 crops at pitch 0 (every 45 degrees of yaw) and 4 each at
-  pitch +45 and -45 (every 90 degrees); together they cover every ERP pixel.
+* Default FOV: 62.47653165897473 degrees, the median from all 52,903 training
+  camera intrinsics (the training range is 45 to 75 degrees).
+* Crop layout: 8 crops at pitch 0 (every 45 degrees of yaw), 6 each at
+  pitch +45 and -45 (every 60 degrees), and one each at pitch +80 and -80.
+  These 22 crops cover every ERP pixel at the default FOV.
 * Each crop is rendered at the S2D native 1080x1080 from the native ERP:
   RGB bilinear (then resized like the panorama eval), z-depth from the
   nearest ERP range sample.
@@ -38,11 +41,11 @@ import cross_projection as cp
 import eval_pano_transfer as ev
 
 
-CROP_FOV_DEG = 90.0
+CROP_FOV_DEG = 62.47653165897473  # audited S2D training median, see ../evidence/
 CROP_NATIVE_SIZE = 1080  # Stanford2D3D S2D native pinhole resolution
 CROP_LAYOUT = tuple((float(yaw), 0.0) for yaw in range(0, 360, 45)) + tuple(
-    (float(yaw), pitch) for pitch in (45.0, -45.0) for yaw in range(0, 360, 90)
-)
+    (float(yaw), pitch) for pitch in (45.0, -45.0) for yaw in range(0, 360, 60)
+) + ((0.0, 80.0), (0.0, -80.0))  # avoid the frozen generator's 180-degree alignment singularity
 CROP_BATCH = 8
 _WORKER_STATE = {}
 
@@ -207,6 +210,10 @@ def main():
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument(
+        "--crop-fov-deg", type=float, default=CROP_FOV_DEG,
+        help="pinhole horizontal/vertical FOV; default is the training median; full ERP coverage is required",
+    )
+    parser.add_argument(
         "--workers", type=int, default=0,
         help="CPU processes building crop inputs (0: in the main process)",
     )
@@ -222,6 +229,8 @@ def main():
         parser.error("--height and --width must be positive")
     if args.workers < 0:
         parser.error("--workers must be zero or positive")
+    if not np.isfinite(args.crop_fov_deg) or not 0 < args.crop_fov_deg < 180:
+        parser.error("--crop-fov-deg must be finite and between 0 and 180 degrees")
 
     if args.output.exists() and any(args.output.iterdir()):
         raise FileExistsError("{} is not empty; refusing to overwrite".format(args.output))
@@ -238,14 +247,14 @@ def main():
     lookup = ev.label_lookup(args.semantic_labels)
     samples = ev.list_panoramas(args.stanford_root, args.areas)[: args.limit]
     eval_size = (args.height, args.width)
-    grids, inside = stitch_grids(eval_size)
+    grids, inside = stitch_grids(eval_size, fov=args.crop_fov_deg)
     crops_per_pixel = inside.sum(axis=0)
     if crops_per_pixel.min() == 0:
         raise ValueError("crop layout leaves ERP pixels uncovered")
 
     _WORKER_STATE.update(
         frozen=frozen, x_mode=config.x_mode, hha_recipe=hha_recipe, lookup=lookup,
-        eval_size=eval_size, model_size=int(config.image_height),
+        eval_size=eval_size, model_size=int(config.image_height), fov=args.crop_fov_deg,
     )
     # Fork the workers before CUDA is initialised; they only run numpy/OpenCV.
     pool = multiprocessing.get_context("fork").Pool(args.workers) if args.workers else None
@@ -301,7 +310,7 @@ def main():
         "hha_cache_report": None if hha_recipe is None else str(args.hha_cache_report),
         "hha_recipe": hha_recipe,
         "crop_layout_yaw_pitch_deg": [list(crop) for crop in CROP_LAYOUT],
-        "crop_fov_deg": CROP_FOV_DEG,
+        "crop_fov_deg": args.crop_fov_deg,
         "crop_native_size": CROP_NATIVE_SIZE,
         "crop_model_size": int(config.image_height),
         "crops_per_erp_pixel": [int(crops_per_pixel.min()), int(crops_per_pixel.max())],

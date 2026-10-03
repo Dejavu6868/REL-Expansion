@@ -24,9 +24,10 @@ def regions(directions):
     return label
 
 
+@pytest.mark.parametrize("fov", [60.0, ec.CROP_FOV_DEG, 75.0])
 @pytest.mark.parametrize("eval_size", [(64, 128), (1024, 2048)])
-def test_default_layout_covers_every_erp_pixel(eval_size):
-    grids, inside = ec.stitch_grids(eval_size)
+def test_default_layout_covers_every_erp_pixel(eval_size, fov):
+    grids, inside = ec.stitch_grids(eval_size, fov=fov)
     assert grids.shape == (len(ec.CROP_LAYOUT),) + eval_size + (2,)
     assert inside.sum(axis=0).min() >= 1
     assert np.abs(grids).max() <= 1 + 1e-6
@@ -58,8 +59,27 @@ def test_stitched_crops_reproduce_the_panorama_labels():
         torch.from_numpy(grids), torch.from_numpy(inside.astype(np.float32)), normalize, "cpu",
     ).numpy()
     expected = regions(cp.erp_directions(64, 128))
-    assert (prediction == expected).mean() > 0.99  # a 5-degree yaw error gives 0.975
+    accuracy = (prediction == expected).mean()
+    assert accuracy > 0.99
     assert (prediction[0] == 10).all() and (prediction[-1] == 11).all()
+    for offset in ((5.0, 0.0), (0.0, 5.0)):
+        wrong_layout = tuple((yaw + offset[0], pitch + offset[1]) for yaw, pitch in ec.CROP_LAYOUT)
+        wrong_grids, wrong_inside = ec.stitch_grids((64, 128), layout=wrong_layout)
+        wrong = ec.predict_panorama(
+            ColourToLabel(), rgb_crops, np.zeros_like(rgb_crops),
+            torch.from_numpy(wrong_grids), torch.from_numpy(wrong_inside.astype(np.float32)),
+            normalize, "cpu",
+        ).numpy()
+        assert (wrong == expected).mean() < accuracy - 0.01
+
+
+def test_old_layout_leaves_gaps_at_training_fov():
+    old_layout = tuple((float(yaw), 0.0) for yaw in range(0, 360, 45)) + tuple(
+        (float(yaw), pitch) for pitch in (45.0, -45.0) for yaw in range(0, 360, 90)
+    )
+    _, inside = ec.stitch_grids((64, 128), layout=old_layout)
+    assert inside.sum(axis=0).min() == 0
+    assert not inside[:, 0].any() and not inside[:, -1].any()
 
 
 @pytest.fixture(scope="module")
@@ -90,6 +110,19 @@ def panorama(tmp_path):
 
 
 LAYOUT = ((30.0, 0.0), (200.0, 45.0))
+
+
+def test_polar_crops_use_nonsingular_frozen_rel_plus_geometry(frozen, panorama):
+    sample, _ = panorama
+    polar_layout = tuple(crop for crop in ec.CROP_LAYOUT if abs(crop[1]) > 70)
+    assert len(polar_layout) == 2
+    rgb, modal_x, _ = ec.prepare_panorama(
+        sample, frozen, "rel_plus_v2_1", None, np.array([0], dtype=np.uint8),
+        (32, 64), 32, native_size=72, layout=polar_layout,
+    )
+    assert rgb.shape == modal_x.shape == (2, 32, 32, 3)
+    assert modal_x.dtype == np.uint8
+    assert (modal_x != 255).any()
 
 
 def test_rel_plus_crops_use_the_canonical_recipe(frozen, panorama):

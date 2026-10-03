@@ -1,0 +1,77 @@
+{
+  "manifest": "/data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv",
+  "manifest_sha256": "afb6912545a59645e0104d081e9078a3d296e0c4f6cababf8a541e1e8156a65e",
+  "native_size_assumed": [
+    1080,
+    1080
+  ],
+  "summaries": {
+    "test": {
+      "count": 17593,
+      "hfov_deg_percentiles": {
+        "min": 45.003138445386334,
+        "p5": 47.38698065519977,
+        "p25": 54.75592934210916,
+        "median": 62.35613207567859,
+        "p75": 69.0606035733692,
+        "p95": 73.83852183237285,
+        "max": 74.99784505914255
+      },
+      "fraction_within_5_deg_of_90": 0.0,
+      "fraction_within_10_deg_of_90": 0.0,
+      "fraction_below_75": 1.0,
+      "metadata_fov_max_diff_deg": 4.9923814842145475e-06,
+      "cx_cy_unique": [
+        [
+          540.0,
+          540.0
+        ]
+      ]
+    },
+    "train": {
+      "count": 52903,
+      "hfov_deg_percentiles": {
+        "min": 45.00027029955558,
+        "p5": 47.36201658613183,
+        "p25": 54.83014398950469,
+        "median": 62.47653165897473,
+        "p75": 69.01017614091461,
+        "p95": 73.81261436197563,
+        "max": 74.99784505914255
+      },
+      "fraction_within_5_deg_of_90": 0.0,
+      "fraction_within_10_deg_of_90": 0.0,
+      "fraction_below_75": 1.0,
+      "metadata_fov_max_diff_deg": 5.178225066515552e-06,
+      "cx_cy_unique": [
+        [
+          540.0,
+          540.0
+        ]
+      ]
+    }
+  },
+  "seconds": 58.082237005233765,
+  "full_audit_sha256": "2499559bf6352adc791a8e834e7367afc319b5eeb9a88bdaf78d76a82f897734",
+  "intrinsic_formula": "degrees(atan(cx/fx)+atan((1080-cx)/fx)); analogous vertically",
+  "sampling": "all 52903 training and 17593 test camera JSON files from the frozen manifest",
+  "native_shape_checks": {
+    "count": 8,
+    "observed_shape": [
+      1080,
+      1080
+    ],
+    "manifest_row_indices": [
+      0,
+      1234,
+      10000,
+      30000,
+      52000,
+      52902,
+      52903,
+      70495
+    ]
+  },
+  "selected_eval_fov_deg": 62.47653165897473,
+  "limitation": "A single representative FOV matches the training median, not its whole 45-75 degree distribution."
+}
