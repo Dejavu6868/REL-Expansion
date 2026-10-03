@@ -31,7 +31,8 @@ python3 1002Pin2Pan/tools/cross_projection.py \
 加载冻结的 CMX 双流 MiT-B2 和 S2D epoch200 权重，在 area_5a/5b 全景上评估：
 
 - **RGB**：用冻结 loader 的原调用读取，即 `cv2.imread(path, cv2.COLOR_BGR2RGB)`，通道顺序与训练一致。
-- **X 输入**：原始 ERP `getREL`，在最近邻缩放到评估尺寸的深度上计算。这对应透视缓存在 480×480 模型尺寸上生成的做法。
+- **REL+ 的 X 输入**：原始 ERP `getREL`，在最近邻缩放到评估尺寸的深度上计算。这对应透视缓存在 480×480 模型尺寸上生成的做法。
+- **HHA 的 X 输入**：采用缓存报告确认的生成顺序（原尺寸生成再缩放，或先缩放深度再生成）和通道顺序。
 - **标签**：通过 `semantic_labels.json` 映射到 13 类，`<UNK>` 记为 ignore255，缩放用最近邻。
 - **推理**：整图一次前向，左右各做 128 列环形填充，保证 ±180° 接缝处两侧都有上下文。
 - **评估尺寸**：默认 1024×2048（约 5.7 px/°），接近 S2D 480 图的像素角密度；如更改须在结果中注明。
@@ -47,11 +48,11 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py \
 
 HHA 臂：把 `--config` 换成 `0927调参结果/configs/hha.json`，并加上 `--hha-cache-report <hha_cache_check.json>`（见第3节）。
 
-输出包括 `metrics.json`、`per_class_iou.csv`、`confusion_matrix.csv` 和 `samples.txt`。加 `--limit 3` 可先做冒烟测试。
+输出包括 `metrics.json`、`per_class_iou.csv`、`confusion_matrix.csv` 和 `samples.txt`。加 `--limit 3` 可先做冒烟测试，报告标记为 `SMOKE`。`--limit` 必须为正；缺少任一指定区域、重复指定区域或没有有效标签像素时拒绝完成评估。
 
 ## 3. 全景 HHA `tools/hha.py` 与缓存核对 `tools/check_hha_cache.py`
 
-CMX README 指定用 [Depth2HHA-python](https://github.com/charlesCXK/Depth2HHA-python) 生成 HHA，已原样收录于 `vendor/depth2hha`（MIT；改动见其 `SOURCE_NOTICE.md`）。
+CMX README 指定用 [Depth2HHA-python](https://github.com/charlesCXK/Depth2HHA-python) 生成 HHA，已收录于 `vendor/depth2hha`（MIT；打包和数值类型兼容改动见其 `SOURCE_NOTICE.md`）。
 
 全景 HHA 沿用 Depth2HHA 中与相机模型无关的全部定义：
 
@@ -76,7 +77,9 @@ python3 1002Pin2Pan/tools/check_hha_cache.py \
   --output <输出目录>/hha_cache_check.json
 ```
 
-只有结果为 MATCH 时，全景 HHA 才与 HHA 权重训练时见到的是同一模态。评估脚本的 HHA 臂必须提供该报告（`--hha-cache-report`），并按报告中的通道顺序输入；结果为 NO_MATCH 时脚本拒绝运行。
+`MATCH` 要求同一种生成顺序和通道顺序下，**每个抽样文件、每个通道的所有字节均一致**。中位数、P95 和最大差异作为诊断保留，不允许用中位数掩盖局部错误或失败样本。这只证明报告所列样本的缓存匹配，不证明整个缓存相同，也不消除 z-depth/range 的差异。
+
+评估脚本的 HHA 臂必须提供该报告（`--hha-cache-report`），核对报告中的缓存目录与配置一致，重新检查逐样本证据，并采用报告确认的生成顺序和通道顺序。旧版仅按中位数判定的报告必须重新生成；`NO_MATCH`、空证据或报告与证据不一致时拒绝运行。
 
 ## 4. 已知限制
 
@@ -91,4 +94,4 @@ python3 1002Pin2Pan/tools/check_hha_cache.py \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-需要 numpy、opencv、pytest；评估测试另需 torch。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。

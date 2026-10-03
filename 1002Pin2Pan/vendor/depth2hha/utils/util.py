@@ -124,7 +124,11 @@ def getYDirHelper(N, y0, thresh, num_iter):
         c = NF.shape[1]
         w,v = np.linalg.eig(A)      # w:eigenvalues; v:eigenvectors
         min_ind = np.argmin(w)      # min index
-        newYDir = v[:,min_ind]
+        # Some LAPACK/NumPy builds return complex dtype even for the real
+        # minimum eigenvector of this real, symmetric gravity matrix.
+        newYDir = np.real_if_close(v[:,min_ind])
+        if np.iscomplexobj(newYDir):
+            raise ValueError("gravity eigenvector is not real")
         yDir = newYDir * np.sign(np.dot(yDir.T, newYDir))
     return yDir
 

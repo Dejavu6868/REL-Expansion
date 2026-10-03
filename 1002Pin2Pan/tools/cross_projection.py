@@ -204,6 +204,8 @@ def summarize(values):
     values = np.abs(np.asarray(values, dtype=np.float64))
     if values.size == 0:
         return {"count": 0, "median": None, "p95": None}
+    if not np.isfinite(values).all():
+        return {"count": int(values.size), "median": None, "p95": None}
     return {
         "count": int(values.size),
         "median": float(np.median(values)),
@@ -350,7 +352,7 @@ def check_panorama_hha(depth_erp_m, frozen, *, yaws, pitches, size, fov):
         for key, limit in HHA_THRESHOLDS.items():
             quantity = key[: -len("_median")]
             median = crop["raw"][quantity]["median"]
-            if median is None or median > limit:
+            if median is None or not np.isfinite(median) or median > limit:
                 failures.append(
                     "HHA yaw={yaw_deg:g} pitch={pitch_deg:g}: ".format(**crop)
                     + "{} median {} > {}".format(quantity, median, limit)
@@ -378,7 +380,7 @@ def check_panorama(raw_depth, frozen, *, yaws, pitches, size, fov, thresholds, w
         for key, limit in thresholds.items():
             quantity = key[: -len("_median")]
             median = crop["raw"][quantity]["median"]
-            if median is None or median > limit:
+            if median is None or not np.isfinite(median) or median > limit:
                 failures.append(
                     "yaw={yaw_deg:g} pitch={pitch_deg:g}: ".format(**crop)
                     + "{} median {} > {}".format(quantity, median, limit)

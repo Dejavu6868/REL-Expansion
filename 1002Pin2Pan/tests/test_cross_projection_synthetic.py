@@ -110,3 +110,34 @@ def test_erp_hha_matches_pinhole_hha_on_crops(frozen):
         # Angle and height bytes agree; disparity cannot (z-depth vs range).
         assert crop["encoded_bytes"]["angle"]["median"] <= 1
         assert crop["encoded_bytes"]["height"]["median"] <= 2
+
+
+def test_gravity_accepts_real_eigenvectors_returned_as_complex(monkeypatch):
+    import hha
+
+    real_eig = np.linalg.eig
+
+    def complex_eig(matrix):
+        values, vectors = real_eig(matrix)
+        return values.astype(complex), vectors.astype(complex)
+
+    monkeypatch.setattr(np.linalg, "eig", complex_eig)
+    normals = np.broadcast_to([0.0, 1.0, 0.0], (8, 8, 3))
+    gravity = hha.getYDir(
+        normals, hha.ANGLE_THRESHOLDS, hha.GRAVITY_ITERATIONS, np.array([0.0, 1.0, 0.0])
+    )
+    assert np.isrealobj(gravity)
+    np.testing.assert_allclose(gravity, [0.0, 1.0, 0.0])
+
+
+def test_nonfinite_geometry_cannot_pass(frozen, report, monkeypatch):
+    from copy import deepcopy
+
+    crop = deepcopy(report["crops"][0])
+    crop["raw"]["height_cm"] = cp.summarize([0.0, np.nan])
+    monkeypatch.setattr(cp, "compare_crop", lambda *args: crop)
+    result = cp.check_panorama(
+        render_erp_raw_depth(64, 128), frozen, yaws=(0.0,), pitches=(0.0,),
+        size=32, fov=90.0, thresholds=cp.DEFAULT_THRESHOLDS,
+    )
+    assert result["status"] == "FAIL"

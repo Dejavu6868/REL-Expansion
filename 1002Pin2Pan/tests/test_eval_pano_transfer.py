@@ -44,3 +44,58 @@ def test_wrap_padding_is_cropped_back():
     plain = ev.predict_with_wrap(PixelwiseNet(), rgb, modal_x, 0, "cpu")
     assert padded.shape == plain.shape == (1, 2, 8, 32)
     assert torch.equal(padded, plain)
+
+
+def test_every_requested_area_must_have_samples(tmp_path):
+    for kind in ("rgb", "depth", "semantic"):
+        folder = tmp_path / "area_5a" / "pano" / kind
+        folder.mkdir(parents=True)
+        (folder / ("sample_" + kind + ".png")).touch()
+    with pytest.raises(FileNotFoundError, match="area_5b"):
+        ev.list_panoramas(tmp_path, ["area_5a", "area_5b"])
+
+
+def test_duplicate_areas_cannot_double_count_samples(tmp_path):
+    with pytest.raises(ValueError, match="unique"):
+        ev.list_panoramas(tmp_path, ["area_5a", "area_5a"])
+
+
+@pytest.mark.parametrize("limit", ["0", "-1"])
+def test_nonpositive_smoke_limit_is_rejected_before_loading(monkeypatch, tmp_path, limit):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+        "--limit", limit,
+    ])
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
+@pytest.mark.parametrize("variant", ["native_then_resize", "resize_then_hha"])
+def test_hha_input_uses_the_verified_resolution_recipe(tmp_path, variant):
+    import cv2
+    import cross_projection as cp
+    import hha
+    from test_cross_projection_synthetic import render_erp_raw_depth
+
+    raw = render_erp_raw_depth(64, 128)
+    sample = {kind: tmp_path / (kind + ".png") for kind in ("rgb", "depth", "semantic")}
+    assert cv2.imwrite(str(sample["rgb"]), np.full((64, 128, 3), 100, dtype=np.uint8))
+    assert cv2.imwrite(str(sample["depth"]), raw)
+    assert cv2.imwrite(str(sample["semantic"]), np.zeros((64, 128, 3), dtype=np.uint8))
+    frozen = cp.import_frozen_source(cp.DEFAULT_SOURCE_ROOT)
+    frozen.update(open_image=cv2.imread, rgb_flag=cv2.IMREAD_COLOR)
+    recipe = {"variant": variant, "channel_order": [2, 1, 0]}
+    _, actual, _ = ev.load_sample(
+        sample, (32, 64), np.array([0], dtype=np.uint8), frozen,
+        "hha_frozen_cache", recipe,
+    )
+    generation_depth = raw if variant == "native_then_resize" else cv2.resize(
+        raw, (64, 32), interpolation=cv2.INTER_NEAREST
+    )
+    expected, _ = hha.erp_hha(cp.decode_erp_depth(generation_depth), frozen)
+    expected = cv2.resize(expected, (64, 32), interpolation=cv2.INTER_NEAREST)
+    assert np.array_equal(actual, expected[:, :, ::-1])

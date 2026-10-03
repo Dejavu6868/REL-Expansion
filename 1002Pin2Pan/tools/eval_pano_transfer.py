@@ -18,7 +18,8 @@ normalisation are the frozen training ones; only the input images change.
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
   ``check_hha_cache.py`` report whose status is MATCH, and uses that report's
-  channel order, so the panorama HHA is the modality the checkpoint saw.
+  channel order and resolution recipe. This checks the sampled cache only;
+  it does not remove the z-depth/range domain difference.
 
 The raw-depth (RGBD) arm is refused: a Stanford pinhole z-depth byte has no
 ERP equivalent.
@@ -33,6 +34,8 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+
+from cross_projection import decode_erp_depth
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -77,9 +80,15 @@ def decode_semantic(semantic_bgr, lookup):
 
 
 def list_panoramas(stanford_root, areas):
+    if not areas or len(set(areas)) != len(areas):
+        raise ValueError("requested areas must be nonempty and unique")
     samples = []
     for area in areas:
-        for rgb_path in sorted((stanford_root / area / "pano" / "rgb").glob("*_rgb.png")):
+        rgb_folder = stanford_root / area / "pano" / "rgb"
+        rgb_paths = sorted(rgb_folder.glob("*_rgb.png"))
+        if not rgb_paths:
+            raise FileNotFoundError("no panoramas found in requested area: {}".format(rgb_folder))
+        for rgb_path in rgb_paths:
             stem = rgb_path.name[: -len("_rgb.png")]
             depth_path = rgb_path.parents[1] / "depth" / (stem + "_depth.png")
             semantic_path = rgb_path.parents[1] / "semantic" / (stem + "_semantic.png")
@@ -94,12 +103,10 @@ def list_panoramas(stanford_root, areas):
                     "semantic": semantic_path,
                 }
             )
-    if not samples:
-        raise FileNotFoundError("no panoramas found under {}".format(stanford_root))
     return samples
 
 
-def load_sample(sample, size, lookup, frozen, x_mode, hha_order=None):
+def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None):
     height, width = size
     rgb = frozen["open_image"](str(sample["rgb"]), frozen["rgb_flag"])
     if rgb.ndim != 3 or rgb.shape[2] != 3:
@@ -109,15 +116,25 @@ def load_sample(sample, size, lookup, frozen, x_mode, hha_order=None):
     raw_depth = cv2.imread(str(sample["depth"]), cv2.IMREAD_UNCHANGED)
     if raw_depth is None or raw_depth.dtype != np.uint16 or raw_depth.ndim != 2:
         raise ValueError("{} is not a uint16 depth map".format(sample["depth"]))
-    raw_depth = cv2.resize(raw_depth, (width, height), interpolation=cv2.INTER_NEAREST)
-    depth_m = (raw_depth + np.uint16(1)).astype(np.float32) / 512.0  # rel.getImage
     if x_mode == "rel_plus_v2_1":
-        modal_x = frozen["getREL"](depth_m)
-    else:
+        resized = cv2.resize(raw_depth, (width, height), interpolation=cv2.INTER_NEAREST)
+        modal_x = frozen["getREL"](decode_erp_depth(resized))
+    elif x_mode == "hha_frozen_cache":
         import hha
 
-        modal_x, _ = hha.erp_hha(depth_m, frozen)
-        modal_x = np.ascontiguousarray(modal_x[:, :, hha_order])
+        if hha_recipe is None:
+            raise ValueError("HHA input requires a verified cache recipe")
+        variant = hha_recipe["variant"]
+        if variant == "resize_then_hha":
+            raw_depth = cv2.resize(raw_depth, (width, height), interpolation=cv2.INTER_NEAREST)
+        elif variant != "native_then_resize":
+            raise ValueError("unsupported HHA resolution recipe: " + str(variant))
+        modal_x, _ = hha.erp_hha(decode_erp_depth(raw_depth), frozen)
+        if variant == "native_then_resize":
+            modal_x = cv2.resize(modal_x, (width, height), interpolation=cv2.INTER_NEAREST)
+        modal_x = np.ascontiguousarray(modal_x[:, :, hha_recipe["channel_order"]])
+    else:
+        raise ValueError("unsupported panorama x_mode: " + str(x_mode))
 
     semantic = cv2.imread(str(sample["semantic"]), cv2.IMREAD_COLOR)
     if semantic is None:
@@ -189,8 +206,10 @@ def load_config(path):
     return config
 
 
-def hha_channel_order(report_path):
-    """Channel order from a MATCH report of tools/check_hha_cache.py."""
+def hha_cache_recipe(report_path, expected_hha_root=None):
+    """Validate the sampled cache evidence and preserve both recipe choices."""
+    from check_hha_cache import CHANNEL_ORDERS, MATCH_RULE, summarize_results
+
     if report_path is None:
         raise ValueError("the HHA arm needs --hha-cache-report (tools/check_hha_cache.py)")
     report = json.loads(Path(report_path).read_text(encoding="utf-8"))
@@ -199,7 +218,25 @@ def hha_channel_order(report_path):
             "HHA cache report is {}: the cached HHA is not Depth2HHA output, so "
             "the ERP HHA would be a different modality".format(report.get("status"))
         )
-    return [0, 1, 2] if report["best"]["channel_order"] == "as_stored" else [2, 1, 0]
+    if report.get("match_rule") != MATCH_RULE:
+        raise ValueError("old HHA cache report: rerun tools/check_hha_cache.py")
+    try:
+        checked = summarize_results(report["samples"])
+        if checked["status"] != "MATCH" or checked["best"] != report["best"]:
+            raise ValueError("inconsistent MATCH report")
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("invalid HHA cache evidence; rerun tools/check_hha_cache.py") from error
+    cache_root = report.get("hha_root")
+    if expected_hha_root is not None and (
+        not cache_root or Path(cache_root).resolve() != Path(expected_hha_root).resolve()
+    ):
+        raise ValueError("HHA report cache root does not match the checkpoint config")
+    return {
+        "variant": checked["best"]["variant"],
+        "channel_order": CHANNEL_ORDERS[checked["best"]["channel_order"]],
+        "sample_count": len(report["samples"]),
+        "hha_root": cache_root,
+    }
 
 
 def main():
@@ -219,6 +256,12 @@ def main():
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--hha-cache-report", type=Path, default=None)
     args = parser.parse_args()
+    if args.limit is not None and args.limit <= 0:
+        parser.error("--limit must be positive; omit it for full evaluation")
+    if args.height <= 0 or args.width <= 0:
+        parser.error("--height and --width must be positive")
+    if not 0 <= args.wrap_pad <= args.width:
+        parser.error("--wrap-pad must be between zero and --width")
 
     import torch
     import torch.nn as nn
@@ -228,9 +271,9 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     frozen = import_frozen(args.source_root)
     config = load_config(args.config)
-    hha_order = None
+    hha_recipe = None
     if config.x_mode == "hha_frozen_cache":
-        hha_order = hha_channel_order(args.hha_cache_report)
+        hha_recipe = hha_cache_recipe(args.hha_cache_report, config.x_root_folder)
     lookup = label_lookup(args.semantic_labels)
     samples = list_panoramas(args.stanford_root, args.areas)[: args.limit]
 
@@ -246,7 +289,7 @@ def main():
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
-            sample, (args.height, args.width), lookup, frozen, config.x_mode, hha_order
+            sample, (args.height, args.width), lookup, frozen, config.x_mode, hha_recipe
         )
         logits = predict_with_wrap(
             network,
@@ -261,9 +304,11 @@ def main():
         if index % 20 == 0 or index == len(samples):
             print("{}/{} panoramas".format(index, len(samples)), flush=True)
 
+    if confusion.sum() == 0:
+        raise ValueError("no valid semantic pixels were evaluated")
     metrics = frozen["metrics_from_confusion"](confusion)
     report = {
-        "status": "SMOKE" if args.limit else "COMPLETED",
+        "status": "SMOKE" if args.limit is not None else "COMPLETED",
         "setting": "source-only pinhole-to-panorama transfer",
         "checkpoint": str(args.checkpoint),
         "checkpoint_epoch": epoch,
@@ -271,10 +316,13 @@ def main():
         "x_mode": config.x_mode,
         "panorama_x_input": (
             "ERP getREL on nearest-resized depth"
-            if hha_order is None
-            else "ERP HHA (hha.erp_hha) on nearest-resized depth, channel order {}".format(hha_order)
+            if hha_recipe is None
+            else "ERP HHA (hha.erp_hha), {}, channel order {}".format(
+                hha_recipe["variant"], hha_recipe["channel_order"]
+            )
         ),
-        "hha_cache_report": None if hha_order is None else str(args.hha_cache_report),
+        "hha_cache_report": None if hha_recipe is None else str(args.hha_cache_report),
+        "hha_recipe": hha_recipe,
         "areas": args.areas,
         "eval_size": [args.height, args.width],
         "wrap_pad": args.wrap_pad,
