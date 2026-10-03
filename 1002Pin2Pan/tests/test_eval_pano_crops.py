@@ -163,3 +163,12 @@ def test_hha_crops_use_the_verified_cache_recipe(frozen, panorama, variant):
         if variant != "resize_then_hha":
             expected = cv2.resize(expected, (32, 32), interpolation=cv2.INTER_LINEAR)
         assert np.array_equal(actual, expected[:, :, ::-1])
+
+
+def test_level_layout_sees_the_horizon_band_and_not_the_poles():
+    height, width = 1024, 2048
+    _, inside = ec.stitch_grids((height, width), layout=ec.LAYOUTS["level"])
+    elevation = 90.0 - np.arange(height) * 180.0 / height
+    seen_rows = inside.any(axis=0).all(axis=1)
+    assert seen_rows[np.abs(elevation) <= 25].all()
+    assert not inside.any(axis=0)[np.abs(elevation) > 35].any()

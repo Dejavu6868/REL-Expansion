@@ -48,7 +48,7 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py \
 
 HHA 臂：把 `--config` 换成 `0927调参结果/configs/hha.json`，并加上 `--hha-cache-report <hha_cache_check.json>`（见第3节）。
 
-输出包括 `metrics.json`、`per_class_iou.csv`、`confusion_matrix.csv` 和 `samples.txt`。加 `--limit 3` 可先做冒烟测试，报告标记为 `SMOKE`。`--limit` 必须为正；缺少任一指定区域、重复指定区域或没有有效标签像素时拒绝完成评估。
+输出包括 `metrics.json`、`per_class_iou.csv`、`confusion_matrix.csv` 和 `samples.txt`，另按 ERP 仰角分带评分：90–60°、60–25°、25–0°、0–−25°、−25–−60°、−60–−90°（每带含上边界），写入 `elevation_band_metrics.csv`、`elevation_band_confusion.npy` 和 `metrics.json` 的 `elevation_bands`。加 `--limit 3` 可先做冒烟测试，报告标记为 `SMOKE`。`--limit` 必须为正；缺少任一指定区域、重复指定区域或没有有效标签像素时拒绝完成评估。
 
 ## 3. 全景 HHA `tools/hha.py` 与缓存核对 `tools/check_hha_cache.py`
 
@@ -91,6 +91,18 @@ python3 1002Pin2Pan/tools/check_hha_cache.py \
 
 `--crop-fov-deg` 可更改视场，但必须满足完整覆盖。默认值只对齐训练视场的中位数，不代表复现了训练集的整个视场分布；原先 16 个 90° 裁剪的布局不能只缩小视场后继续使用。
 
+**水平切片与训练视角核对。** 2026-10-03 的完整切片评测中，HHA 从 55.67 跌到 36.21：倾斜切片上 Depth2HHA 的重力估计失效（抽查一张全景，±80° 切片偏差约 90°，22 个切片中 8 个超过 80°），而仰角 |e|>约30° 的像素（占 ERP 网格的 66%）只由倾斜切片覆盖。为此：
+
+- `--layout level` 只用 8 个 pitch 0 切片（水平切片上重力偏差 0.16–0.65°），未覆盖的像素不计分。默认视场下 ±25° 仰角带全部覆盖，可与第2节整图结果的同两带（25–0°、0–−25°）直接比较。
+- 两种评测都输出仰角分带结果（见第2节），可看出各臂在哪个仰角带失分。
+- `tools/audit_training_views.py` 用冻结位姿加载器读取清单中全部位姿，按 split 报告相机 pitch、roll 分位数、pitch 直方图、各切片 pitch ±10° 内的图像比例，以及训练图像素（每图 32×32 射线采样）落在各仰角带的比例，并与 ERP 网格各带像素比例并列：
+
+```bash
+python3 1002Pin2Pan/tools/audit_training_views.py \
+  --manifest /data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv \
+  --output <输出目录>/training_views.json
+```
+
 - **渲染**：裁剪先在 S2D 原生尺寸 1080×1080 上从原生 ERP 渲染。RGB 用双线性采样，再用 INTER_LINEAR 缩放到 480（与第2节相同；训练集 480 RGB 的缩放核没有记录）。z-depth 由最近 ERP 像素的射线距离换算。
 - **REL+**：深度最近邻缩放到 480，K 同步缩放（即 `load_canonical_frame` 的做法），再以裁剪的已知旋转作为重力调用冻结的 `generate_rel_plus_v2_1`。ReD 与高度按每个裁剪归一化，与训练一致。
 - **HHA**：在裁剪上运行 Depth2HHA，生成顺序、缩放核和通道顺序取自 `check_hha_cache.py` 报告。规则同第2节，`NEAR_MATCH` 同样需要 `--accept-hha-near-match`。
@@ -128,4 +140,4 @@ REL+ 臂换成 `relplus.json` 与 REL+ 权重，去掉两个 HHA 参数。
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。

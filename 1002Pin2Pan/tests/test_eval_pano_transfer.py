@@ -102,3 +102,33 @@ def test_hha_input_uses_the_verified_resolution_recipe(tmp_path, variant):
     interpolation = cv2.INTER_LINEAR if variant.endswith("linear") else cv2.INTER_NEAREST
     expected = cv2.resize(expected, (64, 32), interpolation=interpolation)
     assert np.array_equal(actual, expected[:, :, ::-1])
+
+
+def test_elevation_bands_split_rows_and_skip_empty_bands(tmp_path):
+    # 12 rows at 90, 75, ..., -75 degrees; each band keeps its top edge: [90,60) [60,25) ...
+    label = np.ones((12, 4), dtype=np.uint8)
+    label[10:] = 255  # the bottom band's rows (-60, -75) are unlabelled
+    prediction = np.ones((12, 4), dtype=np.uint8)
+    prediction[0] = 0
+
+    def hist_info(n, pred, gt):
+        keep = gt < n
+        return np.bincount(n * gt[keep].astype(int) + pred[keep], minlength=n * n).reshape(n, n), 0, 0
+
+    bands = ev.elevation_band_confusions(2, prediction, label, hist_info)
+    assert bands.sum(axis=(1, 2)).tolist() == [8, 12, 4, 8, 8, 0]
+    assert bands[0].tolist() == [[0, 0], [4, 4]]
+
+    def metrics(confusion):
+        iou = (np.diag(confusion) / confusion.sum()).tolist()
+        return {"mIoU_percent": 1.0, "pixel_accuracy_percent": 2.0, "per_class_iou_percent": iou}
+
+    summary = ev.write_elevation_bands(tmp_path, bands, metrics, ["a", "b"])
+    assert [band["elevation_deg"] for band in summary][0] == [90, 60]
+    assert summary[-1] == {
+        "elevation_deg": [-60, -90], "valid_pixels": 0, "mIoU_percent": None,
+        "pixel_accuracy_percent": None, "per_class_iou_percent": None,
+    }
+    assert np.array_equal(np.load(tmp_path / "elevation_band_confusion.npy"), bands)
+    rows = (tmp_path / "elevation_band_metrics.csv").read_text().splitlines()
+    assert len(rows) == 7 and rows[-1] == "-60,-90,0,,,,"
