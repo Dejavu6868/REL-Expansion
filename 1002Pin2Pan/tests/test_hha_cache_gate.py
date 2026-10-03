@@ -114,3 +114,44 @@ def test_pixel_centre_nearest_differs_from_opencv_nearest():
     centre = check.resize_native_hha(native, (4, 4), "native_then_resize_nearest_center")
     assert np.array_equal(centre, native[[1, 3, 5, 7]][:, [1, 3, 5, 7]])
     assert not np.array_equal(centre, cv2.resize(native, (4, 4), interpolation=cv2.INTER_NEAREST))
+
+
+def near_result():
+    cached = np.full((20, 20, 3), 100, dtype=np.uint8)
+    candidate = cached.copy()
+    candidate[:, :, 1] += np.uint8(1)
+    candidate[0, 0, 0] = 230
+    return {"sample_id": "s", "native_then_resize": check.compare(candidate, cached),
+            "resize_then_hha": check.compare(cached + 30, cached)}
+
+
+def test_cache_gate_reports_rounding_level_agreement_as_near_match():
+    report = check.summarize_results([near_result()])
+    assert report["status"] == "NEAR_MATCH"
+    assert report["best"]["variant"] == "native_then_resize"
+
+
+def test_near_match_rejects_two_loose_channels_or_a_wide_p95():
+    cached = np.full((20, 20, 3), 100, dtype=np.uint8)
+    two_loose = cached.copy()
+    two_loose[0, 0, :2] = 230
+    wide = cached.copy()
+    wide[:2, :, 0] = 103
+    for candidate in (two_loose, wide):
+        result = {"sample_id": "s", "native_then_resize": check.compare(candidate, cached),
+                  "resize_then_hha": check.compare(cached + 30, cached)}
+        assert check.summarize_results([result])["status"] == "NO_MATCH"
+
+
+def test_evaluator_accepts_near_match_only_when_asked(tmp_path):
+    report = check.summarize_results([near_result()])
+    path = tmp_path / "near.json"
+    path.write_text(json.dumps(report))
+    with pytest.raises(ValueError, match="accept-hha-near-match"):
+        ev.hha_cache_recipe(path)
+    recipe = ev.hha_cache_recipe(path, accept_near_match=True)
+    assert recipe["cache_status"] == "NEAR_MATCH"
+    report["status"] = "MATCH"
+    path.write_text(json.dumps(report))
+    with pytest.raises(ValueError, match="evidence"):
+        ev.hha_cache_recipe(path, accept_near_match=True)

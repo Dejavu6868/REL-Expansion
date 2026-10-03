@@ -81,6 +81,8 @@ python3 1002Pin2Pan/tools/check_hha_cache.py \
 
 评估脚本的 HHA 臂必须提供该报告（`--hha-cache-report`），核对报告中的缓存目录与配置一致，重新检查逐样本证据，并采用报告确认的生成顺序和通道顺序。旧版仅按中位数判定的报告必须重新生成；`NO_MATCH`、空证据或报告与证据不一致时拒绝运行。
 
+若最优配方只差取整级误差（每个样本各通道 P95 ≤1；最多一个通道最大差 >2，且该通道 ≥90% 像素完全一致），报告为 `NEAR_MATCH`，并优先选出满足该条件的配方。评估脚本默认拒绝 `NEAR_MATCH`，需显式加 `--accept-hha-near-match`，并在 `metrics.json` 的 `hha_recipe.cache_status` 中记录。
+
 ## 4. 已知限制
 
 - **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
