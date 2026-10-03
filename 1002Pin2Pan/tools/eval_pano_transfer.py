@@ -17,7 +17,8 @@ normalisation are the frozen training ones; only the input images change.
 
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
-  ``check_hha_cache.py`` report whose status is MATCH, and uses that report's
+  ``check_hha_cache.py`` report whose status is MATCH (or NEAR_MATCH with
+  ``--accept-hha-near-match``), and uses that report's
   channel order and resolution recipe. This checks the sampled cache only;
   it does not remove the z-depth/range domain difference.
 
@@ -208,24 +209,28 @@ def load_config(path):
     return config
 
 
-def hha_cache_recipe(report_path, expected_hha_root=None):
+def hha_cache_recipe(report_path, expected_hha_root=None, accept_near_match=False):
     """Validate the sampled cache evidence and preserve both recipe choices."""
     from check_hha_cache import CHANNEL_ORDERS, MATCH_RULE, summarize_results
 
     if report_path is None:
         raise ValueError("the HHA arm needs --hha-cache-report (tools/check_hha_cache.py)")
     report = json.loads(Path(report_path).read_text(encoding="utf-8"))
-    if report.get("status") != "MATCH":
+    accepted = ("MATCH", "NEAR_MATCH") if accept_near_match else ("MATCH",)
+    if report.get("status") not in accepted:
         raise ValueError(
-            "HHA cache report is {}: the cached HHA is not Depth2HHA output, so "
-            "the ERP HHA would be a different modality".format(report.get("status"))
+            "HHA cache report is {}: not accepted as the same modality as the "
+            "cached HHA{}".format(
+                report.get("status"),
+                "" if accept_near_match else " (NEAR_MATCH needs --accept-hha-near-match)",
+            )
         )
     if report.get("match_rule") != MATCH_RULE:
         raise ValueError("old HHA cache report: rerun tools/check_hha_cache.py")
     try:
         checked = summarize_results(report["samples"])
-        if checked["status"] != "MATCH" or checked["best"] != report["best"]:
-            raise ValueError("inconsistent MATCH report")
+        if checked["status"] != report["status"] or checked["best"] != report["best"]:
+            raise ValueError("inconsistent HHA cache report")
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("invalid HHA cache evidence; rerun tools/check_hha_cache.py") from error
     cache_root = report.get("hha_root")
@@ -234,6 +239,7 @@ def hha_cache_recipe(report_path, expected_hha_root=None):
     ):
         raise ValueError("HHA report cache root does not match the checkpoint config")
     return {
+        "cache_status": checked["status"],
         "variant": checked["best"]["variant"],
         "channel_order": CHANNEL_ORDERS[checked["best"]["channel_order"]],
         "sample_count": len(report["samples"]),
@@ -257,6 +263,10 @@ def main():
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--hha-cache-report", type=Path, default=None)
+    parser.add_argument(
+        "--accept-hha-near-match", action="store_true",
+        help="also accept a NEAR_MATCH cache report (recorded in metrics.json)",
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
         parser.error("--limit must be positive; omit it for full evaluation")
@@ -275,7 +285,9 @@ def main():
     config = load_config(args.config)
     hha_recipe = None
     if config.x_mode == "hha_frozen_cache":
-        hha_recipe = hha_cache_recipe(args.hha_cache_report, config.x_root_folder)
+        hha_recipe = hha_cache_recipe(
+            args.hha_cache_report, config.x_root_folder, args.accept_hha_near_match
+        )
     lookup = label_lookup(args.semantic_labels)
     samples = list_panoramas(args.stanford_root, args.areas)[: args.limit]
 
