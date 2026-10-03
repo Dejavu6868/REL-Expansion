@@ -83,7 +83,35 @@ python3 1002Pin2Pan/tools/check_hha_cache.py \
 
 若最优配方只差取整级误差（每个样本各通道 P95 ≤1；最多一个通道最大差 >2，且该通道 ≥90% 像素完全一致），报告为 `NEAR_MATCH`，并优先选出满足该条件的配方。评估脚本默认拒绝 `NEAR_MATCH`，需显式加 `--accept-hha-near-match`，并在 `metrics.json` 的 `hha_recipe.cache_status` 中记录。
 
-## 4. 已知限制
+## 4. 裁剪拼接评估 `tools/eval_pano_crops.py`
+
+第2节的整图评估给网络的是 ERP 输入，逐图归一化覆盖整个 360°，与训练时的 90° 针孔图不同。本工具把每张全景切成 16 个 90° 针孔裁剪：pitch 0 每隔 45° 一个，pitch ±45 各每隔 90° 一个，合起来覆盖全部 ERP 像素。每个裁剪按训练缓存的做法生成输入并单独推理，再把 softmax 概率投回 ERP 标签网格，用与第2节相同的 1024×2048 标签评分。
+
+- **渲染**：裁剪先在 S2D 原生尺寸 1080×1080 上从原生 ERP 渲染。RGB 用双线性采样，再用 INTER_LINEAR 缩放到 480（与第2节相同；训练集 480 RGB 的缩放核没有记录）。z-depth 由最近 ERP 像素的射线距离换算。
+- **REL+**：深度最近邻缩放到 480，K 同步缩放（即 `load_canonical_frame` 的做法），再以裁剪的已知旋转作为重力调用冻结的 `generate_rel_plus_v2_1`。ReD 与高度按每个裁剪归一化，与训练一致。
+- **HHA**：在裁剪上运行 Depth2HHA，生成顺序、缩放核和通道顺序取自 `check_hha_cache.py` 报告。规则同第2节，`NEAR_MATCH` 同样需要 `--accept-hha-near-match`。
+- **拼接**：每个 ERP 像素取所有覆盖它的裁剪的 softmax 之和，再取 argmax。
+
+参数与第2节相同（没有 `--wrap-pad`），另有 `--workers N`，用 N 个 CPU 进程并行生成裁剪输入。HHA 臂的 Depth2HHA 在 1080 裁剪上本地约 15 s/个，每张全景 16 个，建议加 `--workers 32` 并设 `OMP_NUM_THREADS=1`：
+
+```bash
+OMP_NUM_THREADS=1 python3 1002Pin2Pan/tools/eval_pano_crops.py \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --config 0927调参结果/configs/hha.json \
+  --checkpoint <HHA epoch-200.pth> \
+  --hha-cache-report <hha_cache_check.json> --accept-hha-near-match \
+  --workers 32 \
+  --output <输出目录>/hha_crop_eval
+```
+
+REL+ 臂换成 `relplus.json` 与 REL+ 权重，去掉两个 HHA 参数。
+
+**解读**：分别计算两臂“裁剪评估 − 整图评估”的提升。若 REL+ 的提升明显大于 HHA，整图上多出的降幅主要来自 ERP 输入（逐图归一化），固定归一化的 REL+ 臂值得训练；若两者提升相近，原因在全景场景本身，改归一化不一定有效。裁剪视场固定为 90°，若训练针孔图的视场与此相差较大，结论需要打折扣。
+
+**合成测试**：全景按方位角（每 45° 一区）和仰角（±30°、±70°）分区着色，用逐像素按颜色分类的网络推理并拼接，ERP 标签复原率 99.7%，两极所在的首末行全部正确；把裁剪 yaw 偏 5° 时降到 97.5%，pitch 偏 5° 时降到 91.2%。
+
+## 5. 已知限制
 
 - **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
 - **HHA 的视差通道在两种投影之间存在系统差异**（见第3节）。
@@ -96,4 +124,4 @@ python3 1002Pin2Pan/tools/check_hha_cache.py \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
