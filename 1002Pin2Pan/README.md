@@ -83,7 +83,39 @@ python3 1002Pin2Pan/tools/check_hha_cache.py \
 
 若最优配方只差取整级误差（每个样本各通道 P95 ≤1；最多一个通道最大差 >2，且该通道 ≥90% 像素完全一致），报告为 `NEAR_MATCH`，并优先选出满足该条件的配方。评估脚本默认拒绝 `NEAR_MATCH`，需显式加 `--accept-hha-near-match`，并在 `metrics.json` 的 `hha_recipe.cache_status` 中记录。
 
-## 4. 已知限制
+## 4. 裁剪拼接评估 `tools/eval_pano_crops.py`
+
+第2节的整图评估给网络的是 ERP 输入，逐图归一化覆盖整个 360°。对冻结清单全部 52,903 张训练图的 K 矩阵核对发现，训练视场为 **45.00–75.00°，中位数 62.47653165897473°**，并非 90°；17,593 张测试图也在 45–75°。统计及清单哈希见 [`evidence/training_fov_20261003.json`](evidence/training_fov_20261003.json)。
+
+本工具默认采用训练视场中位数，生成 **22 个针孔裁剪**：pitch 0 每隔 45° 一个（8 个），pitch ±45 各每隔 60° 一个（12 个），再各加一个 pitch ±80°、yaw 0 的极区裁剪。极区避开恰好 −90° 时冻结 REL+ 重力对齐的反平行奇点，同时覆盖两极。每个裁剪按训练缓存的做法生成输入并单独推理，再把 softmax 概率投回 ERP 标签网格，用与第2节相同的 1024×2048 标签评分。运行时逐像素检查覆盖，存在空洞即拒绝评测。
+
+`--crop-fov-deg` 可更改视场，但必须满足完整覆盖。默认值只对齐训练视场的中位数，不代表复现了训练集的整个视场分布；原先 16 个 90° 裁剪的布局不能只缩小视场后继续使用。
+
+- **渲染**：裁剪先在 S2D 原生尺寸 1080×1080 上从原生 ERP 渲染。RGB 用双线性采样，再用 INTER_LINEAR 缩放到 480（与第2节相同；训练集 480 RGB 的缩放核没有记录）。z-depth 由最近 ERP 像素的射线距离换算。
+- **REL+**：深度最近邻缩放到 480，K 同步缩放（即 `load_canonical_frame` 的做法），再以裁剪的已知旋转作为重力调用冻结的 `generate_rel_plus_v2_1`。ReD 与高度按每个裁剪归一化，与训练一致。
+- **HHA**：在裁剪上运行 Depth2HHA，生成顺序、缩放核和通道顺序取自 `check_hha_cache.py` 报告。规则同第2节，`NEAR_MATCH` 同样需要 `--accept-hha-near-match`。
+- **拼接**：每个 ERP 像素取所有覆盖它的裁剪的 softmax 之和，再取 argmax。
+
+参数与第2节相同（没有 `--wrap-pad`），另有 `--workers N`，用 N 个 CPU 进程按全景并行生成裁剪输入，每个进程依次生成一张全景的 22 个裁剪。HHA 臂的 Depth2HHA 在原开发环境中约 15 s/个 1080 裁剪，服务器耗时需实测；可加 `--workers 32` 并设 `OMP_NUM_THREADS=1`：
+
+```bash
+OMP_NUM_THREADS=1 python3 1002Pin2Pan/tools/eval_pano_crops.py \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --config 0927调参结果/configs/hha.json \
+  --checkpoint <HHA epoch-200.pth> \
+  --hha-cache-report <hha_cache_check.json> --accept-hha-near-match \
+  --workers 32 \
+  --output <输出目录>/hha_crop_eval
+```
+
+REL+ 臂换成 `relplus.json` 与 REL+ 权重，去掉两个 HHA 参数。
+
+**解读**：分别计算两臂“裁剪评估 − 整图评估”的变化。本比较同时改变投影、视场与上下文、法向估计、REL+ 的重力来源与归一化范围、HHA 的 z-depth/range 定义，以及多视角概率融合。REL+ 若获得更大增益，可以支持进一步检验其输入表示的跨投影差异，但不能单独证明逐图归一化是主因；若增益接近，也不能据此排除归一化影响或认定场景本身是原因。归因需要固定其他因素、只改变归一化统计范围的对照实验。
+
+**合成测试**：全景按方位角（每 45° 一区）和仰角（±30°、±70°）分区着色，用逐像素按颜色分类的网络推理并拼接。当前布局要求 ERP 标签复原率超过 99%，两极所在的首末行全部正确；把拼接的 yaw 或 pitch 偏移 5°，复原率必须下降超过 1 个百分点。另检查 60°、训练中位视场、75° 在 64×128 与 1024×2048 上的完整覆盖，以及旧 16 切片布局在训练中位视场下会留下空洞。
+
+## 5. 已知限制
 
 - **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
 - **HHA 的视差通道在两种投影之间存在系统差异**（见第3节）。
@@ -96,4 +128,4 @@ python3 1002Pin2Pan/tools/check_hha_cache.py \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
