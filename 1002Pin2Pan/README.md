@@ -166,7 +166,71 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py \
 
 **对照指标**：针孔 mIoU（v2.1 为 61.41），整图全景 mIoU（53.47），底部极区地板→桌子像素数（5.04M）与桌子 IoU（4.96），以及各仰角带在两臂共有类别上与 HHA 的差值。
 
-## 6. 已知限制
+## 6. 领域自适应 `tools/build_target_cache.py`、`tools/gen_pseudo_labels.py`、`tools/train_pin2pan.py`
+
+按 Trans4PASS（`adaptations/`，commit 758f2301）的流程把冻结的针孔检查点适配到全景：先做输出空间对抗预热（warm-up），再用预热后的模型生成伪标签，最后做 MPA（伪标签、原型对齐和对抗三项）。源域是冻结训练用的针孔缓存，配置、数据增强和 focal loss 都不变；目标域是区域 1、2、3、4、6 的全景，训练时不读取它们的真值。区域 5 只用于最终评估：工具拒绝把它作为目标训练区域，也不在区域 5 上挑选检查点，只保存最后一次迭代的结果。
+
+**与 Trans4PASS 的差异**（Trans4PASS 从 ImageNet 权重开始训练，这里微调已经训练好的网络）：
+
+- 优化器沿用冻结配方的 AdamW，学习率取冻结值的 1/10（1.2e-5）并按 poly 衰减；Trans4PASS 用 SGD。这个学习率和迭代次数（预热 2,000 步、MPA 10,000 步）都是估计值，没有调过。
+- 两个域都用冻结的 focal loss（gamma 1，对全部像素取平均）。伪标签为 255 的像素按 0 计入，所以目标项的实际权重约等于伪标签覆盖率。各项权重沿用 Trans4PASS：对抗 0.001，原型每个域 0.001，伪标签 1。
+- 伪标签阈值规则相同（每类置信度的中位数，上限 0.9），但只在评估尺寸上做单尺度推理。Trans4PASS 用 0.5 到 1.75 共六个尺度，而 1.75 倍的 1024×2048 全景放不进 24 GB 显存。
+- 原型记忆的更新修正了 Trans4PASS 的问题。原代码 `np.mean(列表)` 没有指定轴，所有通道被同一个标量代替；缓冲区从不清空；没出现的类被拉向 0。这里按通道求均值，只更新出现过的类，每次更新后清空缓冲区，并在各 GPU 之间同步。
+- 特征取解码器融合层 `decode_head.linear_fuse` 的 512 通道输出（1/4 分辨率）。
+- 目标裁剪保持全高，两极都在其中；宽 1024，起始方位随机，可以跨过接缝。每卡每步 2 张源图、1 张目标裁剪。
+
+**1. 目标缓存。** 缓存与评估完全相同的输入：RGB、该臂的 ERP X 和真值 Label，尺寸 1024×2048。Label 只在第 3 步的报告中使用。REL+ 变体参数和 HHA 报告参数与第 2、5 节相同：
+
+```bash
+python3 1002Pin2Pan/tools/build_target_cache.py \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --config 0927调参结果/configs/relplus.json --workers 32 \
+  --output <输出目录>/relplus_target
+```
+
+HHA 臂换成 `hha.json`，并加上 `--hha-cache-report <报告> --accept-hha-near-match`。
+
+**2. 预热。** 与冻结启动器一样用 `torch.distributed.launch`，每张卡一个进程：
+
+```bash
+python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29511 \
+  1002Pin2Pan/tools/train_pin2pan.py --stage warmup \
+  --config 0927调参结果/configs/relplus.json --checkpoint <REL+ epoch-200.pth> \
+  --target-cache <输出目录>/relplus_target --output <输出目录>/relplus_warmup
+```
+
+**3. 伪标签。** 单卡运行：
+
+```bash
+python3 1002Pin2Pan/tools/gen_pseudo_labels.py \
+  --target-cache <输出目录>/relplus_target \
+  --config 0927调参结果/configs/relplus.json \
+  --checkpoint <输出目录>/relplus_warmup/checkpoint.pth \
+  --output <输出目录>/relplus_pseudo
+```
+
+`pseudo_labels.json` 给出伪标签覆盖率、每类阈值和保留像素的准确率，以及该检查点在目标训练全景上的 mIoU、各仰角带分数和底部极区地板→桌子像素数。这些数字用目标域真值计算，只用来观察，不能据此调整阈值或挑选模型。
+
+**4. MPA。** 从预热检查点开始：
+
+```bash
+python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29512 \
+  1002Pin2Pan/tools/train_pin2pan.py --stage mpa \
+  --config 0927调参结果/configs/relplus.json \
+  --checkpoint <输出目录>/relplus_warmup/checkpoint.pth \
+  --target-cache <输出目录>/relplus_target \
+  --pseudo-labels <输出目录>/relplus_pseudo \
+  --output <输出目录>/relplus_mpa
+```
+
+每个阶段输出 `checkpoint.pth`、`adaptation_state.pth`（判别器与原型记忆）、`pin2pan.json`（本次设置）和 `train_log.jsonl`（每 20 步各项损失）。检查点保存为 `{"epoch": 200, "model": ...}`，epoch 沿用源检查点，所以第 2、4 节的评估可以直接使用，`--expected-epoch 200` 不变。如果 1024 宽的目标裁剪超出显存，可改用 `--target-crop-width 512`（仍保持全高）。显存和速度还没有在 GPU 上测过。
+
+**5. 评估。** 用第 2 节的整图评估在区域 5 上分别评估预热和 MPA 检查点。
+
+**对照指标**：整图全景 mIoU（source-only：REL+ 53.47，HHA 55.67）、各仰角带分数，以及底部极区地板→桌子像素数（REL+ source-only 为 5.04M）。
+
+## 7. 已知限制
 
 - **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
 - **HHA 的视差通道在两种投影之间存在系统差异**（见第3节）。
@@ -180,4 +244,4 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过。测试通过不代表已经在真实服务器数据上验证迁移效果。
