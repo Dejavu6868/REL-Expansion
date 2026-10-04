@@ -43,6 +43,7 @@ import numpy as np
 
 import cross_projection as cp
 import eval_pano_transfer as ev
+import relplus_variant as rv
 
 
 CROP_FOV_DEG = 62.47653165897473  # audited S2D training median, see ../evidence/
@@ -233,6 +234,10 @@ def main():
         "--accept-hha-near-match", action="store_true",
         help="also accept a NEAR_MATCH cache report (recorded in metrics.json)",
     )
+    parser.add_argument(
+        "--relplus-variant", choices=sorted(rv.VARIANT_ALPHA), default="v2_1",
+        help="REL+ EGVIA encoding; must match the checkpoint's training cache (relplus_variant.py)",
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
         parser.error("--limit must be positive; omit it for full evaluation")
@@ -250,6 +255,7 @@ def main():
     config = ev.load_config(args.config)
     if config.image_height != config.image_width:
         raise ValueError("crop evaluation needs a square model input size")
+    relplus_variant = rv.select_for_eval(args.relplus_variant, config, frozen)
     hha_recipe = None
     if config.x_mode == "hha_frozen_cache":
         hha_recipe = ev.hha_cache_recipe(
@@ -320,12 +326,15 @@ def main():
         "config": str(args.config),
         "x_mode": config.x_mode,
         "crop_x_input": (
-            "frozen generate_rel_plus_v2_1 per crop (canonical nearest resize, crop rotation as gravity)"
+            "frozen generate_rel_plus_v2_1 (alpha {}) per crop (canonical nearest resize, crop rotation as gravity)".format(
+                rv.VARIANT_ALPHA[relplus_variant]
+            )
             if hha_recipe is None
             else "Depth2HHA per crop, {}, channel order {}".format(
                 hha_recipe["variant"], hha_recipe["channel_order"]
             )
         ),
+        "relplus_variant": relplus_variant,
         "hha_cache_report": None if hha_recipe is None else str(args.hha_cache_report),
         "hha_recipe": hha_recipe,
         "crop_layout": args.layout,
