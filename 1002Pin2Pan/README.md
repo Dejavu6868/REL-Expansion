@@ -133,6 +133,19 @@ REL+ 臂换成 `relplus.json` 与 REL+ 权重，去掉两个 HHA 参数。
 
 REL+ 3.0（变体名 `v3_0`）对所有表面混入高度。冻结流程只接受 v2.1 的协议字符串，所以本次训练的冻结报告仍写 `RELPLUS_V2_1_OFFLINE480_SOURCECOMPAT`，3.0 记录在缓存标记 `relplus_variant.json` 和评估的 metrics.json 中。两个冻结编码器都先把角度截到 [0, 255]，再判断 `angle <= t or angle >= 255 - t`，其中 `t = alpha * 255 / 180`；取 alpha = −1 时没有像素被判为水平。LOA、ReD、有效掩码和无效值 255 都不变。合成房间（相机离地 1.4 m，桌面高 0.75 m）上，地板仍约为 0，天花板约为 254，桌面从约 0 变为 32（ERP）或 45（pitch −20° 切片）。
 
+**0. 先检查高度线索（可选，只用 CPU，不训练）。** `tools/check_floor_table_egvia.py` 衡量 3.0 的 EGVIA 能否把桌面和地板分开，两个域分别检查：随机抽取的针孔训练帧（用冻结生成器编码，标签取训练配置的 480 标签），以及训练区域（1、2、3、4、6，不含区域 5）的全景。只统计朝上的地板和桌子像素（未混合的 EGVIA 角度 ≤ 63，即 45°）。3.0 的高度按每张图归一化，当桌面是视野里最低的表面时可能接近 0，所以针孔帧按“视野里有没有地板”分开统计：
+
+```bash
+python3 1002Pin2Pan/tools/check_floor_table_egvia.py \
+  --manifest /data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv \
+  --config 0927调参结果/configs/relplus.json \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --workers 32 --output <输出目录>/floor_table_egvia
+```
+
+默认抽 3000 帧针孔图，并使用全部训练区域全景。`floor_table_egvia.json` 给出每个子集、每个变体下地板和桌面的 EGVIA 中位数，以及 `table_above_floor`：随机取一个桌面像素和一个地板像素，桌面 EGVIA 更高的概率（0.5 表示分不开，1.0 表示完全分开）。另外给出针孔帧逐帧的“桌面−地板”中位数差，以及视野里没有地板时桌面 EGVIA 中位数的分布。直方图写在 `floor_table_egvia_histograms.csv`。合成房间上，v2.1 的 `table_above_floor` 为 0.53（针孔）和 0.72（全景，只来自边缘像素），3.0 为 0.996 和 1.000；桌面中位数在针孔约 46，全景约 31，地板约 0–3。
+
 **1. 生成缓存。** `generate` 原样调用冻结的 `tools/generate_full_relplus_cache.py`，其余参数照传。清单用现有 `formal_cache/cache_generation_summary.json` 里记录的 `manifest_path`。工具先在输出目录写入 `relplus_variant.json`，再开始生成图像；如果目录里已有另一种变体，或者有 REL+ 图像却没有标记，就拒绝运行（冻结的 `--resume` 只检查 PNG 能否解码）。缓存进程用 fork 启动，以继承变体设置：
 
 ```bash
@@ -180,4 +193,4 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成、地板/桌面分离检查）、测试区域缺失及空评估参数等回归场景。测试通过不代表已经在真实服务器数据上验证迁移效果。
