@@ -203,6 +203,10 @@ def main(argv=None):
             find_unused_parameters=False,
         )
     discriminator = pa.FCDiscriminator(config.num_classes).to(device)
+    if world_size > 1:
+        # Rank-specific seeds require identical initial weights before averaging gradients.
+        for parameter in discriminator.parameters():
+            dist.broadcast(parameter.detach(), src=0)
     criterion = build_author_criterion(config)
     optimizer_d = torch.optim.Adam(discriminator.parameters(), lr=args.lr_d, betas=(0.9, 0.99))
     schedule = PolyLR(args.lr, config.lr_power, args.iterations)

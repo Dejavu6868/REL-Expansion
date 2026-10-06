@@ -200,6 +200,35 @@ def run(arguments, torchrun=False):
     return result
 
 
+def run_with_discriminator_sync_check(arguments, root):
+    """Check the actual training loop starts each step with identical discriminator weights."""
+    wrapper = root / "check_discriminator_sync.py"
+    wrapper.write_text(
+        "import sys\n"
+        "sys.path.insert(0, {!r})\n".format(str(TOOLS))
+        + """import torch
+import torch.distributed as dist
+import train_pin2pan as training
+
+original_average_gradients = training.average_gradients
+
+def check_and_average(parameters, world_size):
+    actual = torch.cat([parameter.detach().reshape(-1) for parameter in parameters])
+    expected = actual.clone()
+    dist.broadcast(expected, src=0)
+    identical = torch.tensor(int(torch.equal(actual, expected)))
+    dist.all_reduce(identical, op=dist.ReduceOp.MIN)
+    assert bool(identical), 'discriminator weights differ across ranks before optimizer step'
+    original_average_gradients(parameters, world_size)
+
+training.average_gradients = check_and_average
+raise SystemExit(training.main())
+""",
+        encoding="utf-8",
+    )
+    return run([str(wrapper)] + arguments[1:], torchrun=True)
+
+
 @pytest.fixture(scope="module")
 def world(tmp_path_factory):
     import eval_pano_transfer as ev
@@ -285,8 +314,10 @@ def test_adaptation_runs_end_to_end(world):
     run([str(TOOLS / "gen_pseudo_labels.py"), "--target-cache", str(root / "target"), "--checkpoint",
          str(root / "warmup" / "checkpoint.pth"), "--output", str(root / "pseudo1"), "--device", "cpu",
          "--wrap-pad", "16"] + common)
-    run(train + ["--stage", "mpa", "--pseudo-labels", str(root / "pseudo1"), "--output", str(root / "mpa")],
-        torchrun=True)
+    run_with_discriminator_sync_check(
+        train + ["--stage", "mpa", "--pseudo-labels", str(root / "pseudo1"), "--output", str(root / "mpa")],
+        root,
+    )
 
     for stage, world_size in (("warmup", 1), ("mpa", 2)):
         network = frozen["EncoderDecoder"](cfg=ev.load_config(root / "config.json"), criterion=None,
