@@ -224,7 +224,7 @@ python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29512 \
   --output <输出目录>/relplus_mpa
 ```
 
-每个阶段输出 `checkpoint.pth`、`adaptation_state.pth`（判别器与原型记忆）、`pin2pan.json`（本次设置）和 `train_log.jsonl`（每 20 步各项损失）。检查点保存为 `{"epoch": 200, "model": ...}`，epoch 沿用源检查点，所以第 2、4 节的评估可以直接使用，`--expected-epoch 200` 不变。如果 1024 宽的目标裁剪超出显存，可改用 `--target-crop-width 512`（仍保持全高）。显存和速度还没有在 GPU 上测过。
+每个阶段输出 `checkpoint.pth`、`adaptation_state.pth`（判别器与原型记忆）、`pin2pan.json`（本次设置）和 `train_log.jsonl`（每 20 步各项损失）。检查点保存为 `{"epoch": 200, "model": ...}`，epoch 沿用源检查点，所以第 2、4 节的评估可以直接使用，`--expected-epoch 200` 不变。如果 1024 宽的目标裁剪超出显存，可改用 `--target-crop-width 512`（仍保持全高）。`--lambda-adv` 设置对抗权重（默认 0.001），设为 0 即关闭对抗项；判别器仍会训练并记录损失，但不再影响分割网络。显存和速度还没有在 GPU 上测过。
 
 **5. 评估。** 用第 2 节的整图评估在区域 5 上分别评估预热和 MPA 检查点。
 

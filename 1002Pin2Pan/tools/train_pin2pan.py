@@ -62,6 +62,7 @@ def parse_args(argv=None):
     parser.add_argument("--iterations", type=int, default=None, help="default: warmup 2000, mpa 10000")
     parser.add_argument("--lr", type=float, default=1.2e-5)
     parser.add_argument("--lr-d", type=float, default=1e-4)
+    parser.add_argument("--lambda-adv", type=float, default=LAMBDA_ADV, help="adversarial weight; 0 turns it off")
     parser.add_argument("--source-batch", type=int, default=2, help="per GPU")
     parser.add_argument("--target-batch", type=int, default=1, help="per GPU")
     parser.add_argument("--target-crop-width", type=int, default=1024)
@@ -278,7 +279,7 @@ def main(argv=None):
         rgb, modal_x, label = inputs(next(target_batches))
         target_logits = model(rgb, modal_x)
         values["adversarial"] = adversarial(target_logits, SOURCE_LABEL)
-        loss = LAMBDA_ADV * values["adversarial"]
+        loss = args.lambda_adv * values["adversarial"]
         if memory is not None:
             values["pseudo_focal"] = segmentation_loss(target_logits, label)
             values["prototype_target"], target_means, target_present = pa.feat_kl_loss(
@@ -342,7 +343,7 @@ def main(argv=None):
             "target_crop": [manifest["size"][0], args.target_crop_width],
             "lr": args.lr,
             "lr_d": args.lr_d,
-            "weights": {"adversarial": LAMBDA_ADV, "prototype": LAMBDA_PROTOTYPE, "pseudo": LAMBDA_PSEUDO},
+            "weights": {"adversarial": args.lambda_adv, "prototype": LAMBDA_PROTOTYPE, "pseudo": LAMBDA_PSEUDO},
             "memory_init_counts": memory_counts,
             "seconds": time.time() - started,
         }
