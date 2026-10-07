@@ -332,6 +332,10 @@ def test_adaptation_runs_end_to_end(world):
     state = torch.load(str(root / "mpa" / "adaptation_state.pth"))
     assert state["memory"].shape == (13, 32)
     assert metadata["memory_init_counts"]["target_batches"] != [0] * 13
+    assert metadata["weights"]["adversarial"] == 0.001
+    run(train + ["--stage", "mpa", "--pseudo-labels", str(root / "pseudo0"), "--lambda-adv", "0",
+                 "--output", str(root / "mpa_no_adv")])
+    assert json.loads((root / "mpa_no_adv" / "pin2pan.json").read_text())["weights"]["adversarial"] == 0
 
     hha = ev.load_config(root / "config.json")
     hha.x_mode = "hha_frozen_cache"
