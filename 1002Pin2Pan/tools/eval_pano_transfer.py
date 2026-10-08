@@ -51,6 +51,8 @@ EXPECTED_CLASSES = [
 SUPPORTED_X_MODES = ("rel_plus_v2_1", "hha_frozen_cache")
 # Horizon band +-25: fully seen by the level crops of eval_pano_crops.py at the training FOV.
 ELEVATION_BAND_EDGES_DEG = (90, 60, 25, 0, -25, -60, -90)
+# SPan8 benchmark classes (Trans4PASS+ stanford2d3d_pan8.py maps the other 5 to ignore).
+EIGHT_CLASS_NAMES = ("ceiling", "chair", "door", "floor", "sofa", "table", "wall", "window")
 
 
 def label_lookup(semantic_labels_path):
@@ -209,6 +211,25 @@ def predict_with_wrap(network, rgb, modal_x, wrap_pad, device):
     return logits
 
 
+def eight_class_channels(class_names):
+    """Output channels of the SPan8 classes, looked up by name in the config's class order."""
+    names = list(class_names)
+    missing = [name for name in EIGHT_CLASS_NAMES if name not in names]
+    if missing:
+        raise ValueError("config class_names lack {}".format(", ".join(missing)))
+    return [names.index(name) for name in EIGHT_CLASS_NAMES]
+
+
+def predict_classes(logits, channels=None):
+    """Per-pixel argmax; with channels, only those output channels can win."""
+    import torch
+
+    if channels is None:
+        return logits.argmax(dim=1)
+    channels = torch.as_tensor(channels, device=logits.device)
+    return channels[logits[:, channels].argmax(dim=1)]
+
+
 def import_frozen(source_root):
     source_root = Path(source_root).resolve()
     sys.dont_write_bytecode = True  # keep the frozen archive's file set unchanged
@@ -315,6 +336,12 @@ def main():
         "--relplus-variant", choices=sorted(rv.VARIANT_ALPHA), default="v2_1",
         help="REL+ EGVIA encoding; must match the checkpoint's training cache (relplus_variant.py)",
     )
+    parser.add_argument(
+        "--eight-class-predictions", action="store_true",
+        help="argmax over the 8 SPan8 classes only ({}); the network is unchanged".format(
+            " ".join(EIGHT_CLASS_NAMES)
+        ),
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
         parser.error("--limit must be positive; omit it for full evaluation")
@@ -331,6 +358,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     frozen = import_frozen(args.source_root)
     config = load_config(args.config)
+    channels = eight_class_channels(config.class_names) if args.eight_class_predictions else None
     relplus_variant = rv.select_for_eval(args.relplus_variant, config, frozen)
     hha_recipe = None
     if config.x_mode == "hha_frozen_cache":
@@ -362,7 +390,7 @@ def main():
             args.wrap_pad,
             device,
         )
-        prediction = logits.argmax(dim=1)[0].cpu().numpy().astype(np.uint8)
+        prediction = predict_classes(logits, channels)[0].cpu().numpy().astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
         confusion += hist.astype(np.int64)
         band_confusion += elevation_band_confusions(
@@ -394,6 +422,7 @@ def main():
         "areas": args.areas,
         "eval_size": [args.height, args.width],
         "wrap_pad": args.wrap_pad,
+        "prediction_classes": list(EIGHT_CLASS_NAMES if channels else config.class_names),
         "sample_count": len(samples),
         "seconds": time.time() - started,
         "metrics": metrics,
