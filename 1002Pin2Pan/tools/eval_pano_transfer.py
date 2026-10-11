@@ -209,6 +209,15 @@ def predict_with_wrap(network, rgb, modal_x, wrap_pad, device):
     return logits
 
 
+def save_prediction(folder, sample_id, prediction):
+    """Write one panorama's class-id map (0..12) as <folder>/<area>/<stem>.png."""
+    path = Path(folder) / (sample_id + ".png")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not cv2.imwrite(str(path), prediction):
+        raise IOError("could not write " + str(path))
+    return path
+
+
 def import_frozen(source_root):
     source_root = Path(source_root).resolve()
     sys.dont_write_bytecode = True  # keep the frozen archive's file set unchanged
@@ -312,6 +321,10 @@ def main():
         help="also accept a NEAR_MATCH cache report (recorded in metrics.json)",
     )
     parser.add_argument(
+        "--save-predictions", action="store_true",
+        help="also write each panorama's predicted class ids to <output>/predictions/ (render_pano_errors.py)",
+    )
+    parser.add_argument(
         "--relplus-variant", choices=sorted(rv.VARIANT_ALPHA), default="v2_1",
         help="REL+ EGVIA encoding; must match the checkpoint's training cache (relplus_variant.py)",
     )
@@ -368,6 +381,8 @@ def main():
         band_confusion += elevation_band_confusions(
             config.num_classes, prediction, label, frozen["hist_info"]
         )
+        if args.save_predictions:
+            save_prediction(args.output / "predictions", sample["sample_id"], prediction)
         if index % 20 == 0 or index == len(samples):
             print("{}/{} panoramas".format(index, len(samples)), flush=True)
 
