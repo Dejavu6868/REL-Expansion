@@ -238,6 +238,28 @@ python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29512 \
 - **逐图归一化造成的编码差异仍保留在评估输入中。** 如果第1节真实数据也显示 ReD/EGVIA 字节差异很大，应考虑在 Pin2Pan 研究中增加固定物理单位归一化的 REL+ 臂。
 - **REL+ 3.0 的高度仍按每张图 1–99 分位数归一化。** 几乎全是地板的切片会把很小的高度起伏拉伸到整个范围；这对切片评估的影响大于整图评估。
 
+## 8. 错误可视化 `tools/render_pano_errors.py`
+
+先用第2节的评估加 `--save-predictions` 保存每张全景的预测类别图（`<输出目录>/predictions/<area>/<id>.png`，取值 0–12），指标不变。输出目录必须是新的。
+
+```bash
+python3 1002Pin2Pan/tools/eval_pano_transfer.py \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --config <v2.1 配置.json> --checkpoint <v2.1 epoch-200.pth> \
+  --save-predictions --output <输出目录>/relplus_v2_1_preds
+```
+
+再渲染。工具按两种错误给所有全景排序，各画最差的 `--top` 张：地板被判为桌子的像素数，以及墙相关错误（墙被判为其他类，加上其他类被判为墙）。每张图自上而下：RGB、v2.1 的 EGVIA（只在比 45° 陡的表面混入高度）、3.0 的 EGVIA（所有表面混入高度）、真值、预测、错误图（品红 = 地板判为桌子，黄 = 墙相关错误，红 = 其他错误）。EGVIA 用冻结的 ERP `getREL` 在评估所用的同一深度上计算，255（无深度）画成黑色。`--compare-predictions` 可在下方加一组对照预测（例如 3.0 或 HHA 也加 `--save-predictions` 跑一遍）。`counts.csv` 记录每张全景的两种计数和墙被混淆成哪些类。
+
+```bash
+python3 1002Pin2Pan/tools/render_pano_errors.py \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --predictions <输出目录>/relplus_v2_1_preds --label "REL+ v2.1" \
+  --output <输出目录>/relplus_v2_1_error_images --top 8
+```
+
 ## 测试
 
 ```bash
