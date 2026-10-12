@@ -326,8 +326,8 @@ def main():
         "config": str(args.config),
         "x_mode": config.x_mode,
         "crop_x_input": (
-            "frozen generate_rel_plus_v2_1 (alpha {}) per crop (canonical nearest resize, crop rotation as gravity)".format(
-                rv.VARIANT_ALPHA[relplus_variant]
+            "frozen generate_rel_plus_v2_1 ({}) per crop (canonical nearest resize, crop rotation as gravity)".format(
+                rv.describe(relplus_variant)
             )
             if hha_recipe is None
             else "Depth2HHA per crop, {}, channel order {}".format(

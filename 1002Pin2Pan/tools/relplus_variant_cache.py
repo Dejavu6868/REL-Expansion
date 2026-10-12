@@ -47,6 +47,7 @@ def prepare_output_root(output_root, variant, source_root):
     marker = {
         "variant": variant,
         "egvia_alpha": rv.VARIANT_ALPHA[variant],
+        "egvia_rule": rv.describe(variant),
         "frozen_egvia_alpha": rv.VARIANT_ALPHA["v2_1"],
         "source_root": str(Path(source_root).resolve()),
     }
@@ -89,9 +90,9 @@ def main(argv=None):
     sys.dont_write_bytecode = True  # keep the frozen archive's file set unchanged
     sys.path.insert(0, str(Path(args.source_root).resolve()))
     tool = importlib.import_module(module_name)
-    alpha = rv.apply_variant(variant)
+    rv.apply_variant(variant)
     multiprocessing.set_start_method("fork", force=True)  # cache workers inherit the variant
-    print(json.dumps({"relplus_variant": variant, "egvia_alpha": alpha}), flush=True)
+    print(json.dumps({"relplus_variant": variant, "egvia_rule": rv.describe(variant)}), flush=True)
     sys.argv = [tool.__file__] + forwarded
     return tool.main()
 

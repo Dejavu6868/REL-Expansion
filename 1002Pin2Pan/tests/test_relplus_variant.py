@@ -139,7 +139,8 @@ def write_frame(root, sample_id, depth, yaw, pitch):
     }
 
 
-def test_cache_workers_write_the_variant(frozen, room, tmp_path, restore_v2_1):
+@pytest.mark.parametrize("variant", ["v3_0", "v3_1"])
+def test_cache_workers_write_the_variant(frozen, room, tmp_path, restore_v2_1, variant):
     """The frozen cache tool, run through the wrapper with two worker processes."""
     from rel_plus.profiles import STANFORD_S2D_PROFILE
     from rel_plus.stanford_s2d import load_canonical_frame
@@ -153,18 +154,81 @@ def test_cache_workers_write_the_variant(frozen, room, tmp_path, restore_v2_1):
     output = tmp_path / "cache"
     subprocess.run(
         [sys.executable, str(TOOLS / "relplus_variant_cache.py"), "generate",
-         "--manifest", str(manifest), "--output-root", str(output), "--workers", "2", "--limit", "2"],
+         "--manifest", str(manifest), "--output-root", str(output), "--workers", "2", "--limit", "2",
+         "--variant", variant],
         check=True, capture_output=True,
     )
-    assert rv.read_marker(output)["variant"] == "v3_0"
+    assert rv.read_marker(output)["variant"] == variant
     for row in rows:
         raw, camera, _ = load_canonical_frame(
             row["depth_path"], row["camera_metadata_path"], dataset_profile=STANFORD_S2D_PROFILE
         )
         rv.apply_variant("v2_1")
         v2_1 = frozen["generate_rel_plus_v2_1"](raw, camera)
-        rv.apply_variant("v3_0")
+        rv.apply_variant(variant)
         expected = frozen["generate_rel_plus_v2_1"](raw, camera)
         cached = cv2.imread(str(output / "RELPlus" / (row["sample_id"] + ".png")), cv2.IMREAD_UNCHANGED)
         assert np.array_equal(cached, expected)
         assert not np.array_equal(cached[..., 0], v2_1[..., 0])
+
+
+def banded_metric_expected(height_cm, vertical):
+    """banded_metric EGVIA of a flat surface: 0 up-facing, 1 vertical band, plus metric height."""
+    low, high = rv.METRIC_RANGE_CM
+    return 85.0 * (vertical + np.clip((height_cm - low) / (high - low), 0.0, 1.0))
+
+
+def test_erp_banded_metric_keeps_loa_red_and_metric_height(frozen, room, restore_v2_1):
+    depth, height = room
+    local = dict(frozen)
+    rv.apply_variant("v3_1", local)
+    assert local["getREL"] is rv.get_rel_banded_metric
+    encoded = local["getREL"](depth)
+    v2_1 = frozen["getREL"](depth)
+    assert np.array_equal(encoded[..., 1:], v2_1[..., 1:])
+    assert np.array_equal(encoded[..., 0][depth == 0], v2_1[..., 0][depth == 0])
+    masks = surfaces(height)
+    for name, value in (("floor", ROOM_MIN[2]), ("table", TABLE_MAX[2])):
+        assert np.median(encoded[..., 0][masks[name]]) == pytest.approx(banded_metric_expected(value * 100, 0), abs=2)
+    assert np.median(encoded[..., 0][masks["ceiling"]]) >= 170 + 85 * 0.8
+
+
+def test_erp_banded_metric_matches_the_offline_check(frozen, room):
+    import check_egvia_rules as er
+
+    depth = room[0]
+    er._JOB["processDepthImage_ERP"] = frozen["processDepthImage_ERP"]
+    angle, height, height_cm = er.erp_angle_and_height(depth)
+    rule = er.to_byte(er.egvia_rules(angle, height, height_cm, rv.METRIC_RANGE_CM)["banded_metric"])
+    encoded = rv.get_rel_banded_metric(depth)[..., 0]
+    valid = depth != 0
+    assert np.abs(rule[valid].astype(int) - encoded[valid]).max() <= 1  # float rounding at truncation
+    assert np.mean(rule[valid] == encoded[valid]) > 0.999
+
+
+def test_crop_generator_banded_metric_agrees_with_the_panorama(frozen, room, restore_v2_1):
+    """Metric height: a table top gets the same EGVIA in a pinhole crop and in the panorama."""
+    depth, height = room
+    k_json, camera_to_world, rows, columns, raw = cp.render_crop(depth, 60.0, -20.0, 240, 62.48)
+    camera = frozen["CameraGeometry"].from_json_k(k_json, (240, 240), camera_to_world.T)
+    v2_1 = frozen["generate_rel_plus_v2_1"](raw, camera)
+    rv.apply_variant("v3_1")
+    crop = frozen["generate_rel_plus_v2_1"](raw, camera)
+    assert np.array_equal(crop[..., 1:], v2_1[..., 1:])
+    panorama = rv.get_rel_banded_metric(depth)[rows, columns]
+    masks = surfaces(height[rows, columns])
+    for name in ("floor", "table"):
+        assert masks[name].sum() > 100
+        assert np.median(crop[..., 0][masks[name]]) == pytest.approx(np.median(panorama[..., 0][masks[name]]), abs=2)
+    rv.apply_variant("v2_1")
+    assert np.array_equal(frozen["generate_rel_plus_v2_1"](raw, camera), v2_1)
+
+
+def test_eval_accepts_a_v3_1_cache(frozen, tmp_path, restore_v2_1):
+    marked = eval_config(tmp_path, marker="v3_1")
+    with pytest.raises(ValueError, match="trained on the v3_1 cache"):
+        rv.select_for_eval("v3_0", marked, dict(frozen))
+    local = dict(frozen)
+    assert rv.select_for_eval("v3_1", marked, local) == "v3_1"
+    assert local["getREL"] is rv.get_rel_banded_metric
+    assert "metric range" in rv.describe("v3_1")
