@@ -166,15 +166,15 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py \
 
 **对照指标**：针孔 mIoU（v2.1 为 61.41），整图全景 mIoU（53.47），底部极区地板→桌子像素数（5.04M）与桌子 IoU（4.96），以及各仰角带在两臂共有类别上与 HHA 的差值。
 
-### banded_metric 变体（`--variant banded_metric`）
+### REL+ 3.1（变体名 `v3_1`，`--variant v3_1`）
 
-离线对比（下一小节）中分离效果最好的规则。它不改 alpha，而是替换 EGVIA 公式：
+即离线对比（下一小节）中分离效果最好的 `banded_metric` 规则。和 3.0 一样，冻结流程里的协议字符串仍是 v2.1，3.1 只记录在缓存标记和评估 metrics.json 中。它不改 alpha，而是替换 EGVIA 公式：
 
 EGVIA = 85 · [S((θ − 45°)/15°) + S((θ − 135°)/15°) + clip((z − z_lo)/(z_hi − z_lo), 0, 1)]，S(x) = ½ + ¾x − ¼x³（x 先截到 [−1, 1]）
 
 θ 是未混合的表面角度（0° 朝上，90° 竖直，180° 朝下），z 是相对相机的高度（cm），[z_lo, z_hi] = [−150, 210]（训练集地板 p5 到天花板 p95）。朝上、竖直、朝下的平面分别落在 0–85、85–170、170–255，没有跳变；高度是米制的，同一张桌面在针孔帧和全景里取值相同。LOA、ReD、有效掩码和无效值 255 都不变。针孔侧把冻结生成器调用的 `encode_rel_channels` 换成只改写第 0 通道的包装；全景侧用 `get_rel_banded_metric`，LOA 和 ReD 逐句沿用 `getREL`。测试核对两者的 LOA/ReD 与冻结编码器逐字节一致。
 
-缓存、训练和评估都按上面 1–4 步进行，只是把 `--variant`/`--relplus-variant` 换成 `banded_metric`，输出目录换成新的（例如 `CMX_RELPlus_banded_metric/formal_cache`），复制的配置里所有缓存路径都指向它。
+缓存、训练和评估都按上面 1–4 步进行，只是把 `--variant`/`--relplus-variant` 换成 `v3_1`，输出目录换成新的（例如 `CMX_RELPlus_v3_1/formal_cache`），复制的配置里所有缓存路径都指向它。
 
 ### EGVIA 规则离线对比 `tools/check_egvia_rules.py`（只用 CPU，不训练）
 

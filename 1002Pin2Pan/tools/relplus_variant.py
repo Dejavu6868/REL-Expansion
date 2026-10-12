@@ -9,7 +9,8 @@ angle to [0, 255] and then test ``angle <= t or angle >= 255 - t`` with
 ``t = alpha * 255 / 180``, so a negative alpha marks no pixel horizontal.
 Nothing else changes: LOA, ReD, the valid mask and the invalid value 255.
 
-``banded_metric`` replaces the EGVIA formula instead of alpha:
+REL+ 3.1 (``v3_1``, the ``banded_metric`` rule of check_egvia_rules.py) replaces the
+EGVIA formula instead of alpha:
 EGVIA = 85 [S((theta - 45) / 15) + S((theta - 135) / 15) + clip((z - z_lo) / (z_hi - z_lo), 0, 1)],
 S(x) = 1/2 + 3/4 x - 1/4 x^3 on clip(x, -1, 1), with theta the unblended surface
 angle in degrees and z the camera-relative height in cm, [z_lo, z_hi] =
@@ -27,7 +28,7 @@ from pathlib import Path
 import numpy as np
 
 
-VARIANT_ALPHA = {"v2_1": 45.0, "v3_0": -1.0, "banded_metric": None}  # None: not an alpha variant
+VARIANT_ALPHA = {"v2_1": 45.0, "v3_0": -1.0, "v3_1": None}  # None: not an alpha variant
 MARKER_NAME = "relplus_variant.json"  # written into the cache root by relplus_variant_cache.py
 METRIC_RANGE_CM = (-150.0, 210.0)
 BAND_HALF_WIDTH_DEG = 15.0

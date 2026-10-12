@@ -139,7 +139,7 @@ def write_frame(root, sample_id, depth, yaw, pitch):
     }
 
 
-@pytest.mark.parametrize("variant", ["v3_0", "banded_metric"])
+@pytest.mark.parametrize("variant", ["v3_0", "v3_1"])
 def test_cache_workers_write_the_variant(frozen, room, tmp_path, restore_v2_1, variant):
     """The frozen cache tool, run through the wrapper with two worker processes."""
     from rel_plus.profiles import STANFORD_S2D_PROFILE
@@ -181,7 +181,7 @@ def banded_metric_expected(height_cm, vertical):
 def test_erp_banded_metric_keeps_loa_red_and_metric_height(frozen, room, restore_v2_1):
     depth, height = room
     local = dict(frozen)
-    rv.apply_variant("banded_metric", local)
+    rv.apply_variant("v3_1", local)
     assert local["getREL"] is rv.get_rel_banded_metric
     encoded = local["getREL"](depth)
     v2_1 = frozen["getREL"](depth)
@@ -212,7 +212,7 @@ def test_crop_generator_banded_metric_agrees_with_the_panorama(frozen, room, res
     k_json, camera_to_world, rows, columns, raw = cp.render_crop(depth, 60.0, -20.0, 240, 62.48)
     camera = frozen["CameraGeometry"].from_json_k(k_json, (240, 240), camera_to_world.T)
     v2_1 = frozen["generate_rel_plus_v2_1"](raw, camera)
-    rv.apply_variant("banded_metric")
+    rv.apply_variant("v3_1")
     crop = frozen["generate_rel_plus_v2_1"](raw, camera)
     assert np.array_equal(crop[..., 1:], v2_1[..., 1:])
     panorama = rv.get_rel_banded_metric(depth)[rows, columns]
@@ -224,11 +224,11 @@ def test_crop_generator_banded_metric_agrees_with_the_panorama(frozen, room, res
     assert np.array_equal(frozen["generate_rel_plus_v2_1"](raw, camera), v2_1)
 
 
-def test_eval_accepts_a_banded_metric_cache(frozen, tmp_path, restore_v2_1):
-    marked = eval_config(tmp_path, marker="banded_metric")
-    with pytest.raises(ValueError, match="trained on the banded_metric cache"):
+def test_eval_accepts_a_v3_1_cache(frozen, tmp_path, restore_v2_1):
+    marked = eval_config(tmp_path, marker="v3_1")
+    with pytest.raises(ValueError, match="trained on the v3_1 cache"):
         rv.select_for_eval("v3_0", marked, dict(frozen))
     local = dict(frozen)
-    assert rv.select_for_eval("banded_metric", marked, local) == "banded_metric"
+    assert rv.select_for_eval("v3_1", marked, local) == "v3_1"
     assert local["getREL"] is rv.get_rel_banded_metric
-    assert "metric range" in rv.describe("banded_metric")
+    assert "metric range" in rv.describe("v3_1")
