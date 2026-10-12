@@ -166,6 +166,21 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py \
 
 **对照指标**：针孔 mIoU（v2.1 为 61.41），整图全景 mIoU（53.47），底部极区地板→桌子像素数（5.04M）与桌子 IoU（4.96），以及各仰角带在两臂共有类别上与 HHA 的差值。
 
+### EGVIA 规则离线对比 `tools/check_egvia_rules.py`（只用 CPU，不训练）
+
+用同一组角度 A 和高度 H 计算五种 EGVIA 规则，按类别比较：`v2_1`（REL 公开代码与 REL+ v2.1，在 45° 处跳变）、`paper_eq4`（REL 论文式 4，同样跳变，方向相反）、`v3_0`（处处 0.5A + 0.5H）、`banded`（85·o(A) + H/3，o 在 45° 与 135° 两侧 ±15° 内平滑地从 0 过渡到 1 再到 2；朝上、竖直、朝下的平面分别落在 0–85、85–170、170–255，高度仍逐图归一化）、`banded_metric`（同 `banded`，但 H 换成相对相机的米制高度，截断到 `--metric-range-cm`，默认 −200 到 200 cm）。每张图都会核对 `v2_1` 规则与冻结编码器的 EGVIA 逐字节一致。后两种只是候选，尚未接入缓存生成。
+
+```bash
+python3 1002Pin2Pan/tools/check_egvia_rules.py \
+  --manifest /data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv \
+  --config 0927调参结果/configs/relplus.json \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --workers 32 --output <输出目录>/egvia_rules
+```
+
+样本与上面的地板/桌面检查相同：默认 3000 帧针孔训练图，以及训练区域（1、2、3、4、6，不含区域 5）的全部全景。`egvia_rules.json` 按子集给出：各规则下关键类别对的 EGVIA 直方图重叠（两类归一化直方图逐 bin 取最小值再求和，1 为相同，0 为完全分开）及全部类别对的平均重叠；各类别距 45°/135° 不到 5° 的像素比例（`v2_1` 与 `paper_eq4` 在这里跳变）；各类别相对相机高度的 p5/中位数/p95（用训练集确定米制范围）。完整重叠矩阵在 `egvia_overlap.csv`，直方图在 `egvia_histograms.csv`。EGVIA 重叠只是代理指标：RGB、LOA、ReD 仍能区分 EGVIA 分不开的类别。
+
 ## 6. 领域自适应 `tools/build_target_cache.py`、`tools/gen_pseudo_labels.py`、`tools/train_pin2pan.py`
 
 按 Trans4PASS（`adaptations/`，commit 758f2301）的流程把冻结的针孔检查点适配到全景：先做输出空间对抗预热（warm-up），再用预热后的模型生成伪标签，最后做 MPA（伪标签、原型对齐和对抗三项）。源域是冻结训练用的针孔缓存，配置、数据增强和 focal loss 都不变；目标域是区域 1、2、3、4、6 的全景，训练时不读取它们的真值。区域 5 只用于最终评估：工具拒绝把它作为目标训练区域，也不在区域 5 上挑选检查点，只保存最后一次迭代的结果。
@@ -244,4 +259,4 @@ python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29512 \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过。测试通过不代表已经在真实服务器数据上验证迁移效果。
