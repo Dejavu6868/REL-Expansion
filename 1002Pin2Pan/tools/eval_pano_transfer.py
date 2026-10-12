@@ -382,7 +382,7 @@ def main():
         "config": str(args.config),
         "x_mode": config.x_mode,
         "panorama_x_input": (
-            "ERP getREL (alpha {}) on nearest-resized depth".format(rv.VARIANT_ALPHA[relplus_variant])
+            "ERP getREL ({}) on nearest-resized depth".format(rv.describe(relplus_variant))
             if hha_recipe is None
             else "ERP HHA (hha.erp_hha), {}, channel order {}".format(
                 hha_recipe["variant"], hha_recipe["channel_order"]
