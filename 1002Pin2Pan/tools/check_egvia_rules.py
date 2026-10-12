@@ -19,6 +19,8 @@ and the height H into one byte. The rules compared, all from the same A and H:
   camera, clipped to ``--metric-range-cm``, instead of the per-image
   P1..P99 normalisation. The same table top then gets the same value in every
   frame, and in pinhole frames and panoramas alike.
+* ``v3_0_metric``: 3.0 with that metric height: 0.5 A + 0.5 metric height.
+  It isolates the height change from the banding.
 
 Every rule is checked byte for byte against the frozen encoders' v2_1 output
 on every image. For each rule it reports, per pair of classes, the overlap of
@@ -45,7 +47,7 @@ import eval_pano_transfer as ev
 
 
 TRAIN_AREAS = ("area_1", "area_2", "area_3", "area_4", "area_6")
-RULES = ("v2_1", "paper_eq4", "v3_0", "banded", "banded_metric")
+RULES = ("v2_1", "paper_eq4", "v3_0", "banded", "banded_metric", "v3_0_metric")
 ALPHA_DEG = 45.0
 LAMBDA = 0.5
 BAND_HALF_WIDTH_DEG = 15.0
@@ -84,12 +86,14 @@ def egvia_rules(angle, height_normalized, height_cm, metric_range_cm):
     horizontal = (angle <= threshold) | (angle >= 255.0 - threshold)
     blended = LAMBDA * angle + (1.0 - LAMBDA) * height_normalized
     level = orientation_level(angle)
+    height_metric = metric_height(height_cm, metric_range_cm)
     return {
         "v2_1": np.where(horizontal, angle, blended),
         "paper_eq4": np.where(horizontal, blended, angle),
         "v3_0": blended,
         "banded": 85.0 * level + height_normalized / 3.0,
-        "banded_metric": 85.0 * level + metric_height(height_cm, metric_range_cm) / 3.0,
+        "banded_metric": 85.0 * level + height_metric / 3.0,
+        "v3_0_metric": LAMBDA * angle + (1.0 - LAMBDA) * height_metric,
     }
 
 
@@ -231,8 +235,8 @@ def main(argv=None):
     parser.add_argument("--frames", type=int, default=3000, help="random pinhole training frames")
     parser.add_argument("--panoramas", type=int, default=None, help="default: every training-area panorama")
     parser.add_argument(
-        "--metric-range-cm", type=float, nargs=2, default=(-200.0, 200.0),
-        help="camera-relative height mapped to 0..255 by banded_metric",
+        "--metric-range-cm", type=float, nargs=2, default=(-150.0, 210.0),
+        help="camera-relative height mapped to 0..255 by the metric rules (default: floor p5 to ceiling p95 of the training split)",
     )
     parser.add_argument("--seed", type=int, default=12345)
     parser.add_argument("--height", type=int, default=1024)

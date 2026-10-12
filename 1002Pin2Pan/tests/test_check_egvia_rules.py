@@ -37,7 +37,7 @@ def sweep(height):
 @pytest.mark.parametrize("height", [0.0, 128.0, 255.0])
 def test_only_the_gated_rules_jump(height):
     steps = {rule: np.abs(np.diff(egvia)).max() for rule, egvia in sweep(height).items()}
-    for rule in ("v3_0", "banded", "banded_metric"):
+    for rule in ("v3_0", "banded", "banded_metric", "v3_0_metric"):
         assert steps[rule] < 0.05, rule  # 0.0072 degrees per step
     if height != 0.0:  # v2_1 and paper_eq4 jump by (1 - lambda) |A - H| at 45 degrees
         assert steps["v2_1"] > 20 and steps["paper_eq4"] > 20
@@ -138,6 +138,7 @@ def test_synthetic_room_run(tmp_path, room):
     assert pinhole["egvia_overlap_key_pairs"]["table-wall"]["banded_metric"] < 0.6 * pinhole["egvia_overlap_key_pairs"]["table-wall"]["v3_0"]
     mean = pinhole["egvia_overlap_mean_over_class_pairs"]
     assert mean["banded_metric"] < mean["banded"] < mean["v3_0"] < mean["v2_1"]
+    assert mean["v3_0_metric"] < mean["v3_0"]
     assert pinhole["share_within_5_deg_of_switch"]["floor"] > 0  # floor next to walls and table: the normal window straddles the corner
     heights = report["subsets"]["panorama"]["camera_relative_height_cm"]
     assert heights["floor"]["median"] == pytest.approx(ROOM_MIN[2] * 100, abs=5)
