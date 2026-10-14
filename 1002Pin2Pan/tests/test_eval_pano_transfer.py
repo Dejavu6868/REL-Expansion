@@ -46,6 +46,22 @@ def test_wrap_padding_is_cropped_back():
     assert torch.equal(padded, plain)
 
 
+def test_eight_class_predictions_only_pick_span8_channels():
+    torch = pytest.importorskip("torch")
+
+    config = json.loads((ev.REPO_ROOT / "0927调参结果" / "configs" / "relplus.json").read_text(encoding="utf-8"))
+    channels = ev.eight_class_channels(config["class_names"])
+    assert channels == [3, 4, 7, 8, 9, 10, 11, 12]
+    logits = torch.zeros(1, 13, 1, 3)
+    logits[0, 5, 0, 0], logits[0, 12, 0, 0] = 9.0, 1.0  # clutter wins; window is the best of the 8
+    logits[0, 0, 0, 1], logits[0, 4, 0, 1] = 9.0, 1.0  # beam wins; chair is the best of the 8
+    logits[0, 10, 0, 2] = 2.0  # table wins either way
+    assert ev.predict_classes(logits)[0, 0].tolist() == [5, 0, 10]
+    assert ev.predict_classes(logits, channels)[0, 0].tolist() == [12, 4, 10]
+    with pytest.raises(ValueError, match="sofa"):
+        ev.eight_class_channels([name for name in config["class_names"] if name != "sofa"])
+
+
 def test_every_requested_area_must_have_samples(tmp_path):
     for kind in ("rgb", "depth", "semantic"):
         folder = tmp_path / "area_5a" / "pano" / kind
