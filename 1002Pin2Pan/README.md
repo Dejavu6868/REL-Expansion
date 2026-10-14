@@ -50,6 +50,8 @@ HHA 臂：把 `--config` 换成 `0927调参结果/configs/hha.json`，并加上 
 
 输出包括 `metrics.json`、`per_class_iou.csv`、`confusion_matrix.csv` 和 `samples.txt`，另按 ERP 仰角分带评分：90–60°、60–25°、25–0°、0–−25°、−25–−60°、−60–−90°（每带含上边界），写入 `elevation_band_metrics.csv`、`elevation_band_confusion.npy` 和 `metrics.json` 的 `elevation_bands`。加 `--limit 3` 可先做冒烟测试，报告标记为 `SMOKE`。`--limit` 必须为正；缺少任一指定区域、重复指定区域或没有有效标签像素时拒绝完成评估。
 
+加 `--eight-class-predictions` 时，argmax 只在 SPan8 的 8 类（ceiling、chair、door、floor、sofa、table、wall、window）中取，网络和权重不变，`metrics.json` 的 `prediction_classes` 记录所用类别。混淆矩阵仍为 13×13；8 类分数需忽略其余 5 类的真值行（与 Trans4PASS+ `stanford2d3d_pan8.py` 一致），此时 `metrics.json` 中的 13 类指标不再有意义。
+
 ## 3. 全景 HHA `tools/hha.py` 与缓存核对 `tools/check_hha_cache.py`
 
 CMX README 指定用 [Depth2HHA-python](https://github.com/charlesCXK/Depth2HHA-python) 生成 HHA，已收录于 `vendor/depth2hha`（MIT；打包和数值类型兼容改动见其 `SOURCE_NOTICE.md`）。
