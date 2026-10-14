@@ -52,6 +52,20 @@ HHA 臂：把 `--config` 换成 `0927调参结果/configs/hha.json`，并加上 
 
 加 `--eight-class-predictions` 时，argmax 只在 SPan8 的 8 类（ceiling、chair、door、floor、sofa、table、wall、window）中取，网络和权重不变，`metrics.json` 的 `prediction_classes` 记录所用类别。混淆矩阵仍为 13×13；8 类分数需忽略其余 5 类的真值行（与 Trans4PASS+ `stanford2d3d_pan8.py` 一致），此时 `metrics.json` 中的 13 类指标不再有意义。
 
+### 针孔评估 `tools/eval_pinhole.py`
+
+冻结启动器（`evaluation/run_evaluation.py`）只接受 2026-09-20 的两个第 200 轮检查点。本工具对任意配置和检查点（其他种子、REL+ 3.x、`train_pin2pan.py` 的适配检查点）运行同一个冻结全测试集评估器 `tools/eval_rel_plus_v2_3_full.py`（HHA 臂套用冻结的 `evaluation/input_adapter.py`），测试集仍是区域 5 的 17,593 张针孔图。不加 `--eight-class-predictions` 时计算与冻结评估相同，同一检查点的混淆矩阵应与冻结结果一致；加上后 argmax 只在 SPan8 的 8 类中取，与全景评估的同名参数相同。
+
+```bash
+python3 1002Pin2Pan/tools/eval_pinhole.py \
+  --config <该检查点训练时的 resolved 配置.json> \
+  --checkpoint <epoch-200.pth 或适配后的 checkpoint.pth> \
+  --eight-class-predictions \
+  --output <输出目录>/hha_pinhole_8pred
+```
+
+REL+ 臂读取配置中缓存路径指向的针孔缓存，变体名（v2_1、v3_0、v3_1）写入 `eval_pinhole.json`。适配检查点保存的是源检查点的轮数，`--expected-epoch` 保持默认 200。默认单卡；8 卡时用 `python -m torch.distributed.launch --nproc_per_node=8 --use_env 1002Pin2Pan/tools/eval_pinhole.py ...`。`evaluation/` 下是冻结评估器的原样输出（13 类 `metrics.json`、`confusion_matrix.csv` 等）；`eval_pinhole.json` 记录检查点、配置、预测类别，以及精确 8 类分数 `classes_8`（忽略其余 5 类真值行，保留全部预测列）。加 `--eight-class-predictions` 时 `evaluation/metrics.json` 的 13 类 mIoU 把其余 5 类记为 0，请看 `classes_8`。输出目录已有评估结果时拒绝运行。
+
 ## 3. 全景 HHA `tools/hha.py` 与缓存核对 `tools/check_hha_cache.py`
 
 CMX README 指定用 [Depth2HHA-python](https://github.com/charlesCXK/Depth2HHA-python) 生成 HHA，已收录于 `vendor/depth2hha`（MIT；打包和数值类型兼容改动见其 `SOURCE_NOTICE.md`）。
@@ -271,4 +285,4 @@ python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29512 \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过。测试通过不代表已经在真实服务器数据上验证迁移效果。
