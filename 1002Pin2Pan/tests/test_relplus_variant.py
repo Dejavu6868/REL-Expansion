@@ -139,7 +139,7 @@ def write_frame(root, sample_id, depth, yaw, pitch):
     }
 
 
-@pytest.mark.parametrize("variant", ["v3_0", "v3_1"])
+@pytest.mark.parametrize("variant", ["v3_0", "v3_1", "v3_2"])
 def test_cache_workers_write_the_variant(frozen, room, tmp_path, restore_v2_1, variant):
     """The frozen cache tool, run through the wrapper with two worker processes."""
     from rel_plus.profiles import STANFORD_S2D_PROFILE
@@ -232,3 +232,73 @@ def test_eval_accepts_a_v3_1_cache(frozen, tmp_path, restore_v2_1):
     assert rv.select_for_eval("v3_1", marked, local) == "v3_1"
     assert local["getREL"] is rv.get_rel_banded_metric
     assert "metric range" in rv.describe("v3_1")
+
+
+def horizontal_distance_cm(depth):
+    """Analytic horizontal distance of each ERP pixel of a level panorama."""
+    directions = cp.erp_directions(*depth.shape)
+    return np.hypot(directions[..., 0], directions[..., 1]) * depth * 100
+
+
+def test_erp_v3_2_is_v3_1_with_metric_red(frozen, room, restore_v2_1):
+    depth = room[0]
+    local = dict(frozen)
+    rv.apply_variant("v3_1", local)
+    v3_1 = local["getREL"](depth)
+    rv.apply_variant("v3_2", local)
+    assert local["getREL"].func is rv.get_rel_banded_metric and local["getREL"].keywords == {"metric_red": True}
+    v3_2 = local["getREL"](depth)
+    assert np.array_equal(v3_2[..., :2], v3_1[..., :2])
+    valid = depth != 0
+    assert np.all(v3_2[~valid] == 255)
+    expected = np.clip(255.0 * horizontal_distance_cm(depth) / rv.METRIC_RED_MAX_CM, 0, 255).astype(int)
+    diff = np.abs(v3_2[..., 2][valid].astype(int) - expected[valid])
+    assert diff.max() <= 1  # estimated gravity tilt on the level room
+    assert np.mean(diff == 0) > 0.99
+
+
+def test_crop_generator_v3_2_red_agrees_with_the_panorama(frozen, room, restore_v2_1):
+    """Metric ReD: the same ray gets the same ReD in a pinhole crop and in the panorama."""
+    depth = room[0]
+    k_json, camera_to_world, rows, columns, raw = cp.render_crop(depth, 60.0, -20.0, 240, 62.48)
+    camera = frozen["CameraGeometry"].from_json_k(k_json, (240, 240), camera_to_world.T)
+    rv.apply_variant("v3_1")
+    v3_1 = frozen["generate_rel_plus_v2_1"](raw, camera)
+    v3_1_panorama = rv.get_rel_banded_metric(depth)[rows, columns]
+    rv.apply_variant("v3_2")
+    v3_2 = frozen["generate_rel_plus_v2_1"](raw, camera)
+    assert np.array_equal(v3_2[..., :2], v3_1[..., :2])
+    panorama = rv.get_rel_banded_metric(depth, metric_red=True)[rows, columns]
+    valid = raw > 0
+    per_image = np.abs(v3_1[..., 2][valid].astype(int) - v3_1_panorama[..., 2][valid])
+    metric = np.abs(v3_2[..., 2][valid].astype(int) - panorama[..., 2][valid])
+    assert np.median(per_image) > 5
+    assert np.median(metric) == 0 and np.percentile(metric, 99) <= 1
+
+
+def test_crop_generator_v3_2_red_ignores_holes(frozen, room, restore_v2_1):
+    """Invalid pixels no longer move the ReD of valid ones (they do under 3.1)."""
+    depth = room[0]
+    k_json, camera_to_world, _, _, raw = cp.render_crop(depth, 60.0, -20.0, 240, 62.48)
+    camera = frozen["CameraGeometry"].from_json_k(k_json, (240, 240), camera_to_world.T)
+    holed = raw.copy()
+    holed[100:120, 50:90] = 0
+    valid = holed > 0
+    for variant, moves in (("v3_1", True), ("v3_2", False)):
+        rv.apply_variant(variant)
+        clean = frozen["generate_rel_plus_v2_1"](raw, camera)[..., 2]
+        with_hole = frozen["generate_rel_plus_v2_1"](holed, camera)[..., 2]
+        assert np.all(with_hole[~valid] == 255)
+        assert np.array_equal(clean[valid], with_hole[valid]) != moves
+
+
+def test_eval_accepts_a_v3_2_cache(frozen, tmp_path, restore_v2_1):
+    marked = eval_config(tmp_path, marker="v3_2")
+    with pytest.raises(ValueError, match="trained on the v3_2 cache"):
+        rv.select_for_eval("v3_1", marked, dict(frozen))
+    local = dict(frozen)
+    assert rv.select_for_eval("v3_2", marked, local) == "v3_2"
+    assert local["getREL"].keywords == {"metric_red": True}
+    assert "metric ReD" in rv.describe("v3_2") and "metric ReD" not in rv.describe("v3_1")
+    rvc.prepare_output_root(tmp_path / "new_cache", "v3_2", cp.DEFAULT_SOURCE_ROOT)
+    assert "metric ReD" in rv.read_marker(tmp_path / "new_cache")["egvia_rule"]
