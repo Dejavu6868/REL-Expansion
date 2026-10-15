@@ -207,6 +207,28 @@ python3 1002Pin2Pan/tools/check_egvia_rules.py \
 
 样本与上面的地板/桌面检查相同：默认 3000 帧针孔训练图，以及训练区域（1、2、3、4、6，不含区域 5）的全部全景。`egvia_rules.json` 按子集给出：各规则下关键类别对的 EGVIA 直方图重叠（两类归一化直方图逐 bin 取最小值再求和，1 为相同，0 为完全分开）及全部类别对的平均重叠；各类别距 45°/135° 不到 5° 的像素比例（`v2_1` 与 `paper_eq4` 在这里跳变）；各类别相对相机高度的 p5/中位数/p95（用训练集确定米制范围）。完整重叠矩阵在 `egvia_overlap.csv`，直方图在 `egvia_histograms.csv`。EGVIA 重叠只是代理指标：RGB、LOA、ReD 仍能区分 EGVIA 分不开的类别。
 
+### 输入缺陷检查 `tools/check_input_defects.py`（阶段0，只用 CPU，不训练）
+
+在不改任何缓存、检查点和冻结源码的前提下，度量 REL+ 输入的四个已知问题有多大，用来决定是否值得重训：
+
+- **ReD**：针孔训练帧中有无效像素的比例；无效像素（存为相机位置，水平距离 0）把逐图最小值拉到 0 后，有效像素的 ReD 字节相对"只用有效像素求 min/max"偏移多少；水平距离的 cm 分位数（用于定米制 ReD 的范围 R，取 p99）。另在训练区域全景上渲染针孔裁剪（yaw 0/90/180/270 × pitch −20/0/20，FOV 60°，同 `cross_projection.check_panorama`），比较同一射线上裁剪与全景的 ReD 字节差：现行逐图 ReD，以及由水平距离差换算的米制 ReD（距离/R）。
+- **插值混入无效值**：对配置所指的 REL+ 缓存（变体取自缓存标记）和 `--hha-root` 的 HHA 缓存，按训练的缩放/裁剪采样（两臂同一变换），调用冻结的 `analyze_invalid_interpolation`，统计输入被双线性缩放混入无效像素的有标签像素比例。HHA 没有有效掩码，用 480 深度的有效像素代替。
+- **水平翻转**：对前 `--flip-frames` 帧，把深度、内参和重力一起镜像后重新编码，与翻转后的原编码比较（v2.1 与 3.1）。EGVIA、ReD 应完全一致；LOA 分别按 180−LOA 和 179−LOA 计分（LOA 字节是截断的，所以合成场景上恰好成立的是 179−LOA）。
+- **全景输入**：全景深度中原始值 0（ERP 解码会把它当成 2 mm 的有效点）和 65535 的比例；`getGDir` 估计重力相对 ERP 竖直方向的倾角（与 `cross_projection.py` 一样假设全景是水平存储的），以及该倾角对 3.1 的高度（cm）和 EGVIA 字节的影响。
+
+全程不读全景标签。全景计数默认覆盖全部区域，裁剪只用训练区域。`input_defects.json` 的 `plan_gates` 按修复计划预先写好的阈值给出结论：阶段1（米制 ReD）要求多数裁剪现行 ReD 中位差 ≥10 级且米制 ReD ≤3 级；阶段2（缩放修复）要求任一臂受影响的有标签像素超过 1%。每帧、每张全景、每个裁剪的明细在 `pinhole_frames.csv`、`panoramas.csv`、`crops.csv`。
+
+```bash
+OMP_NUM_THREADS=1 nice -n 19 python3 1002Pin2Pan/tools/check_input_defects.py \
+  --manifest /data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv \
+  --config <REL+ 3.1 训练所用的配置.json> \
+  --hha-root /data/zhuzhaoziao/cmx/datasets/Stanford2D3D_480/HHA \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --workers 8 --output <输出目录>/input_defects
+```
+
+`--skip-blend` 跳过缓存读取（不需要 torch）。
+
 ## 6. 领域自适应 `tools/build_target_cache.py`、`tools/gen_pseudo_labels.py`、`tools/train_pin2pan.py`
 
 按 Trans4PASS（`adaptations/`，commit 758f2301）的流程把冻结的针孔检查点适配到全景：先做输出空间对抗预热（warm-up），再用预热后的模型生成伪标签，最后做 MPA（伪标签、原型对齐和对抗三项）。源域是冻结训练用的针孔缓存，配置、数据增强和 focal loss 都不变；目标域是区域 1、2、3、4、6 的全景，训练时不读取它们的真值。区域 5 只用于最终评估：工具拒绝把它作为目标训练区域，也不在区域 5 上挑选检查点，只保存最后一次迭代的结果。
@@ -285,4 +307,4 @@ python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29512 \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。
