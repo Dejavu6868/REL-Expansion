@@ -302,7 +302,33 @@ python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29512 \
 
 **对照指标**：整图全景 mIoU（source-only：REL+ 53.47，HHA 55.67）、各仰角带分数，以及底部极区地板→桌子像素数（REL+ source-only 为 5.04M）。
 
-## 7. 已知限制
+## 7. RGB-only 基线 `tools/rgb_only.py`、`tools/train_rgb_only.py`
+
+用来回答深度是否帮助针孔→全景迁移。网络是冻结 CMX 的 RGB 流：先按 CMX 原样构建双流 MiT-B2 + MLPDecoder512（同一种子下随机数消耗相同，RGB 编码器和解码器的初始权重与 HHA 臂一致），再删去 X 流（`extra_*`）和融合模块（FRM、FFM），四个阶段的 RGB 特征直接进入解码器。解码器保留 CMX 的 512 通道（SegFormer-B2 原版为 768），所以与 HHA 臂只差 X 流和融合。参数量 25.78M（编码器 24.20M），CMX 为 66.57M。`forward(rgb, modal_x)` 保持 CMX 接口并忽略 `modal_x`。
+
+**训练。** 输入某个种子的 HHA 臂 resolved 配置，种子、数据、配方和数据检查都取自它；工具只改架构、臂名和输出路径，然后用冻结的 `source/train.py` 训练 RGB-only 网络。数据仍按 HHA 臂读取（HHA 输入被网络忽略），所以同一种子下与 HHA 臂的批次和增强相同（CPU 测试中用两个 loader worker 与 CMX 网络逐批比对过，服务器上没有追踪）。与套件的 `run_arm.py` 一样，每个进程用 1 个 OpenCV 和 1 个 torch 线程，遇到 NaN 损失即停止，world size 必须为 8。
+
+```bash
+python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29513 \
+  1002Pin2Pan/tools/train_rgb_only.py \
+  --config 0927调参结果/configs/hha.json \
+  --output <输出目录>/rgb_only_s12345
+```
+
+输出目录必须为空。先加 `--smoke-iterations 20`（换一个输出目录）只训练一轮 20 步并保存 `checkpoints/epoch-1.pth`，用来检查显存和整条路径。中断后换新的输出目录，加 `--continue <旧目录>/checkpoints/epoch-N.pth` 续训（参数原样交给冻结 Engine）。输出目录中有 `resolved_config.json`（评估时作 `--config`）、`rgb_only.json`（架构、来源配置、种子、参数量）以及冻结训练的日志和检查点；冻结的 train.log 仍打印 "Architecture: Original CMX"。
+
+**评估。** 第 2 节的全景评估和针孔评估按配置中的 `architecture` 构建 RGB-only 网络，并把它写入输出报告。全景评估把 X 置零，不需要 `--hha-cache-report`；针孔评估仍经过冻结的 HHA 输入适配器，输入同样被忽略。
+
+```bash
+python3 1002Pin2Pan/tools/eval_pano_transfer.py --eight-class-predictions \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --config <输出目录>/rgb_only_s12345/resolved_config.json \
+  --checkpoint <输出目录>/rgb_only_s12345/checkpoints/epoch-200.pth \
+  --output <评估目录>/rgb_only_s12345_pano_8pred
+```
+
+## 8. 已知限制
 
 - **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
 - **HHA 的视差通道在两种投影之间存在系统差异**（见第3节）。
@@ -316,4 +342,4 @@ python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29512 \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、RGB-only 基线（与 CMX 的初始权重和预训练加载一致、输出与 X 无关，以及在小网络上用 CPU 跑通训练、针孔评估和全景评估，并与 CMX 网络逐批比对训练批次）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。

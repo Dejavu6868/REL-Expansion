@@ -27,6 +27,10 @@ normalisation are the frozen training ones; only the input images change.
 
 The raw-depth (RGBD) arm is refused: a Stanford pinhole z-depth byte has no
 ERP equivalent.
+
+An RGB-only checkpoint (``rgb_only.py``, config ``architecture`` set by
+``train_rgb_only.py``) gets zeros as X, which its network ignores; it needs no
+HHA cache report.
 """
 
 import argparse
@@ -40,6 +44,7 @@ import cv2
 import numpy as np
 
 import relplus_variant as rv
+import rgb_only as ro
 from cross_projection import decode_erp_depth
 
 
@@ -167,7 +172,9 @@ def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None, label_siz
     raw_depth = cv2.imread(str(sample["depth"]), cv2.IMREAD_UNCHANGED)
     if raw_depth is None or raw_depth.dtype != np.uint16 or raw_depth.ndim != 2:
         raise ValueError("{} is not a uint16 depth map".format(sample["depth"]))
-    if x_mode == "rel_plus_v2_1":
+    if x_mode is None:  # RGB-only network: X is ignored
+        modal_x = np.zeros_like(rgb)
+    elif x_mode == "rel_plus_v2_1":
         resized = cv2.resize(raw_depth, (width, height), interpolation=cv2.INTER_NEAREST)
         modal_x = frozen["getREL"](decode_erp_depth(resized))
     elif x_mode == "hha_frozen_cache":
@@ -379,8 +386,9 @@ def main():
     config = load_config(args.config)
     channels = eight_class_channels(config.class_names) if args.eight_class_predictions else None
     relplus_variant = rv.select_for_eval(args.relplus_variant, config, frozen)
+    rgb_only = ro.is_rgb_only(config)
     hha_recipe = None
-    if config.x_mode == "hha_frozen_cache":
+    if config.x_mode == "hha_frozen_cache" and not rgb_only:
         hha_recipe = hha_cache_recipe(
             args.hha_cache_report, config.x_root_folder, args.accept_hha_near_match
         )
@@ -388,7 +396,8 @@ def main():
     samples = list_panoramas(args.stanford_root, args.areas)[: args.limit]
 
     device = torch.device(args.device)
-    network = frozen["EncoderDecoder"](cfg=config, criterion=None, norm_layer=nn.BatchNorm2d)
+    network_class = ro.model_class() if rgb_only else frozen["EncoderDecoder"]
+    network = network_class(cfg=config, criterion=None, norm_layer=nn.BatchNorm2d)
     epoch = frozen["load_checkpoint_once"](
         network, args.checkpoint, expected_epoch=args.expected_epoch
     )
@@ -400,7 +409,7 @@ def main():
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
-            sample, infer_size, lookup, frozen, config.x_mode, hha_recipe,
+            sample, infer_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
             label_size=(args.height, args.width),
         )
         logits = predict_with_wrap(
@@ -430,8 +439,10 @@ def main():
         "checkpoint_epoch": epoch,
         "config": str(args.config),
         "x_mode": config.x_mode,
+        "architecture": config.get("architecture"),
         "panorama_x_input": (
-            "ERP getREL ({}) on nearest-resized depth".format(rv.describe(relplus_variant))
+            "none: the RGB-only network ignores X" if rgb_only
+            else "ERP getREL ({}) on nearest-resized depth".format(rv.describe(relplus_variant))
             if hha_recipe is None
             else "ERP HHA (hha.erp_hha), {}, channel order {}".format(
                 hha_recipe["variant"], hha_recipe["channel_order"]

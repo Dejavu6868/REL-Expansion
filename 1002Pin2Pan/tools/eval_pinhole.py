@@ -5,7 +5,9 @@ The frozen launcher (``evaluation/run_evaluation.py``) only accepts the 2026-09-
 epoch-200 checkpoints. This tool runs the same frozen full-test evaluator
 (``tools/eval_rel_plus_v2_3_full.py``, with the frozen HHA input adapter for the HHA
 arm) on a resolved arm config JSON and any checkpoint: seed runs, REL+ 3.x runs and
-adapted checkpoints from ``train_pin2pan.py``.
+adapted checkpoints from ``train_pin2pan.py``. An RGB-only checkpoint
+(``train_rgb_only.py``) is built with ``rgb_only.model_class()`` and evaluated on the
+HHA arm's inputs, which its network ignores.
 
 ``--eight-class-predictions`` restricts the per-pixel argmax to the 8 SPan8 classes, as
 ``eval_pano_transfer.py --eight-class-predictions`` does on panoramas. Without it the
@@ -31,6 +33,7 @@ from pathlib import Path
 import numpy as np
 
 import relplus_variant as rv
+import rgb_only as ro
 from eval_pano_transfer import (
     DEFAULT_SOURCE_ROOT,
     EIGHT_CLASS_NAMES,
@@ -165,6 +168,12 @@ def main():
         adapter = use_hha_adapter(args.source_root, frozen, core)
     if args.eight_class_predictions:
         core.evaluate_prepared_sample = eight_class_evaluate(core, channels)
+    if ro.is_rgb_only(config):
+        # The frozen evaluator imports EncoderDecoder from models.builder. Patching the real
+        # module would break the frozen __init__, whose super() call looks the name up there.
+        view = types.ModuleType("models.builder")
+        view.EncoderDecoder = ro.model_class()
+        sys.modules["models.builder"] = view
     marker = rv.read_marker(Path(config.x_root_folder).parent) if config.x_mode == "rel_plus_v2_1" else None
 
     module = types.ModuleType("eval_pinhole_config")
@@ -189,6 +198,7 @@ def main():
         "expected_epoch": args.expected_epoch,
         "config": str(args.config),
         "x_mode": config.x_mode,
+        "architecture": config.get("architecture"),
         "relplus_cache_variant": None if config.x_mode != "rel_plus_v2_1" else (
             "v2_1" if marker is None else marker["variant"]
         ),
