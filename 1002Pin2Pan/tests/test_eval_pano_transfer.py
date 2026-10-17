@@ -46,6 +46,56 @@ def test_wrap_padding_is_cropped_back():
     assert torch.equal(padded, plain)
 
 
+def test_infer_scale_logits_return_to_the_label_size():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb[:, :2] + modal_x[:, :2]
+
+    rgb = torch.randn(1, 3, 10, 40)
+    modal_x = torch.randn(1, 3, 10, 40)
+    net = PixelwiseNet()
+    same = ev.predict_with_wrap(net, rgb, modal_x, 4, "cpu", output_size=(10, 40))
+    assert torch.equal(same, ev.predict_with_wrap(net, rgb, modal_x, 4, "cpu"))
+    resized = ev.predict_with_wrap(net, rgb, modal_x, 5, "cpu", output_size=(8, 32))
+    assert resized.shape == (1, 2, 8, 32)
+
+
+def test_infer_scale_resizes_inputs_but_not_labels(tmp_path):
+    import cv2
+    import cross_projection as cp
+    from test_cross_projection_synthetic import render_erp_raw_depth
+
+    sample = {kind: tmp_path / (kind + ".png") for kind in ("rgb", "depth", "semantic")}
+    assert cv2.imwrite(str(sample["rgb"]), np.full((64, 128, 3), 100, dtype=np.uint8))
+    assert cv2.imwrite(str(sample["depth"]), render_erp_raw_depth(64, 128))
+    assert cv2.imwrite(str(sample["semantic"]), np.zeros((64, 128, 3), dtype=np.uint8))
+    frozen = cp.import_frozen_source(cp.DEFAULT_SOURCE_ROOT)
+    frozen.update(open_image=cv2.imread, rgb_flag=cv2.IMREAD_COLOR)
+    recipe = {"variant": "native_then_resize_linear", "channel_order": [2, 1, 0]}
+    rgb, modal_x, label = ev.load_sample(
+        sample, (40, 80), np.array([0], dtype=np.uint8), frozen,
+        "hha_frozen_cache", recipe, label_size=(32, 64),
+    )
+    assert rgb.shape[:2] == modal_x.shape[:2] == (40, 80)
+    assert label.shape == (32, 64)
+
+
+@pytest.mark.parametrize("scale", ["0", "-1", "nan"])
+def test_bad_infer_scale_is_rejected_before_loading(monkeypatch, tmp_path, scale):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+        "--infer-scale", scale,
+    ])
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def test_eight_class_predictions_only_pick_span8_channels():
     torch = pytest.importorskip("torch")
 
