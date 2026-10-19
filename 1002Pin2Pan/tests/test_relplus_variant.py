@@ -34,6 +34,7 @@ def frozen():
 def restore_v2_1(frozen):
     yield
     rv.apply_variant("v2_1")
+    rv.set_egvia_params()
 
 
 @pytest.fixture(scope="module")
@@ -139,8 +140,8 @@ def write_frame(root, sample_id, depth, yaw, pitch):
     }
 
 
-@pytest.mark.parametrize("variant", ["v3_0", "v3_1"])
-def test_cache_workers_write_the_variant(frozen, room, tmp_path, restore_v2_1, variant):
+@pytest.mark.parametrize("variant, params", [("v3_0", []), ("v3_1", []), ("v3_1", ["z_low_cm=-200"])])
+def test_cache_workers_write_the_variant(frozen, room, tmp_path, restore_v2_1, variant, params):
     """The frozen cache tool, run through the wrapper with two worker processes."""
     from rel_plus.profiles import STANFORD_S2D_PROFILE
     from rel_plus.stanford_s2d import load_canonical_frame
@@ -155,10 +156,11 @@ def test_cache_workers_write_the_variant(frozen, room, tmp_path, restore_v2_1, v
     subprocess.run(
         [sys.executable, str(TOOLS / "relplus_variant_cache.py"), "generate",
          "--manifest", str(manifest), "--output-root", str(output), "--workers", "2", "--limit", "2",
-         "--variant", variant],
+         "--variant", variant] + ["--egvia-param=" + param for param in params],
         check=True, capture_output=True,
     )
     assert rv.read_marker(output)["variant"] == variant
+    assert rv.read_marker(output)["egvia_params"] == (rv.set_egvia_params(rv.parse_egvia_params(params)) if params else None)
     for row in rows:
         raw, camera, _ = load_canonical_frame(
             row["depth_path"], row["camera_metadata_path"], dataset_profile=STANFORD_S2D_PROFILE
@@ -232,3 +234,43 @@ def test_eval_accepts_a_v3_1_cache(frozen, tmp_path, restore_v2_1):
     assert rv.select_for_eval("v3_1", marked, local) == "v3_1"
     assert local["getREL"] is rv.get_rel_banded_metric
     assert "metric range" in rv.describe("v3_1")
+
+
+def test_egvia_params_override_the_3_1_constants(room, restore_v2_1):
+    depth, height = room
+    trained = rv.get_rel_banded_metric(depth)
+    assert rv.set_egvia_params() == rv.DEFAULT_EGVIA_PARAMS
+    assert "NOT" not in rv.describe("v3_1")
+    rv.set_egvia_params(rv.parse_egvia_params(["z_low_cm=-200", "z_high_cm=200"]))
+    assert "NOT the trained 3.1 parameters" in rv.describe("v3_1")
+    swept = rv.get_rel_banded_metric(depth)
+    assert np.array_equal(swept[..., 1:], trained[..., 1:])
+    floor = surfaces(height)["floor"]
+    expected = 85.0 * (ROOM_MIN[2] * 100 + 200.0) / 400.0
+    assert np.median(swept[..., 0][floor]) == pytest.approx(expected, abs=2)
+    angle = np.array([0.0, 50.0, 127.5]) * 255.0 / 180.0
+    rv.set_egvia_params({"low_center_deg": 55.0})
+    shifted = rv.banded_metric_egvia(angle, np.full(3, -150.0))
+    rv.set_egvia_params()
+    default = rv.banded_metric_egvia(angle, np.full(3, -150.0))
+    assert shifted[0] == default[0] and shifted[2] == default[2] and shifted[1] < default[1] - 20
+    for bad in (["width=3"], ["half_width_deg"], ["z_low_cm=300"], ["half_width_deg=50"]):
+        with pytest.raises(ValueError):
+            rv.set_egvia_params(rv.parse_egvia_params(bad))
+    assert rv.egvia_params == rv.DEFAULT_EGVIA_PARAMS  # a rejected override leaves the parameters alone
+
+
+def test_eval_egvia_params_come_from_the_marker_or_the_override(frozen, tmp_path, restore_v2_1):
+    marked = eval_config(tmp_path / "a", marker="v3_1")
+    rv.select_for_eval("v3_1", marked, dict(frozen))
+    assert rv.egvia_params == rv.DEFAULT_EGVIA_PARAMS
+    rv.select_for_eval("v3_1", marked, dict(frozen), {"half_width_deg": 10.0})
+    assert rv.egvia_params == dict(rv.DEFAULT_EGVIA_PARAMS, half_width_deg=10.0)
+    swept = tmp_path / "b" / "cache"
+    rvc.prepare_output_root(swept, "v3_1", cp.DEFAULT_SOURCE_ROOT, {"z_low_cm": -170.0})
+    rv.select_for_eval("v3_1", EasyDict(x_mode="rel_plus_v2_1", x_root_folder=str(swept / "RELPlus")), dict(frozen))
+    assert rv.egvia_params["z_low_cm"] == -170.0
+    with pytest.raises(FileExistsError, match="EGVIA parameters"):
+        rvc.prepare_output_root(swept, "v3_1", cp.DEFAULT_SOURCE_ROOT)
+    with pytest.raises(ValueError, match="v3_1 only"):
+        rv.select_for_eval("v3_0", eval_config(tmp_path / "c", marker="v3_0"), dict(frozen), {"half_width_deg": 10.0})

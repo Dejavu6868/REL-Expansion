@@ -10,6 +10,8 @@ the reports are the ones the training launcher already reads.
 ``generate`` writes ``relplus_variant.json`` into ``--output-root`` before any
 image, and refuses an output root that holds another variant, or REL+ images
 without a marker (the frozen ``--resume`` only checks that a PNG decodes).
+``--egvia-param`` (3.1 only) builds a cache with other 3.1 parameters, for the
+eval-only sensitivity sweep; the marker records them.
 ``audit`` takes the variant from the marker in ``--cache-root`` and regenerates
 its samples byte for byte with it.
 """
@@ -31,7 +33,7 @@ FROZEN_TOOLS = {
 }
 
 
-def prepare_output_root(output_root, variant, source_root):
+def prepare_output_root(output_root, variant, source_root, egvia_params=None):
     """Write the marker before any image, so a resumed run cannot mix variants."""
     output_root = Path(output_root)
     marker = rv.read_marker(output_root)
@@ -39,15 +41,20 @@ def prepare_output_root(output_root, variant, source_root):
         raise FileExistsError(
             "{} holds REL+ images without {}".format(output_root, rv.MARKER_NAME)
         )
-    if marker is not None and marker["variant"] != variant:
+    if marker is not None and (
+        marker["variant"] != variant or marker.get("egvia_params") != egvia_params
+    ):
         raise FileExistsError(
-            "{} holds the {} variant".format(output_root, marker["variant"])
+            "{} holds the {} variant with EGVIA parameters {}".format(
+                output_root, marker["variant"], marker.get("egvia_params")
+            )
         )
     output_root.mkdir(parents=True, exist_ok=True)
     marker = {
         "variant": variant,
         "egvia_alpha": rv.VARIANT_ALPHA[variant],
         "egvia_rule": rv.describe(variant),
+        "egvia_params": egvia_params,
         "frozen_egvia_alpha": rv.VARIANT_ALPHA["v2_1"],
         "source_root": str(Path(source_root).resolve()),
     }
@@ -67,6 +74,12 @@ def main(argv=None):
         "--variant", choices=sorted(rv.VARIANT_ALPHA), default="v3_0",
         help="generate only; audit uses the cache's marker",
     )
+    parser.add_argument(
+        "--egvia-param", action="append", metavar="NAME=VALUE",
+        help="generate with --variant v3_1 only: override a 3.1 parameter ({})".format(
+            ", ".join(sorted(rv.DEFAULT_EGVIA_PARAMS))
+        ),
+    )
     parser.add_argument("--source-root", type=Path, default=DEFAULT_SOURCE_ROOT)
     args, forwarded = parser.parse_known_args(argv)
     module_name, root_flag = FROZEN_TOOLS[args.command]
@@ -74,9 +87,14 @@ def main(argv=None):
     locate.add_argument(root_flag, dest="root", type=Path, required=True)
     root = locate.parse_known_args(forwarded)[0].root
 
+    egvia_params = None
     if args.command == "generate":
         variant = args.variant
-        prepare_output_root(root, variant, args.source_root)
+        if args.egvia_param:
+            if variant != "v3_1":
+                parser.error("--egvia-param needs --variant v3_1")
+            egvia_params = rv.set_egvia_params(rv.parse_egvia_params(args.egvia_param))
+        prepare_output_root(root, variant, args.source_root, egvia_params)
     else:
         marker = rv.read_marker(root)
         if marker is None:
@@ -86,11 +104,16 @@ def main(argv=None):
                 )
             )
         variant = marker["variant"]
+        if args.egvia_param:
+            parser.error("audit takes the EGVIA parameters from the marker")
+        egvia_params = marker.get("egvia_params")
 
     sys.dont_write_bytecode = True  # keep the frozen archive's file set unchanged
     sys.path.insert(0, str(Path(args.source_root).resolve()))
     tool = importlib.import_module(module_name)
     rv.apply_variant(variant)
+    if variant == "v3_1":
+        rv.set_egvia_params(egvia_params)
     multiprocessing.set_start_method("fork", force=True)  # cache workers inherit the variant
     print(json.dumps({"relplus_variant": variant, "egvia_rule": rv.describe(variant)}), flush=True)
     sys.argv = [tool.__file__] + forwarded

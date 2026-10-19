@@ -202,6 +202,9 @@ def main():
         "relplus_cache_variant": None if config.x_mode != "rel_plus_v2_1" else (
             "v2_1" if marker is None else marker["variant"]
         ),
+        "relplus_cache_egvia_params": None if marker is None or marker["variant"] != "v3_1" else (
+            marker.get("egvia_params") or rv.DEFAULT_EGVIA_PARAMS
+        ),
         "hha_input_adapter": None if adapter is None else str(adapter),
         "source_root": str(Path(args.source_root).resolve()),
         "prediction_classes": list(

@@ -143,5 +143,18 @@ def test_synthetic_room_run(tmp_path, room):
     heights = report["subsets"]["panorama"]["camera_relative_height_cm"]
     assert heights["floor"]["median"] == pytest.approx(ROOM_MIN[2] * 100, abs=5)
     assert heights["table"]["p95"] == pytest.approx(TABLE_MAX[2] * 100, abs=5)
+    for subset in ("pinhole", "panorama"):
+        summary = report["subsets"][subset]
+        theta = summary["theta_deg"]
+        assert theta["floor"]["median"] < theta["wall"]["median"]
+        params = summary["egvia_params_from_statistics"]
+        assert 20 <= params["low_center_deg"] <= 71 and 110 <= params["high_center_deg"] <= 161
+        assert params["half_width_deg"] > 0
+        assert params["z_low_cm"] == summary["camera_relative_height_cm"]["floor"]["p5"]
+    theta = report["subsets"]["panorama"]["theta_deg"]
+    assert theta["floor"]["median"] < 10 and abs(theta["wall"]["median"] - 90) < 3 and theta["ceiling"]["median"] > 170
+    assert report["subsets"]["panorama"]["egvia_params_from_statistics"]["z_high_cm"] == pytest.approx(ROOM_MAX[2] * 100, abs=5)
+    theta_rows = (tmp_path / "out" / "theta_histograms.csv").read_text().splitlines()
+    assert len(theta_rows) == 1 + 2 * len(CLASSES)
     rows = (tmp_path / "out" / "egvia_overlap.csv").read_text().splitlines()
     assert len(rows) == 1 + 2 * len(er.RULES) * len(CLASSES)
