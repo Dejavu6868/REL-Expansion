@@ -15,7 +15,9 @@ EGVIA = 85 [S((theta - 45) / 15) + S((theta - 135) / 15) + clip((z - z_lo) / (z_
 S(x) = 1/2 + 3/4 x - 1/4 x^3 on clip(x, -1, 1), with theta the unblended surface
 angle in degrees and z the camera-relative height in cm, [z_lo, z_hi] =
 METRIC_RANGE_CM (floor p5 to ceiling p95 of the training split,
-check_egvia_rules.py). It is applied by swapping the generator's
+check_egvia_rules.py). The two band centres, the half-width and the metric range
+are ``DEFAULT_EGVIA_PARAMS``; ``set_egvia_params`` overrides them for a sensitivity
+sweep (``--egvia-param`` on the evals and the cache tool). It is applied by swapping the generator's
 ``encode_rel_channels`` for a wrapper that rewrites channel 0, and
 ``frozen["getREL"]`` for ``get_rel_banded_metric``, which repeats the ERP
 ``getREL`` statements for LOA and ReD.
@@ -32,15 +34,48 @@ VARIANT_ALPHA = {"v2_1": 45.0, "v3_0": -1.0, "v3_1": None}  # None: not an alpha
 MARKER_NAME = "relplus_variant.json"  # written into the cache root by relplus_variant_cache.py
 METRIC_RANGE_CM = (-150.0, 210.0)
 BAND_HALF_WIDTH_DEG = 15.0
+DEFAULT_EGVIA_PARAMS = {
+    "low_center_deg": 45.0,
+    "high_center_deg": 135.0,
+    "half_width_deg": BAND_HALF_WIDTH_DEG,
+    "z_low_cm": METRIC_RANGE_CM[0],
+    "z_high_cm": METRIC_RANGE_CM[1],
+}
+egvia_params = dict(DEFAULT_EGVIA_PARAMS)  # read by banded_metric_egvia; change with set_egvia_params
+
+
+def parse_egvia_params(items):
+    """``["half_width_deg=10", ...]`` to a dict of overrides."""
+    overrides = {}
+    for item in items or ():
+        name, _, value = item.partition("=")
+        if name not in DEFAULT_EGVIA_PARAMS or not value:
+            raise ValueError("--egvia-param takes NAME=VALUE with NAME in {}".format(sorted(DEFAULT_EGVIA_PARAMS)))
+        overrides[name] = float(value)
+    return overrides
+
+
+def set_egvia_params(overrides=None):
+    """Reset the 3.1 parameters to the defaults plus ``overrides``; returns the result."""
+    params = dict(DEFAULT_EGVIA_PARAMS, **(overrides or {}))
+    if not (params["half_width_deg"] > 0 and params["z_low_cm"] < params["z_high_cm"]
+            and params["low_center_deg"] + params["half_width_deg"]
+            <= params["high_center_deg"] - params["half_width_deg"]):
+        raise ValueError("invalid EGVIA parameters {}".format(params))
+    egvia_params.clear()
+    egvia_params.update(params)
+    return dict(params)
 
 
 def describe(variant):
     """The EGVIA rule of a variant, for reports."""
     if VARIANT_ALPHA[variant] is not None:
         return "alpha {}".format(VARIANT_ALPHA[variant])
-    return "banded_metric (metric range {} cm, band half-width {} deg)".format(
-        list(METRIC_RANGE_CM), BAND_HALF_WIDTH_DEG
+    p = egvia_params
+    text = "banded_metric (metric range {} cm, band centres {} deg, band half-width {} deg)".format(
+        [p["z_low_cm"], p["z_high_cm"]], [p["low_center_deg"], p["high_center_deg"]], p["half_width_deg"]
     )
+    return text if p == DEFAULT_EGVIA_PARAMS else text + ", NOT the trained 3.1 parameters"
 
 
 def smooth_step(x):
@@ -50,11 +85,12 @@ def smooth_step(x):
 
 def banded_metric_egvia(angle, height_cm):
     """Float EGVIA from the unblended angle code (0..255) and the camera-relative height in cm."""
+    p = egvia_params
     degrees = angle * 180.0 / 255.0
-    low, high = METRIC_RANGE_CM
+    low, high = p["z_low_cm"], p["z_high_cm"]
     return 85.0 * (
-        smooth_step((degrees - 45.0) / BAND_HALF_WIDTH_DEG)
-        + smooth_step((degrees - 135.0) / BAND_HALF_WIDTH_DEG)
+        smooth_step((degrees - p["low_center_deg"]) / p["half_width_deg"])
+        + smooth_step((degrees - p["high_center_deg"]) / p["half_width_deg"])
         + np.clip((height_cm - low) / (high - low), 0.0, 1.0)
     )
 
@@ -136,8 +172,14 @@ def read_marker(cache_root):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def select_for_eval(variant, config, frozen):
-    """Apply an eval's variant after checking it against the checkpoint's training cache."""
+def select_for_eval(variant, config, frozen, egvia_overrides=None):
+    """Apply an eval's variant after checking it against the checkpoint's training cache.
+
+    3.1 uses the parameters in the cache's marker (the defaults if it has none), unless
+    ``egvia_overrides`` replaces some of them for a sensitivity sweep.
+    """
+    if egvia_overrides and variant != "v3_1":
+        raise ValueError("--egvia-param applies to --relplus-variant v3_1 only")
     if config.x_mode != "rel_plus_v2_1":
         if variant != "v2_1":
             raise ValueError("--relplus-variant applies to the REL+ arm only")
@@ -152,4 +194,6 @@ def select_for_eval(variant, config, frozen):
             )
         )
     apply_variant(variant, frozen)
+    if variant == "v3_1":
+        set_egvia_params(dict((marker or {}).get("egvia_params") or {}, **(egvia_overrides or {})))
     return variant

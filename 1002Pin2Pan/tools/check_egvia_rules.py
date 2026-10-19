@@ -30,6 +30,14 @@ the 45 and 135 degree switch (where v2_1 and paper_eq4 jump). It also reports
 per-class percentiles of camera-relative height, to set the metric range from
 the training split. EGVIA overlap is a proxy: RGB, LOA and ReD can still
 separate classes that EGVIA confuses.
+
+It also writes per-class surface-angle histograms (theta, 1 degree bins) and,
+per subset, ``egvia_params_from_statistics``: REL+ 3.1 parameters read off the
+training data instead of chosen by hand. Each band centre is the least
+populated angle (5 degree moving average) between two flat orientations, in
+20..70 and 110..160 degrees. The half-width is the largest that keeps 95% of
+the pixels on each side of each centre outside the transition. The metric range
+is floor p5 to ceiling p95. All are from the training split only.
 """
 
 import argparse
@@ -53,6 +61,8 @@ LAMBDA = 0.5
 BAND_HALF_WIDTH_DEG = 15.0
 SWITCH_ZONE_DEG = 5.0
 HEIGHT_BINS_CM = np.arange(-400, 401, 5)
+THETA_BINS = 180  # 1 degree
+VALLEY_SEARCH_DEG = ((20, 70), (110, 160))
 KEY_PAIRS = (
     ("floor", "table"), ("table", "wall"), ("chair", "table"), ("sofa", "table"),
     ("wall", "door"), ("wall", "window"), ("wall", "board"), ("wall", "bookcase"),
@@ -120,7 +130,9 @@ def image_statistics(angle, height_normalized, height_cm, valid, label, frozen_e
     )
     height_bin = np.clip(np.digitize(height_cm[keep], HEIGHT_BINS_CM) - 1, 0, len(HEIGHT_BINS_CM) - 2)
     height = np.bincount(classes * (len(HEIGHT_BINS_CM) - 1) + height_bin, minlength=n * (len(HEIGHT_BINS_CM) - 1))
+    theta_bin = np.clip(degrees.astype(np.int64), 0, THETA_BINS - 1)
     return {
+        "theta_deg": np.bincount(classes * THETA_BINS + theta_bin, minlength=n * THETA_BINS).reshape(n, THETA_BINS),
         "egvia": histograms,
         "pixels": np.bincount(classes, minlength=n),
         "near_switch": np.bincount(classes[near_switch], minlength=n),
@@ -199,8 +211,48 @@ def histogram_percentiles(histogram, edges):
     }
 
 
+def theta_quantile(histogram, low, high, q):
+    """q-th percentile, in degrees, of the pixels in 1 degree bins [low, high)."""
+    part = histogram[low:high]
+    if part.sum() == 0:
+        return None
+    return float(low + np.searchsorted(np.cumsum(part), q / 100.0 * part.sum()) + 0.5)
+
+
+def params_from_statistics(theta, heights):
+    """REL+ 3.1 parameters from the training data; see the module docstring."""
+    histogram = theta.sum(axis=0).astype(np.float64)
+    smooth = np.convolve(histogram, np.ones(5) / 5.0, mode="same")
+    low, high = (start + int(np.argmin(smooth[start:stop + 1])) for start, stop in VALLEY_SEARCH_DEG)
+    edges = {
+        "up_facing_p95_deg": theta_quantile(histogram, 0, low, 95),
+        "vertical_p5_deg": theta_quantile(histogram, low, high, 5),
+        "vertical_p95_deg": theta_quantile(histogram, low, high, 95),
+        "down_facing_p5_deg": theta_quantile(histogram, high, THETA_BINS, 5),
+    }
+    gaps = [
+        gap for gap in (
+            None if edges["up_facing_p95_deg"] is None else low + 0.5 - edges["up_facing_p95_deg"],
+            None if edges["vertical_p5_deg"] is None else edges["vertical_p5_deg"] - low - 0.5,
+            None if edges["vertical_p95_deg"] is None else high + 0.5 - edges["vertical_p95_deg"],
+            None if edges["down_facing_p5_deg"] is None else edges["down_facing_p5_deg"] - high - 0.5,
+        ) if gap is not None
+    ]
+    return {
+        "low_center_deg": low + 0.5,
+        "high_center_deg": high + 0.5,
+        "half_width_deg": min(gaps) if gaps else None,
+        "z_low_cm": None if heights["floor"] is None else heights["floor"]["p5"],
+        "z_high_cm": None if heights["ceiling"] is None else heights["ceiling"]["p95"],
+        "mode_edges": edges,
+    }
+
+
 def summarize(total, names):
     present = total["pixels"] > 0
+    heights = {
+        name: histogram_percentiles(histogram, HEIGHT_BINS_CM) for name, histogram in zip(names, total["height_cm"])
+    }
     overlaps = {rule: overlap_matrix(total["egvia"][rule]) for rule in RULES}
     upper = np.triu(np.ones((len(names), len(names)), dtype=bool), 1) & present[:, None] & present[None, :]
     return {
@@ -215,10 +267,15 @@ def summarize(total, names):
             for a, b in KEY_PAIRS
         },
         "egvia_overlap_mean_over_class_pairs": {rule: float(overlaps[rule][upper].mean()) for rule in RULES},
-        "camera_relative_height_cm": {
-            name: histogram_percentiles(histogram, HEIGHT_BINS_CM)
-            for name, histogram in zip(names, total["height_cm"])
+        "camera_relative_height_cm": heights,
+        "theta_deg": {
+            name: None if not histogram.sum() else {
+                q: theta_quantile(histogram, 0, THETA_BINS, value)
+                for q, value in (("p5", 5), ("median", 50), ("p95", 95))
+            }
+            for name, histogram in zip(names, total["theta_deg"])
         },
+        "egvia_params_from_statistics": params_from_statistics(total["theta_deg"], heights),
     }, overlaps
 
 
@@ -312,10 +369,17 @@ def main(argv=None):
             for rule in RULES:
                 for name, row in zip(names, total["egvia"][rule]):
                     writer.writerow([subset, rule, name] + row.tolist())
+    with (args.output / "theta_histograms.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["subset", "class"] + ["theta_{}".format(b) for b in range(THETA_BINS)])
+        for subset, total in totals.items():
+            for name, row in zip(names, total["theta_deg"]):
+                writer.writerow([subset, name] + row.tolist())
     (args.output / "egvia_rules.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     for subset, summary in report["subsets"].items():
         print(subset, "switch zone", summary["all_pixels_within_switch_zone"])
         print(subset, "mean overlap", json.dumps(summary["egvia_overlap_mean_over_class_pairs"]))
+        print(subset, "parameters from statistics", json.dumps(summary["egvia_params_from_statistics"]))
     return 0
 
 

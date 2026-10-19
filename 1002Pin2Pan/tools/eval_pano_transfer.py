@@ -344,6 +344,13 @@ def main():
         help="REL+ EGVIA encoding; must match the checkpoint's training cache (relplus_variant.py)",
     )
     parser.add_argument(
+        "--egvia-param", action="append", metavar="NAME=VALUE",
+        help="v3_1 only: encode panoramas with another 3.1 parameter ({}) than the model was "
+        "trained with; a sensitivity test, not a design comparison".format(
+            ", ".join(sorted(rv.DEFAULT_EGVIA_PARAMS))
+        ),
+    )
+    parser.add_argument(
         "--eight-class-predictions", action="store_true",
         help="argmax over the 8 SPan8 classes only ({}); the network is unchanged".format(
             " ".join(EIGHT_CLASS_NAMES)
@@ -366,7 +373,9 @@ def main():
     frozen = import_frozen(args.source_root)
     config = load_config(args.config)
     channels = eight_class_channels(config.class_names) if args.eight_class_predictions else None
-    relplus_variant = rv.select_for_eval(args.relplus_variant, config, frozen)
+    relplus_variant = rv.select_for_eval(
+        args.relplus_variant, config, frozen, rv.parse_egvia_params(args.egvia_param)
+    )
     rgb_only = ro.is_rgb_only(config)
     hha_recipe = None
     if config.x_mode == "hha_frozen_cache" and not rgb_only:
@@ -429,6 +438,7 @@ def main():
             )
         ),
         "relplus_variant": relplus_variant,
+        "egvia_params": dict(rv.egvia_params) if relplus_variant == "v3_1" else None,
         "hha_cache_report": None if hha_recipe is None else str(args.hha_cache_report),
         "hha_recipe": hha_recipe,
         "areas": args.areas,

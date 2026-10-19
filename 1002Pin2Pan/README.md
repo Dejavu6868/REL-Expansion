@@ -207,6 +207,14 @@ python3 1002Pin2Pan/tools/check_egvia_rules.py \
 
 样本与上面的地板/桌面检查相同：默认 3000 帧针孔训练图，以及训练区域（1、2、3、4、6，不含区域 5）的全部全景。`egvia_rules.json` 按子集给出：各规则下关键类别对的 EGVIA 直方图重叠（两类归一化直方图逐 bin 取最小值再求和，1 为相同，0 为完全分开）及全部类别对的平均重叠；各类别距 45°/135° 不到 5° 的像素比例（`v2_1` 与 `paper_eq4` 在这里跳变）；各类别相对相机高度的 p5/中位数/p95（用训练集确定米制范围）。完整重叠矩阵在 `egvia_overlap.csv`，直方图在 `egvia_histograms.csv`。EGVIA 重叠只是代理指标：RGB、LOA、ReD 仍能区分 EGVIA 分不开的类别。
 
+`egvia_rules.json` 每个子集还给出 `theta_deg`（各类别表面角度 θ 的 p5/中位数/p95）和 `egvia_params_from_statistics`：从训练数据读出的 3.1 参数。两个带中心取 20–70° 与 110–160° 内像素最少的角度（5° 滑动平均）；半宽取能让每个中心两侧各 95% 像素都落在过渡区之外的最大值；米制范围取地板 p5 到天花板 p95。逐类别 θ 直方图（1° 一格）在 `theta_histograms.csv`。只用训练集。
+
+### 3.1 参数敏感性（只评估，不训练）
+
+`--egvia-param NAME=VALUE`（可重复；NAME 为 `low_center_deg`、`high_center_deg`、`half_width_deg`、`z_low_cm`、`z_high_cm`，默认 45、135、15、−150、210）让已训练的 3.1 模型用另一组参数编码输入。全景评估 `eval_pano_transfer.py --relplus-variant v3_1` 现场编码，直接加这个参数即可，metrics.json 记录 `egvia_params`。针孔输入来自缓存，所以要先用 `relplus_variant_cache.py generate --variant v3_1 --egvia-param ...` 重建测试集缓存（标记里记录参数，参数不同的目录会被拒绝），再把复制配置里的缓存路径指向它；`eval_pinhole.json` 记录 `relplus_cache_egvia_params`。
+
+模型只见过默认参数编码的输入，所以分数下降衡量的是已训练模型对编码的敏感度，不说明新参数是不是更好的设计；要比较设计必须重训。
+
 ### 输入缺陷检查 `tools/check_input_defects.py`（阶段0，只用 CPU，不训练）
 
 在不改任何缓存、检查点和冻结源码的前提下，度量 REL+ 输入的四个已知问题有多大，用来决定是否值得重训：
