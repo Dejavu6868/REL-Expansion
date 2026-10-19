@@ -181,6 +181,8 @@ def write_launcher(path, world_size, network="rgb_only"):
 
 
 def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
+    pytest.importorskip("tensorboardX")  # the frozen train.py imports both
+    pytest.importorskip("tqdm")
     from models.encoders.dual_segformer import mit_b0
     from test_cross_projection_synthetic import render_erp_raw_depth
 
