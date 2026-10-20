@@ -124,6 +124,8 @@ python3 1002Pin2Pan/tools/audit_training_views.py \
 - **HHA**：在裁剪上运行 Depth2HHA，生成顺序、缩放核和通道顺序取自 `check_hha_cache.py` 报告。规则同第2节，`NEAR_MATCH` 同样需要 `--accept-hha-near-match`。
 - **拼接**：每个 ERP 像素取所有覆盖它的裁剪的 softmax 之和，再取 argmax。
 
+**ERP 切片对照 `--projection erp`**（只能配合 `--layout level`）：窗口与拼接方式和 8 个水平切片完全相同，但每个切片直接从整图输入上截取，不做重投影。整图 RGB 与 X 按第2节的方式生成，尺寸取能让 480 像素正好覆盖切片视场的 ERP 尺寸（默认视场下为 1382×2764，切片视场 62.52°），因此 ERP 切片与针孔裁剪的窗口和像素数相同，只有投影不同；X 的归一化范围随整图输入覆盖 360°，这一点也与针孔裁剪不同。与针孔水平裁剪比较（±25° 两带）可看投影的作用；与同分辨率的整图评估比较可看分窗与多视角平均的作用。`--eight-class-predictions` 与第2节同名参数相同，只在 SPan8 的 8 类上做 softmax 与 argmax，两种投影都可用。
+
 参数与第2节相同（没有 `--wrap-pad`），另有 `--workers N`，用 N 个 CPU 进程按全景并行生成裁剪输入，每个进程依次生成一张全景的 22 个裁剪。HHA 臂的 Depth2HHA 在原开发环境中约 15 s/个 1080 裁剪，服务器耗时需实测；可加 `--workers 32` 并设 `OMP_NUM_THREADS=1`：
 
 ```bash
@@ -319,7 +321,29 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py --eight-class-predictions \
   --output <评估目录>/rgb_only_s12345_pano_8pred
 ```
 
-## 8. 已知限制
+## 8. 免训练探针 `tools/eval_pano_scope.py`、`tools/attention_profile.py`
+
+用现有检查点检验模块想法 1（与训练视场匹配的注意力）和 3（几何歧义门控），不训练。
+
+**`eval_pano_scope.py`** 原样调用第2节的整图评估（`eval_pano_transfer.py` 不改，其参数全部透传），再加最多三项只在评估时生效的改动，设置和结果写入 `metrics.json` 的 `scope_probes`：
+
+- `--attention-cap-deg R`：两条流四个阶段的 MiT 自注意力中，每个 query 只看测地角 R 度以内的 key。只写参数名时 R = 40.6°，即训练中位视场 62.48° 方形画面中心到角点的角度。token 的方向按卷积算术取：累计步长 S 的第 i 个 token 位于输入像素 S·i，空间缩减比 r 的 key 位于其 r×r 个 token 的中心。R = 180 不屏蔽任何 key，结果与整图评估完全相同。
+- `--tangent-offsets`：编码器中所有大于 1×1 的卷积（patch embedding、Mix-FFN 深度卷积、空间缩减卷积、FFM 深度卷积）改在输出方向的切平面上采样（Tateno et al., ECCV 2018），用 `torchvision.ops.deform_conv2d` 加固定偏移，权重不变。跨 180° 接缝的采样点读取保留区的全景列，越过极点的采样点绕到另一侧。需要 `--wrap-pad` 为 32 的正整数倍（默认 128）。
+- `--coplanar-share`：对门和窗像素统计“几何不可分”的比例：周围 `--coplanar-window`（默认 15 像素，1024×2048 下约 2.6°）窗口内的相机坐标点能用一个平面拟合，残差 RMS 不超过平均距离的 `--coplanar-tolerance`（默认 0.5%），即附近没有深度边缘或形状变化。分别统计全部像素、被预测为墙的像素和预测正确的像素。不改变预测。
+
+至少要设其中一项。FRM 的通道权重做全图池化、FFM 的交叉注意力构造全图通道上下文，上限对这两处无效；解码器只有 1×1 卷积。
+
+```bash
+python3 1002Pin2Pan/tools/eval_pano_scope.py --attention-cap-deg --tangent-offsets --eight-class-predictions \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
+  --config <配置> --checkpoint <epoch-200.pth> \
+  --output <输出目录>/cap40.6_tangent
+```
+
+**`attention_profile.py`** 在 `--panoramas`（默认 20）张均匀抽取的全景上，分别对整图输入和 8 个水平裁剪（第4节 `--layout level` 的输入）运行冻结网络，记录两条流第 1、2 阶段每个 query 的注意力（各头平均）随 query–key 测地角（5° 一档）和相机坐标三维距离（0.25 m 一档，最后一档含 12 m 以上）的分布，取 query 与 block 的平均。query 取仰角 ±25° 以内、有深度、行列每隔 `--query-step`（默认 4）个 token 的位置。另给平均角度、平均距离、无深度 key 的权重，以及 40.6° 以外的权重（即默认上限去掉的部分）。只支持 CMX 两臂，参数同第2节（无 `--eight-class-predictions`），输出 `attention_profile.json`。
+
+## 9. 已知限制
 
 - **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
 - **HHA 的视差通道在两种投影之间存在系统差异**（见第3节）。
@@ -333,4 +357,4 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py --eight-class-predictions \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、RGB-only 基线（与 CMX 的初始权重和预训练加载一致、输出与 X 无关，以及在小网络上用 CPU 跑通训练、针孔评估和全景评估，并与 CMX 网络逐批比对训练批次）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、ERP 切片对照（窗口与水平切片一致、跨接缝拼接复原标签、切片取自整图输入、8 类预测，以及在小网络上用 CPU 端到端运行）、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、RGB-only 基线（与 CMX 的初始权重和预训练加载一致、输出与 X 无关，以及在小网络上用 CPU 跑通训练、针孔评估和全景评估，并与 CMX 网络逐批比对训练批次）、免训练探针（注意力上限的 token 方向与屏蔽范围、与冻结注意力逐项一致、切平面采样与独立推导的反日晷投影一致、赤道上核轴偏移为零、覆盖编码器全部宽卷积、共面判断、180° 上限与整图评估逐像素相同、注意力分布直方图，以及在小网络上用 CPU 端到端运行）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。

@@ -28,6 +28,12 @@ difference does not identify the effect of normalisation alone.
 * HHA: Depth2HHA on the crop with the recipe and channel order of a
   ``check_hha_cache.py`` report (same rules as the whole-panorama eval).
 * Stitching: each ERP pixel averages the softmax of every crop that sees it.
+* ``--projection erp`` is the control for the level crops: the same 8 windows and the same
+  stitching, but each tile is cut straight from the whole-panorama inputs (RGB and X built as
+  ``eval_pano_transfer.py`` builds them) with no reprojection. The inputs are built at the ERP
+  size on which a tile of the model size spans the crop FOV, so tiles and crops have the same
+  window and pixel count. Only the projection, and the X normalisation scope that comes with
+  the whole-panorama inputs, differ.
 """
 
 import argparse
@@ -93,6 +99,47 @@ def stitch_grids(eval_size, layout=CROP_LAYOUT, fov=CROP_FOV_DEG):
     return np.asarray(grids), np.asarray(inside)
 
 
+def erp_tile_source_size(model_size, fov=CROP_FOV_DEG):
+    """ERP (height, width) on which ``model_size`` pixels span ``fov`` degrees; width a multiple of 4."""
+    width = 4 * max(1, int(round(model_size * 360.0 / fov / 4)))
+    return width // 2, width
+
+
+def erp_tile_windows(layout, source_size, model_size):
+    """Top-left (row, column) of each tile, centred on its level crop's optical axis."""
+    height, width = source_size
+    windows = []
+    for yaw, pitch in layout:
+        if pitch != 0.0:
+            raise ValueError("ERP tiles are defined for the level layout only")
+        _, column = erp_coordinates(cp.crop_camera_to_world(yaw, pitch)[:, 2], height, width)
+        left = int(round(float(column) - (model_size - 1) / 2)) % width
+        windows.append(((height - model_size) // 2, left))
+    return windows
+
+
+def erp_tile_grids(eval_size, windows, source_size, model_size):
+    """Per tile, where each eval-grid ERP pixel lands (grid_sample units) and whether it is inside."""
+    height, width = source_size
+    rows, columns = erp_coordinates(cp.erp_directions(*eval_size), height, width)
+    grids, inside = [], []
+    for top, left in windows:
+        x = np.mod(columns - left + 0.5, width) - 0.5  # wrap across the 180-degree seam
+        y = rows - top
+        seen = (x >= -0.5) & (x <= model_size - 0.5) & (y >= -0.5) & (y <= model_size - 0.5)
+        grid = np.stack([(2 * x + 1) / model_size - 1, (2 * y + 1) / model_size - 1], axis=-1)
+        grids.append(np.where(seen[..., None], grid, 0.0).astype(np.float32))
+        inside.append(seen)
+    return np.asarray(grids), np.asarray(inside)
+
+
+def cut_erp_tiles(image, windows, model_size):
+    """The ``model_size`` square of ``image`` at each window, wrapping across the seam."""
+    return np.asarray([
+        np.roll(image, -left, axis=1)[top:top + model_size, :model_size] for top, left in windows
+    ])
+
+
 def crop_hha(raw, k_json, hha_recipe, model_size):
     """Depth2HHA on one Stanford-encoded crop, resized as the verified cache recipe."""
     import hha
@@ -153,20 +200,36 @@ def prepare_panorama(
         else:
             raise ValueError("unsupported crop x_mode: " + str(x_mode))
 
+    return np.asarray(rgb_crops), np.asarray(x_crops), eval_label(sample, lookup, eval_size)
+
+
+def prepare_erp_tiles(sample, frozen, x_mode, hha_recipe, lookup, eval_size, model_size, windows, source_size):
+    """RGB and X tiles cut from the whole-panorama inputs at ``source_size``, plus the eval label."""
+    rgb, modal_x, _ = ev.load_sample(sample, source_size, lookup, frozen, x_mode, hha_recipe)
+    return (
+        cut_erp_tiles(rgb, windows, model_size), cut_erp_tiles(modal_x, windows, model_size),
+        eval_label(sample, lookup, eval_size),
+    )
+
+
+def eval_label(sample, lookup, eval_size):
     height, width = eval_size
     semantic = cv2.imread(str(sample["semantic"]), cv2.IMREAD_COLOR)
     if semantic is None:
         raise FileNotFoundError(sample["semantic"])
     semantic = cv2.resize(semantic, (width, height), interpolation=cv2.INTER_NEAREST)
-    return np.asarray(rgb_crops), np.asarray(x_crops), ev.decode_semantic(semantic, lookup)
+    return ev.decode_semantic(semantic, lookup)
 
 
 def _prepare_in_worker(sample):
-    return prepare_panorama(sample, **_WORKER_STATE)
+    return _WORKER_STATE["prepare"](sample, **_WORKER_STATE["arguments"])
 
 
-def predict_panorama(network, rgb_crops, x_crops, grids, inside, normalize, device):
-    """Stitched ERP prediction: argmax of the summed softmax of the crops seeing each pixel."""
+def predict_panorama(network, rgb_crops, x_crops, grids, inside, normalize, device, channels=None):
+    """Stitched ERP prediction: argmax of the summed softmax of the crops seeing each pixel.
+
+    With ``channels``, the softmax runs over those output channels only, so only they can win.
+    """
     import torch
     import torch.nn.functional as F
 
@@ -179,13 +242,16 @@ def predict_panorama(network, rgb_crops, x_crops, grids, inside, normalize, devi
             logits = network(rgb, modal_x)
         if not bool(torch.isfinite(logits).all()):
             raise FloatingPointError("non-finite logits")
+        if channels is not None:
+            logits = logits[:, channels]
         sampled = F.grid_sample(
             logits.softmax(dim=1), grids[batch], mode="bilinear",
             padding_mode="border", align_corners=False,
         )
         sampled = (sampled * inside[batch, None]).sum(dim=0)
         total = sampled if total is None else total + sampled
-    return total.argmax(dim=0)
+    prediction = total.argmax(dim=0)
+    return prediction if channels is None else torch.as_tensor(channels, device=prediction.device)[prediction]
 
 
 def import_frozen_crops(source_root):
@@ -226,6 +292,16 @@ def main():
         help="full: 22 crops covering the sphere; level: pitch-0 crops only, unseen pixels unscored",
     )
     parser.add_argument(
+        "--projection", choices=["pinhole", "erp"], default="pinhole",
+        help="pinhole: rendered crops; erp: the level windows cut straight from the whole-panorama inputs (level layout only)",
+    )
+    parser.add_argument(
+        "--eight-class-predictions", action="store_true",
+        help="softmax and argmax over the 8 SPan8 classes only ({}); the network is unchanged".format(
+            " ".join(ev.EIGHT_CLASS_NAMES)
+        ),
+    )
+    parser.add_argument(
         "--workers", type=int, default=0,
         help="CPU processes building crop inputs (0: in the main process)",
     )
@@ -247,6 +323,8 @@ def main():
         parser.error("--workers must be zero or positive")
     if not np.isfinite(args.crop_fov_deg) or not 0 < args.crop_fov_deg < 180:
         parser.error("--crop-fov-deg must be finite and between 0 and 180 degrees")
+    if args.projection == "erp" and args.layout != "level":
+        parser.error("--projection erp needs --layout level")
 
     if args.output.exists() and any(args.output.iterdir()):
         raise FileExistsError("{} is not empty; refusing to overwrite".format(args.output))
@@ -264,18 +342,27 @@ def main():
     lookup = ev.label_lookup(args.semantic_labels)
     samples = ev.list_panoramas(args.stanford_root, args.areas)[: args.limit]
     eval_size = (args.height, args.width)
+    model_size = int(config.image_height)
     layout = LAYOUTS[args.layout]
-    grids, inside = stitch_grids(eval_size, layout=layout, fov=args.crop_fov_deg)
+    arguments = dict(
+        frozen=frozen, x_mode=config.x_mode, hha_recipe=hha_recipe, lookup=lookup,
+        eval_size=eval_size, model_size=model_size,
+    )
+    if args.projection == "erp":
+        source_size = erp_tile_source_size(model_size, args.crop_fov_deg)
+        windows = erp_tile_windows(layout, source_size, model_size)
+        grids, inside = erp_tile_grids(eval_size, windows, source_size, model_size)
+        arguments.update(windows=windows, source_size=source_size)
+        _WORKER_STATE.update(prepare=prepare_erp_tiles, arguments=arguments)
+    else:
+        grids, inside = stitch_grids(eval_size, layout=layout, fov=args.crop_fov_deg)
+        arguments.update(fov=args.crop_fov_deg, layout=layout)
+        _WORKER_STATE.update(prepare=prepare_panorama, arguments=arguments)
     crops_per_pixel = inside.sum(axis=0)
     seen = crops_per_pixel > 0
     if args.layout == "full" and not seen.all():
         raise ValueError("crop layout leaves ERP pixels uncovered")
-
-    _WORKER_STATE.update(
-        frozen=frozen, x_mode=config.x_mode, hha_recipe=hha_recipe, lookup=lookup,
-        eval_size=eval_size, model_size=int(config.image_height), fov=args.crop_fov_deg,
-        layout=layout,
-    )
+    channels = ev.eight_class_channels(config.class_names) if args.eight_class_predictions else None
     # Fork the workers before CUDA is initialised; they only run numpy/OpenCV.
     pool = multiprocessing.get_context("fork").Pool(args.workers) if args.workers else None
     prepared = pool.imap(_prepare_in_worker, samples) if pool else map(_prepare_in_worker, samples)
@@ -301,7 +388,7 @@ def main():
     band_confusion = np.zeros((len(ev.ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
     for index, (rgb_crops, x_crops, label) in enumerate(prepared, start=1):
         prediction = predict_panorama(
-            network, rgb_crops, x_crops, grids_device, inside_device, normalize, device
+            network, rgb_crops, x_crops, grids_device, inside_device, normalize, device, channels
         ).cpu().numpy().astype(np.uint8)
         label = np.where(seen, label, 255).astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
@@ -318,22 +405,35 @@ def main():
     if confusion.sum() == 0:
         raise ValueError("no valid semantic pixels were evaluated")
     metrics = frozen["metrics_from_confusion"](confusion)
+    if args.projection == "erp":
+        crop_x_input = "whole-panorama X at {}x{} as in eval_pano_transfer.py ({}), cut into tiles".format(
+            source_size[0], source_size[1],
+            rv.describe(relplus_variant) if hha_recipe is None else "ERP HHA, {}, channel order {}".format(
+                hha_recipe["variant"], hha_recipe["channel_order"]
+            ),
+        )
+    elif hha_recipe is None:
+        crop_x_input = "frozen generate_rel_plus_v2_1 ({}) per crop (canonical nearest resize, crop rotation as gravity)".format(
+            rv.describe(relplus_variant)
+        )
+    else:
+        crop_x_input = "Depth2HHA per crop, {}, channel order {}".format(
+            hha_recipe["variant"], hha_recipe["channel_order"]
+        )
     report = {
         "status": "SMOKE" if args.limit is not None else "COMPLETED",
-        "setting": "source-only pinhole-to-panorama transfer, crop-tiled",
+        "setting": "source-only pinhole-to-panorama transfer, {}".format(
+            "ERP-tiled" if args.projection == "erp" else "crop-tiled"
+        ),
         "checkpoint": str(args.checkpoint),
         "checkpoint_epoch": epoch,
         "config": str(args.config),
         "x_mode": config.x_mode,
-        "crop_x_input": (
-            "frozen generate_rel_plus_v2_1 ({}) per crop (canonical nearest resize, crop rotation as gravity)".format(
-                rv.describe(relplus_variant)
-            )
-            if hha_recipe is None
-            else "Depth2HHA per crop, {}, channel order {}".format(
-                hha_recipe["variant"], hha_recipe["channel_order"]
-            )
-        ),
+        "projection": args.projection,
+        "erp_tile_source_size": list(source_size) if args.projection == "erp" else None,
+        "erp_tile_fov_deg": model_size * 360.0 / source_size[1] if args.projection == "erp" else None,
+        "prediction_classes": list(ev.EIGHT_CLASS_NAMES if channels else config.class_names),
+        "crop_x_input": crop_x_input,
         "relplus_variant": relplus_variant,
         "hha_cache_report": None if hha_recipe is None else str(args.hha_cache_report),
         "hha_recipe": hha_recipe,
@@ -342,7 +442,7 @@ def main():
         "scored_erp_pixel_fraction": float(seen.mean()),
         "crop_fov_deg": args.crop_fov_deg,
         "crop_native_size": CROP_NATIVE_SIZE,
-        "crop_model_size": int(config.image_height),
+        "crop_model_size": model_size,
         "crops_per_erp_pixel": [int(crops_per_pixel.min()), int(crops_per_pixel.max())],
         "areas": args.areas,
         "eval_size": list(eval_size),
