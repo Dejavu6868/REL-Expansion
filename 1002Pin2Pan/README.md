@@ -61,6 +61,8 @@ for s in 1.0 1.25 1.375; do
 done
 ```
 
+加 `--attention-chunk-mb <MiB>` 时，编码器的每个 MiT 注意力按查询行分块计算分数，每块分数矩阵不超过该大小；softmax 按查询行进行，所以结果与冻结前向一致（只有浮点舍入差异）。用于原生分辨率整景输入：`--infer-scale 2.0` 时输入为 2048×4096（加环形填充后 2048×4608），第 1 阶段一个注意力矩阵约 21.7 GB（float32），不分块放不进 24 GB 显卡。默认 0，即冻结前向；`metrics.json` 记录 `attention_chunk_mb` 和 `chunked_attention_modules`（CMX 双流 MiT-B2 为 32）。
+
 ### 针孔评估 `tools/eval_pinhole.py`
 
 冻结启动器（`evaluation/run_evaluation.py`）只接受 2026-09-20 的两个第 200 轮检查点。本工具对任意配置和检查点（其他种子、REL+ 3.x、`train_pin2pan.py` 的适配检查点）运行同一个冻结全测试集评估器 `tools/eval_rel_plus_v2_3_full.py`（HHA 臂套用冻结的 `evaluation/input_adapter.py`），测试集仍是区域 5 的 17,593 张针孔图。不加 `--eight-class-predictions` 时计算与冻结评估相同，同一检查点的混淆矩阵应与冻结结果一致；加上后 argmax 只在 SPan8 的 8 类中取，与全景评估的同名参数相同。
