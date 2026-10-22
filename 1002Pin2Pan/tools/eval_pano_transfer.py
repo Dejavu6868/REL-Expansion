@@ -17,6 +17,10 @@ normalisation are the frozen training ones; only the input images change.
 * ``--infer-scale`` runs that pass on RGB and X resized by the factor (wrap
   padding scaled with it) and resizes the logits back to the evaluation size
   before the argmax, so labels and scored pixels stay those of the default run.
+* ``--attention-chunk-mb`` runs every MiT attention with its queries in chunks,
+  so a large input (such as the native 2048x4096 panorama, ``--infer-scale 2``)
+  never holds a whole query-by-key score matrix. Softmax is taken per query, so
+  the result is the frozen forward's up to float rounding.
 
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
@@ -35,6 +39,7 @@ HHA cache report.
 
 import argparse
 import csv
+import functools
 import json
 import sys
 import time
@@ -228,6 +233,47 @@ def predict_with_wrap(network, rgb, modal_x, wrap_pad, device, output_size=None)
     return logits
 
 
+def _chunked_attention_forward(module, budget_bytes, x, H, W):
+    """The frozen MiT ``Attention.forward`` with the scores computed a chunk of queries at a time."""
+    import torch
+
+    B, N, C = x.shape
+    heads = module.num_heads
+    q = module.q(x).reshape(B, N, heads, C // heads).permute(0, 2, 1, 3)
+    if module.sr_ratio > 1:
+        x_ = x.permute(0, 2, 1).reshape(B, C, H, W)
+        x_ = module.sr(x_).reshape(B, C, -1).permute(0, 2, 1)
+        x_ = module.norm(x_)
+        kv = module.kv(x_).reshape(B, -1, 2, heads, C // heads).permute(2, 0, 3, 1, 4)
+    else:
+        kv = module.kv(x).reshape(B, -1, 2, heads, C // heads).permute(2, 0, 3, 1, 4)
+    k, v = kv[0], kv[1]
+    step = max(1, budget_bytes // (B * heads * k.shape[2] * q.element_size()))
+    out = torch.empty_like(q)
+    for start in range(0, N, step):
+        attn = (q[:, :, start:start + step] @ k.transpose(-2, -1)) * module.scale
+        attn = attn.softmax(dim=-1)
+        attn = module.attn_drop(attn)
+        out[:, :, start:start + step] = attn @ v
+    x = out.transpose(1, 2).reshape(B, N, C)
+    x = module.proj(x)
+    x = module.proj_drop(x)
+    return x
+
+
+def chunk_attention(network, budget_mb):
+    """Chunk every MiT attention so one score chunk holds at most ``budget_mb`` MiB."""
+    from models.encoders.dual_segformer import Attention
+
+    modules = [module for module in network.modules() if isinstance(module, Attention)]
+    if not modules:
+        raise ValueError("the network has no MiT attention to chunk")
+    budget_bytes = int(budget_mb * 2 ** 20)
+    for module in modules:
+        module.forward = functools.partial(_chunked_attention_forward, module, budget_bytes)
+    return len(modules)
+
+
 def eight_class_channels(class_names):
     """Output channels of the SPan8 classes, looked up by name in the config's class order."""
     names = list(class_names)
@@ -347,6 +393,11 @@ def main():
         help="run the network on the panorama resized by this factor; logits are resized "
         "back to --height x --width, where labels stay",
     )
+    parser.add_argument(
+        "--attention-chunk-mb", type=int, default=0,
+        help="compute MiT attention scores in query chunks of at most this many MiB "
+        "(same result; for inputs whose score matrix does not fit); 0 keeps the frozen forward",
+    )
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--hha-cache-report", type=Path, default=None)
@@ -373,6 +424,8 @@ def main():
         parser.error("--wrap-pad must be between zero and --width")
     if not np.isfinite(args.infer_scale) or args.infer_scale <= 0:
         parser.error("--infer-scale must be finite and positive")
+    if args.attention_chunk_mb < 0:
+        parser.error("--attention-chunk-mb must be zero or positive")
     infer_size = (int(round(args.height * args.infer_scale)), int(round(args.width * args.infer_scale)))
     infer_wrap_pad = int(round(args.wrap_pad * args.infer_scale))
 
@@ -401,6 +454,9 @@ def main():
     epoch = frozen["load_checkpoint_once"](
         network, args.checkpoint, expected_epoch=args.expected_epoch
     )
+    chunked_attention_modules = 0
+    if args.attention_chunk_mb:
+        chunked_attention_modules = chunk_attention(network, args.attention_chunk_mb)
     network.to(device)
     network.eval()
 
@@ -457,6 +513,8 @@ def main():
         "infer_scale": args.infer_scale,
         "infer_size": list(infer_size),
         "infer_wrap_pad": infer_wrap_pad,
+        "attention_chunk_mb": args.attention_chunk_mb,
+        "chunked_attention_modules": chunked_attention_modules,
         "prediction_classes": list(EIGHT_CLASS_NAMES if channels else config.class_names),
         "sample_count": len(samples),
         "seconds": time.time() - started,
