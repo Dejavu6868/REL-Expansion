@@ -154,6 +154,44 @@ def greedy_drop(masks, groups, count, k):
     return keep
 
 
+def read_split(manifest, split):
+    with manifest.open(newline="", encoding="utf-8") as handle:
+        rows = [row for row in csv.DictReader(handle) if row["split"] == split]
+    if not rows:
+        raise ValueError("no {} samples in manifest".format(split))
+    return rows
+
+
+def load_views(rows, directions):
+    """Pitch, roll, FOV and visible directions per view, views grouped by camera location.
+
+    Needs ``cp.import_frozen_source`` first.
+    """
+    from rel_plus.camera import gravity_in_camera, load_stanford_s2d_camera_geometry
+
+    pitches, rolls, fovs, masks, keys, centres = [], [], [], [], [], {}
+    for row in rows:
+        camera = load_stanford_s2d_camera_geometry(row["camera_metadata_path"], audit.NATIVE_SHAPE)
+        pitch, roll = audit.view_angles(camera, gravity_in_camera)
+        pitches.append(pitch)
+        rolls.append(roll)
+        fovs.append(horizontal_fov_deg(camera))
+        masks.append(visible(camera, directions))
+        key = location_key(row["camera_metadata_path"])
+        keys.append(key)
+        centres.setdefault(key, []).append(-camera.R_world_to_camera.T @ camera.t_world_to_camera)
+    order = sorted(set(keys))
+    index = {key: i for i, key in enumerate(order)}
+    groups = [[] for _ in order]
+    for row, key in enumerate(keys):
+        groups[index[key]].append(row)
+    groups = [np.asarray(rows_) for rows_ in groups]
+    centre_spread = [
+        float(np.max(np.linalg.norm(np.asarray(points) - points[0], axis=1))) for points in centres.values()
+    ]
+    return np.asarray(pitches), rolls, fovs, np.stack(masks), groups, centre_spread
+
+
 def decide(random_holes, greedy_holes):
     if random_holes < HOLE_SHARE_THRESHOLD:
         return "REDUNDANT_RANDOM_SUFFICES"
@@ -176,38 +214,11 @@ def main():
     args = parser.parse_args()
 
     cp.import_frozen_source(args.source_root)
-    from rel_plus.camera import gravity_in_camera, load_stanford_s2d_camera_geometry
-
-    with args.manifest.open(newline="", encoding="utf-8") as handle:
-        rows = [row for row in csv.DictReader(handle) if row["split"] == args.split]
-    if not rows:
-        raise ValueError("no {} samples in manifest".format(args.split))
+    rows = read_split(args.manifest, args.split)
     started = time.time()
     directions = sphere_directions(args.directions)
     bands = band_masks(directions)
-
-    pitches, rolls, fovs, masks, keys, centres = [], [], [], [], [], {}
-    for row in rows:
-        camera = load_stanford_s2d_camera_geometry(row["camera_metadata_path"], audit.NATIVE_SHAPE)
-        pitch, roll = audit.view_angles(camera, gravity_in_camera)
-        pitches.append(pitch)
-        rolls.append(roll)
-        fovs.append(horizontal_fov_deg(camera))
-        masks.append(visible(camera, directions))
-        key = location_key(row["camera_metadata_path"])
-        keys.append(key)
-        centres.setdefault(key, []).append(-camera.R_world_to_camera.T @ camera.t_world_to_camera)
-    pitches = np.asarray(pitches)
-    masks = np.stack(masks)
-    order = sorted(set(keys))
-    index = {key: i for i, key in enumerate(order)}
-    groups = [[] for _ in order]
-    for row, key in enumerate(keys):
-        groups[index[key]].append(row)
-    groups = [np.asarray(rows_) for rows_ in groups]
-    centre_spread = [
-        float(np.max(np.linalg.norm(np.asarray(points) - points[0], axis=1))) for points in centres.values()
-    ]
+    pitches, rolls, fovs, masks, groups, centre_spread = load_views(rows, directions)
 
     drop_count = int(round(args.drop_fraction * len(rows)))
     all_kept = np.ones(len(rows), dtype=bool)
@@ -254,7 +265,7 @@ def main():
         },
         "abs_roll_deg_percentiles": percentiles(np.abs(rolls)),
         "hfov_deg_percentiles": percentiles(fovs),
-        "locations": len(order),
+        "locations": len(groups),
         "views_per_location_percentiles": percentiles([len(rows_) for rows_ in groups]),
         "camera_centre_spread_m_percentiles": percentiles(centre_spread),
         "directions": args.directions,
@@ -283,7 +294,7 @@ def main():
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print(args.split, len(rows), "views,", len(order), "locations; verdict", report["rule"]["verdict"])
+    print(args.split, len(rows), "views,", len(groups), "locations; verdict", report["rule"]["verdict"])
     return 0
 
 
