@@ -119,6 +119,14 @@ python3 1002Pin2Pan/tools/audit_training_views.py \
   --output <输出目录>/training_views.json
 ```
 
+- `tools/audit_view_coverage.py`（只用 CPU，不训练）检查训练视角的冗余度，以及按位姿删掉 15% 训练图会去掉什么。按位姿文件名的 `camera_<uuid>_` 前缀把视角分到拍摄位置，报告每个位置的视角数、pitch/roll/视场分布，以及每个位置上球面各方向（`--directions` 个近似等立体角方向）被几个视角看到（按仰角带）。再比较三种删法：|pitch| 最大的先删、均匀随机（`--random-trials` 次）、贪心覆盖规则（每次删掉使最少方向降到 `--greedy-k` 个视角以下的那张）。“空洞”指某位置原来至少一个视角看得到、删后一个都看不到的方向。判定规则预先写在脚本中：随机删除的空洞占比低于 1% 判为 `REDUNDANT_RANDOM_SUFFICES`；贪心规则把空洞至少减半判为 `COVERAGE_RULE_HAS_ROOM`；否则 `COVERAGE_RULE_NO_BETTER`。这只是覆盖层面的筛查，mIoU 是否变化仍需训练。
+
+```bash
+python3 1002Pin2Pan/tools/audit_view_coverage.py \
+  --manifest /data/zhuzhaoziao/RELPlus/outputs/REL_plus_v2_1_implementation/full_manifest.csv \
+  --output <输出目录>/view_coverage.json
+```
+
 - **渲染**：裁剪先在 S2D 原生尺寸 1080×1080 上从原生 ERP 渲染。RGB 用双线性采样，再用 INTER_LINEAR 缩放到 480（与第2节相同；训练集 480 RGB 的缩放核没有记录）。z-depth 由最近 ERP 像素的射线距离换算。
 - **REL+**：深度最近邻缩放到 480，K 同步缩放（即 `load_canonical_frame` 的做法），再以裁剪的已知旋转作为重力调用冻结的 `generate_rel_plus_v2_1`。ReD 与高度按每个裁剪归一化，与训练一致。
 - **HHA**：在裁剪上运行 Depth2HHA，生成顺序、缩放核和通道顺序取自 `check_hha_cache.py` 报告。规则同第2节，`NEAR_MATCH` 同样需要 `--accept-hha-near-match`。
@@ -333,4 +341,4 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py --eight-class-predictions \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、RGB-only 基线（与 CMX 的初始权重和预训练加载一致、输出与 X 无关，以及在小网络上用 CPU 跑通训练、针孔评估和全景评估，并与 CMX 网络逐批比对训练批次）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、训练视角覆盖与子采样核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、RGB-only 基线（与 CMX 的初始权重和预训练加载一致、输出与 X 无关，以及在小网络上用 CPU 跑通训练、针孔评估和全景评估，并与 CMX 网络逐批比对训练批次）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。
