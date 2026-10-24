@@ -52,6 +52,17 @@ HHA 臂：把 `--config` 换成 `0927调参结果/configs/hha.json`，并加上 
 
 加 `--eight-class-predictions` 时，argmax 只在 SPan8 的 8 类（ceiling、chair、door、floor、sofa、table、wall、window）中取，网络和权重不变，`metrics.json` 的 `prediction_classes` 记录所用类别。混淆矩阵仍为 13×13；8 类分数需忽略其余 5 类的真值行（与 Trans4PASS+ `stanford2d3d_pan8.py` 一致），此时 `metrics.json` 中的 13 类指标不再有意义。
 
+加 `--infer-scale <s>` 时，RGB 和 X 输入按 s 倍缩放（环形填充同比例缩放）后前向，logits 再双线性缩回 `--height`×`--width` 后取 argmax；标签和计分像素与默认运行完全相同，`s=1`（默认）与不加该参数逐位一致。用于区分全景掉点中的尺度因素与投影因素：训练图为 480 px、视场中位数 62.48°（中心约 6.9 px/°，平均约 7.7 px/°），而 2048 宽全景为 5.7 px/°，故 s≈1.25 对应针孔中心，s≈1.375 对应针孔平均。`metrics.json` 记录 `infer_scale`、`infer_size` 和 `infer_wrap_pad`。注意：REL+ 的法向窗口按像素计，放大后覆盖的角度变小；HHA 仍在原尺寸生成后缩放。非 1 倍的分数不与已发表的 2048×1024 单尺度结果放在同一行。
+
+```bash
+for s in 1.0 1.25 1.375; do
+  python3 1002Pin2Pan/tools/eval_pano_transfer.py <同上参数> \
+    --eight-class-predictions --infer-scale $s --output <输出目录>/hha_pano_8pred_x$s
+done
+```
+
+加 `--attention-chunk-mb <MiB>` 时，编码器的每个 MiT 注意力按查询行分块计算分数，每块分数矩阵不超过该大小；softmax 按查询行进行，所以结果与冻结前向一致（只有浮点舍入差异）。用于原生分辨率整景输入：`--infer-scale 2.0` 时输入为 2048×4096（加环形填充后 2048×4608），第 1 阶段一个注意力矩阵约 21.7 GB（float32），不分块放不进 24 GB 显卡。默认 0，即冻结前向；`metrics.json` 记录 `attention_chunk_mb` 和 `chunked_attention_modules`（CMX 双流 MiT-B2 为 32）。
+
 ### 针孔评估 `tools/eval_pinhole.py`
 
 冻结启动器（`evaluation/run_evaluation.py`）只接受 2026-09-20 的两个第 200 轮检查点。本工具对任意配置和检查点（其他种子、REL+ 3.x、`train_pin2pan.py` 的适配检查点）运行同一个冻结全测试集评估器 `tools/eval_rel_plus_v2_3_full.py`（HHA 臂套用冻结的 `evaluation/input_adapter.py`），测试集仍是区域 5 的 17,593 张针孔图。不加 `--eight-class-predictions` 时计算与冻结评估相同，同一检查点的混淆矩阵应与冻结结果一致；加上后 argmax 只在 SPan8 的 8 类中取，与全景评估的同名参数相同。

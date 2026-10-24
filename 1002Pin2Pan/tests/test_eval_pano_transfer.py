@@ -46,6 +46,109 @@ def test_wrap_padding_is_cropped_back():
     assert torch.equal(padded, plain)
 
 
+def test_infer_scale_logits_return_to_the_label_size():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb[:, :2] + modal_x[:, :2]
+
+    rgb = torch.randn(1, 3, 10, 40)
+    modal_x = torch.randn(1, 3, 10, 40)
+    net = PixelwiseNet()
+    same = ev.predict_with_wrap(net, rgb, modal_x, 4, "cpu", output_size=(10, 40))
+    assert torch.equal(same, ev.predict_with_wrap(net, rgb, modal_x, 4, "cpu"))
+    resized = ev.predict_with_wrap(net, rgb, modal_x, 5, "cpu", output_size=(8, 32))
+    assert resized.shape == (1, 2, 8, 32)
+
+
+def test_infer_scale_resizes_inputs_but_not_labels(tmp_path):
+    import cv2
+    import cross_projection as cp
+    from test_cross_projection_synthetic import render_erp_raw_depth
+
+    sample = {kind: tmp_path / (kind + ".png") for kind in ("rgb", "depth", "semantic")}
+    assert cv2.imwrite(str(sample["rgb"]), np.full((64, 128, 3), 100, dtype=np.uint8))
+    assert cv2.imwrite(str(sample["depth"]), render_erp_raw_depth(64, 128))
+    assert cv2.imwrite(str(sample["semantic"]), np.zeros((64, 128, 3), dtype=np.uint8))
+    frozen = cp.import_frozen_source(cp.DEFAULT_SOURCE_ROOT)
+    frozen.update(open_image=cv2.imread, rgb_flag=cv2.IMREAD_COLOR)
+    recipe = {"variant": "native_then_resize_linear", "channel_order": [2, 1, 0]}
+    rgb, modal_x, label = ev.load_sample(
+        sample, (40, 80), np.array([0], dtype=np.uint8), frozen,
+        "hha_frozen_cache", recipe, label_size=(32, 64),
+    )
+    assert rgb.shape[:2] == modal_x.shape[:2] == (40, 80)
+    assert label.shape == (32, 64)
+
+
+def frozen_attention_class():
+    ev.import_frozen(ev.DEFAULT_SOURCE_ROOT)
+    from models.encoders.dual_segformer import Attention
+
+    return Attention
+
+
+@pytest.mark.parametrize("sr_ratio", [1, 2])
+def test_chunked_attention_matches_the_frozen_forward(sr_ratio):
+    torch = pytest.importorskip("torch")
+    attention_class = frozen_attention_class()
+    torch.manual_seed(0)
+    module = attention_class(dim=16, num_heads=2, sr_ratio=sr_ratio).eval()
+    x = torch.randn(1, 6 * 10, 16)
+    keys = 60 // sr_ratio ** 2
+    with torch.no_grad():
+        frozen = module(x, 6, 10)
+        chunked = ev._chunked_attention_forward(module, 7 * 2 * keys * 4, x, 6, 10)  # 7 queries a chunk
+    assert torch.allclose(chunked, frozen, atol=1e-6)
+
+
+def test_chunk_attention_covers_both_streams_and_keeps_the_logits(tmp_path):
+    torch = pytest.importorskip("torch")
+    frozen = ev.import_frozen(ev.DEFAULT_SOURCE_ROOT)
+    config = json.loads((ev.REPO_ROOT / "0927调参结果" / "configs" / "relplus.json").read_text(encoding="utf-8"))
+    config.update(backbone="mit_b0", decoder_embed_dim=32)
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    torch.manual_seed(0)
+    network = frozen["EncoderDecoder"](
+        cfg=ev.load_config(config_path), criterion=None, norm_layer=torch.nn.BatchNorm2d
+    ).eval()
+    rgb, modal_x = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    with torch.no_grad():
+        plain = network(rgb, modal_x)
+        assert ev.chunk_attention(network, 1 / 1024) == 2 * 8  # mit_b0 depths 2, 2, 2, 2, two streams
+        chunked = network(rgb, modal_x)
+    assert torch.allclose(chunked, plain, atol=1e-5)
+
+
+@pytest.mark.parametrize("scale", ["0", "-1", "nan"])
+def test_bad_infer_scale_is_rejected_before_loading(monkeypatch, tmp_path, scale):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+        "--infer-scale", scale,
+    ])
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
+def test_negative_attention_chunk_is_rejected_before_loading(monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+        "--attention-chunk-mb", "-1",
+    ])
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def test_eight_class_predictions_only_pick_span8_channels():
     torch = pytest.importorskip("torch")
 
