@@ -14,6 +14,9 @@ normalisation are the frozen training ones; only the input images change.
   resized with nearest neighbour; ``<UNK>`` becomes ignore 255.
 * Inference is one whole-panorama pass with circular padding on the left and
   right edges, so the 180-degree seam sees context from both sides.
+* ``--infer-scale`` runs that pass on RGB and X resized by the factor (wrap
+  padding scaled with it) and resizes the logits back to the evaluation size
+  before the argmax, so labels and scored pixels stay those of the default run.
 
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
@@ -158,7 +161,8 @@ def write_elevation_bands(output, band_confusion, metrics_from_confusion, class_
     return summary
 
 
-def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None):
+def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None, label_size=None):
+    """RGB and X at ``size``; labels at ``label_size`` (default ``size``)."""
     height, width = size
     rgb = frozen["open_image"](str(sample["rgb"]), frozen["rgb_flag"])
     if rgb.ndim != 3 or rgb.shape[2] != 3:
@@ -195,12 +199,16 @@ def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None):
     semantic = cv2.imread(str(sample["semantic"]), cv2.IMREAD_COLOR)
     if semantic is None:
         raise FileNotFoundError(sample["semantic"])
-    semantic = cv2.resize(semantic, (width, height), interpolation=cv2.INTER_NEAREST)
+    label_height, label_width = size if label_size is None else label_size
+    semantic = cv2.resize(semantic, (label_width, label_height), interpolation=cv2.INTER_NEAREST)
     return rgb, modal_x, decode_semantic(semantic, lookup)
 
 
-def predict_with_wrap(network, rgb, modal_x, wrap_pad, device):
-    """Whole-image logits with circular padding along the panorama width."""
+def predict_with_wrap(network, rgb, modal_x, wrap_pad, device, output_size=None):
+    """Whole-image logits with circular padding along the panorama width.
+
+    With ``output_size`` the cropped logits are resized (bilinear) to it.
+    """
     import torch
     import torch.nn.functional as F
 
@@ -213,6 +221,8 @@ def predict_with_wrap(network, rgb, modal_x, wrap_pad, device):
         logits = network(rgb, modal_x)
     if wrap_pad > 0:
         logits = logits[:, :, :, wrap_pad:-wrap_pad]
+    if output_size is not None and tuple(logits.shape[2:]) != tuple(output_size):
+        logits = F.interpolate(logits, size=tuple(output_size), mode="bilinear", align_corners=False)
     if not bool(torch.isfinite(logits).all()):
         raise FloatingPointError("non-finite logits")
     return logits
@@ -332,6 +342,11 @@ def main():
     parser.add_argument("--height", type=int, default=1024)
     parser.add_argument("--width", type=int, default=2048)
     parser.add_argument("--wrap-pad", type=int, default=128)
+    parser.add_argument(
+        "--infer-scale", type=float, default=1.0,
+        help="run the network on the panorama resized by this factor; logits are resized "
+        "back to --height x --width, where labels stay",
+    )
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--hha-cache-report", type=Path, default=None)
@@ -356,6 +371,10 @@ def main():
         parser.error("--height and --width must be positive")
     if not 0 <= args.wrap_pad <= args.width:
         parser.error("--wrap-pad must be between zero and --width")
+    if not np.isfinite(args.infer_scale) or args.infer_scale <= 0:
+        parser.error("--infer-scale must be finite and positive")
+    infer_size = (int(round(args.height * args.infer_scale)), int(round(args.width * args.infer_scale)))
+    infer_wrap_pad = int(round(args.wrap_pad * args.infer_scale))
 
     import torch
     import torch.nn as nn
@@ -390,15 +409,16 @@ def main():
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
-            sample, (args.height, args.width), lookup, frozen, None if rgb_only else config.x_mode,
-            hha_recipe,
+            sample, infer_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
+            label_size=(args.height, args.width),
         )
         logits = predict_with_wrap(
             network,
             frozen["normalized_bchw"](rgb, config.norm_mean, config.norm_std),
             frozen["normalized_bchw"](modal_x, config.norm_mean, config.norm_std),
-            args.wrap_pad,
+            infer_wrap_pad,
             device,
+            output_size=(args.height, args.width),
         )
         prediction = predict_classes(logits, channels)[0].cpu().numpy().astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
@@ -434,6 +454,9 @@ def main():
         "areas": args.areas,
         "eval_size": [args.height, args.width],
         "wrap_pad": args.wrap_pad,
+        "infer_scale": args.infer_scale,
+        "infer_size": list(infer_size),
+        "infer_wrap_pad": infer_wrap_pad,
         "prediction_classes": list(EIGHT_CLASS_NAMES if channels else config.class_names),
         "sample_count": len(samples),
         "seconds": time.time() - started,
