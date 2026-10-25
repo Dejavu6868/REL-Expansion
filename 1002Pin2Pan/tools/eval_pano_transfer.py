@@ -21,6 +21,12 @@ normalisation are the frozen training ones; only the input images change.
   so a large input (such as the native 2048x4096 panorama, ``--infer-scale 2``)
   never holds a whole query-by-key score matrix. Softmax is taken per query, so
   the result is the frozen forward's up to float rounding.
+* ``--polar-strips MARGIN`` replaces the whole pass by three strips: the bands
+  between +60 and -60 degrees at the evaluation size, and the two polar bands
+  at half size from the panorama resized by 0.5 (as ``--infer-scale 0.5``).
+  Each strip also gets MARGIN rows of context past +-60 degrees (at the
+  evaluation size, rounded up to a multiple of 32 rows at the strip's scale),
+  which are dropped before scoring.
 
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
@@ -66,6 +72,10 @@ SUPPORTED_X_MODES = ("rel_plus_v2_1", "hha_frozen_cache")
 ELEVATION_BAND_EDGES_DEG = (90, 60, 25, 0, -25, -60, -90)
 # SPan8 benchmark classes (Trans4PASS+ stanford2d3d_pan8.py maps the other 5 to ignore).
 EIGHT_CLASS_NAMES = ("ceiling", "chair", "door", "floor", "sofa", "table", "wall", "window")
+# --polar-strips: the bands beyond +-60 deg run at this scale; strip heights are multiples of the MiT stride.
+POLAR_STRIP_ELEVATION_DEG = 60
+POLAR_STRIP_SCALE = 0.5
+STRIP_ROW_MULTIPLE = 32
 
 
 def label_lookup(semantic_labels_path):
@@ -233,6 +243,71 @@ def predict_with_wrap(network, rgb, modal_x, wrap_pad, device, output_size=None)
     return logits
 
 
+def polar_strip_rows(height, margin, scale=POLAR_STRIP_SCALE):
+    """Row windows of the three-strip pass; the core split is the band rule of ``elevation_band_confusions``.
+
+    ``top_end`` and ``bottom_start`` (evaluation rows) bound the middle core, ``middle`` is the
+    middle strip in evaluation rows, ``top`` and ``bottom`` the polar strips in scaled rows.
+    """
+    elevation = 90.0 - np.arange(height) * 180.0 / height
+    top_end = int((elevation > POLAR_STRIP_ELEVATION_DEG).sum())
+    bottom_start = int(np.argmax(elevation <= -POLAR_STRIP_ELEVATION_DEG))
+    scaled_height = height * scale
+    if scaled_height != int(scaled_height):
+        raise ValueError("--height times the polar scale must be a whole number of rows")
+    scaled_height = int(scaled_height)
+
+    def rounded(rows, limit):
+        return min(limit, STRIP_ROW_MULTIPLE * int(np.ceil(rows / STRIP_ROW_MULTIPLE)))
+
+    middle_need = bottom_start - top_end + 2 * margin
+    middle_rows = rounded(middle_need, height)
+    middle_start = top_end - margin - (middle_rows - middle_need) // 2
+    middle_start = max(0, min(middle_start, height - middle_rows))
+    top_rows = rounded(np.ceil((top_end + margin) * scale), scaled_height)
+    bottom_rows = rounded(np.ceil((height - bottom_start + margin) * scale), scaled_height)
+    for rows in (top_rows, bottom_rows):
+        if rows / scale != int(rows / scale):
+            raise ValueError("a polar strip does not map to whole evaluation rows")
+    return {
+        "top_end": top_end,
+        "bottom_start": bottom_start,
+        "middle": [middle_start, middle_start + middle_rows],
+        "top": [0, top_rows],
+        "bottom": [scaled_height - bottom_rows, scaled_height],
+    }
+
+
+def predict_polar_strips(network, full, polar, rows, wrap_pad, polar_wrap_pad, device):
+    """Evaluation-size logits from the middle strip of ``full`` and the polar strips of ``polar``.
+
+    ``full`` and ``polar`` are (rgb, modal_x) tensors at the evaluation size and at the polar
+    scale. Each strip keeps only its own band's rows; the rest of it is context.
+    """
+    import torch
+
+    height, width = full[0].shape[2:]
+    scale = polar[0].shape[2] / height
+    middle_start, middle_end = rows["middle"]
+    middle = predict_with_wrap(
+        network, full[0][:, :, middle_start:middle_end], full[1][:, :, middle_start:middle_end],
+        wrap_pad, device,
+    )
+    top, bottom = (
+        predict_with_wrap(
+            network, polar[0][:, :, start:end], polar[1][:, :, start:end], polar_wrap_pad, device,
+            output_size=(int(round((end - start) / scale)), width),
+        )
+        for start, end in (rows["top"], rows["bottom"])
+    )
+    bottom_offset = height - bottom.shape[2]
+    return torch.cat([
+        top[:, :, :rows["top_end"]],
+        middle[:, :, rows["top_end"] - middle_start:rows["bottom_start"] - middle_start],
+        bottom[:, :, rows["bottom_start"] - bottom_offset:],
+    ], dim=2)
+
+
 def _chunked_attention_forward(module, budget_bytes, x, H, W):
     """The frozen MiT ``Attention.forward`` with the scores computed a chunk of queries at a time."""
     import torch
@@ -398,6 +473,11 @@ def main():
         help="compute MiT attention scores in query chunks of at most this many MiB "
         "(same result; for inputs whose score matrix does not fit); 0 keeps the frozen forward",
     )
+    parser.add_argument(
+        "--polar-strips", type=int, default=None, metavar="MARGIN",
+        help="three passes instead of one: +60..-60 deg at the evaluation size, the two polar "
+        "bands at x{} size, each with MARGIN context rows past +-60 deg".format(POLAR_STRIP_SCALE),
+    )
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--hha-cache-report", type=Path, default=None)
@@ -428,6 +508,18 @@ def main():
         parser.error("--attention-chunk-mb must be zero or positive")
     infer_size = (int(round(args.height * args.infer_scale)), int(round(args.width * args.infer_scale)))
     infer_wrap_pad = int(round(args.wrap_pad * args.infer_scale))
+    strip_rows = None
+    if args.polar_strips is not None:
+        if args.polar_strips < 0:
+            parser.error("--polar-strips must be zero or positive")
+        if args.infer_scale != 1.0:
+            parser.error("--polar-strips runs the middle strip at the evaluation size; keep --infer-scale 1")
+        try:
+            strip_rows = polar_strip_rows(args.height, args.polar_strips)
+        except ValueError as error:
+            parser.error(str(error))
+        polar_size = (int(args.height * POLAR_STRIP_SCALE), int(round(args.width * POLAR_STRIP_SCALE)))
+        polar_wrap_pad = int(round(args.wrap_pad * POLAR_STRIP_SCALE))
 
     import torch
     import torch.nn as nn
@@ -468,14 +560,24 @@ def main():
             sample, infer_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
             label_size=(args.height, args.width),
         )
-        logits = predict_with_wrap(
-            network,
-            frozen["normalized_bchw"](rgb, config.norm_mean, config.norm_std),
-            frozen["normalized_bchw"](modal_x, config.norm_mean, config.norm_std),
-            infer_wrap_pad,
-            device,
-            output_size=(args.height, args.width),
-        )
+        inputs = [
+            frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
+        ]
+        if strip_rows is None:
+            logits = predict_with_wrap(
+                network, *inputs, infer_wrap_pad, device, output_size=(args.height, args.width),
+            )
+        else:
+            polar_rgb, polar_x, _ = load_sample(
+                sample, polar_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
+            )
+            polar_inputs = [
+                frozen["normalized_bchw"](image, config.norm_mean, config.norm_std)
+                for image in (polar_rgb, polar_x)
+            ]
+            logits = predict_polar_strips(
+                network, inputs, polar_inputs, strip_rows, args.wrap_pad, polar_wrap_pad, device
+            )
         prediction = predict_classes(logits, channels)[0].cpu().numpy().astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
         confusion += hist.astype(np.int64)
@@ -515,6 +617,13 @@ def main():
         "infer_wrap_pad": infer_wrap_pad,
         "attention_chunk_mb": args.attention_chunk_mb,
         "chunked_attention_modules": chunked_attention_modules,
+        "polar_strips": None if strip_rows is None else {
+            "margin_rows": args.polar_strips,
+            "polar_scale": POLAR_STRIP_SCALE,
+            "polar_infer_size": list(polar_size),
+            "polar_wrap_pad": polar_wrap_pad,
+            "rows": strip_rows,
+        },
         "prediction_classes": list(EIGHT_CLASS_NAMES if channels else config.class_names),
         "sample_count": len(samples),
         "seconds": time.time() - started,

@@ -82,6 +82,55 @@ def test_infer_scale_resizes_inputs_but_not_labels(tmp_path):
     assert label.shape == (32, 64)
 
 
+@pytest.mark.parametrize("margin, middle, polar", [(0, 704, 96), (32, 768, 128), (64, 832, 128)])
+def test_polar_strip_rows_follow_the_band_rule(margin, middle, polar):
+    rows = ev.polar_strip_rows(1024, margin)
+    elevation = 90.0 - np.arange(1024) * 180.0 / 1024
+    assert rows["top_end"] == ((elevation <= 90) & (elevation > 60)).sum() == 171
+    assert rows["bottom_start"] == 1024 - ((elevation <= -60) & (elevation > -90)).sum() == 854
+    start, end = rows["middle"]
+    assert end - start == middle  # the sizes measured in results/half_res_poles_2026-10-25/strip_flops.py
+    assert start <= 171 - margin and end >= 854 + margin
+    assert rows["top"] == [0, polar] and rows["bottom"] == [512 - polar, 512]
+    assert polar / 0.5 >= 171 + margin and polar / 0.5 >= 170 + margin
+
+
+def test_polar_strips_reproduce_the_two_whole_passes_for_a_pixelwise_net():
+    torch = pytest.importorskip("torch")
+    import torch.nn.functional as F
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb[:, :2] + modal_x[:, :2]
+
+    torch.manual_seed(0)
+    full = [torch.randn(1, 3, 192, 384) for _ in range(2)]
+    polar = [F.interpolate(image, size=(96, 192), mode="bilinear", align_corners=False) for image in full]
+    rows = ev.polar_strip_rows(192, 8)
+    net = PixelwiseNet()
+    strips = ev.predict_polar_strips(net, full, polar, rows, 16, 8, "cpu")
+    whole = ev.predict_with_wrap(net, *full, 16, "cpu")
+    half = ev.predict_with_wrap(net, *polar, 8, "cpu", output_size=(192, 384))
+    top_end, bottom_start = rows["top_end"], rows["bottom_start"]
+    assert strips.shape == whole.shape
+    assert torch.allclose(strips[:, :, :top_end], half[:, :, :top_end], atol=1e-6)
+    assert torch.equal(strips[:, :, top_end:bottom_start], whole[:, :, top_end:bottom_start])
+    assert torch.allclose(strips[:, :, bottom_start:], half[:, :, bottom_start:], atol=1e-6)
+
+
+@pytest.mark.parametrize("extra", [["--polar-strips", "-1"], ["--polar-strips", "32", "--infer-scale", "0.5"]])
+def test_bad_polar_strips_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def frozen_attention_class():
     ev.import_frozen(ev.DEFAULT_SOURCE_ROOT)
     from models.encoders.dual_segformer import Attention
