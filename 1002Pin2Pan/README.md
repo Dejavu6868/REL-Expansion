@@ -132,7 +132,7 @@ python3 1002Pin2Pan/tools/audit_view_coverage.py \
 - **HHA**：在裁剪上运行 Depth2HHA，生成顺序、缩放核和通道顺序取自 `check_hha_cache.py` 报告。规则同第2节，`NEAR_MATCH` 同样需要 `--accept-hha-near-match`。
 - **拼接**：每个 ERP 像素取所有覆盖它的裁剪的 softmax 之和，再取 argmax。
 
-参数与第2节相同（没有 `--wrap-pad`），另有 `--workers N`，用 N 个 CPU 进程按全景并行生成裁剪输入，每个进程依次生成一张全景的 22 个裁剪。HHA 臂的 Depth2HHA 在原开发环境中约 15 s/个 1080 裁剪，服务器耗时需实测；可加 `--workers 32` 并设 `OMP_NUM_THREADS=1`：
+参数与第2节相同（没有 `--wrap-pad`），另有 `--workers N`，用 N 个 CPU 进程按全景并行生成裁剪输入，每个进程依次生成一张全景的 22 个裁剪。HHA 臂的 Depth2HHA 在原开发环境中约 15 s/个 1080 裁剪，服务器耗时需实测；可加 `--workers 16` 并设 `OMP_NUM_THREADS=1`：
 
 ```bash
 OMP_NUM_THREADS=1 python3 1002Pin2Pan/tools/eval_pano_crops.py \
@@ -141,7 +141,7 @@ OMP_NUM_THREADS=1 python3 1002Pin2Pan/tools/eval_pano_crops.py \
   --config 0927调参结果/configs/hha.json \
   --checkpoint <HHA epoch-200.pth> \
   --hha-cache-report <hha_cache_check.json> --accept-hha-near-match \
-  --workers 32 \
+  --workers 16 \
   --output <输出目录>/hha_crop_eval
 ```
 
@@ -163,7 +163,7 @@ REL+ 3.0（变体名 `v3_0`）对所有表面混入高度。冻结流程只接�
 python3 1002Pin2Pan/tools/relplus_variant_cache.py generate \
   --manifest <manifest_path> \
   --output-root /data/zhuzhaoziao/RELPlus/outputs/CMX_RELPlus_v3_0/formal_cache \
-  --workers 32 --authorize-full-cache
+  --workers 16 --authorize-full-cache
 ```
 
 **2. 审计缓存。** `audit` 原样调用冻结的 `tools/audit_full_relplus_cache.py`，变体从缓存标记读取，70 个样本按该变体逐字节重新生成并比对：
@@ -210,7 +210,7 @@ python3 1002Pin2Pan/tools/check_egvia_rules.py \
   --config 0927调参结果/configs/relplus.json \
   --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
   --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
-  --workers 32 --output <输出目录>/egvia_rules
+  --workers 16 --output <输出目录>/egvia_rules
 ```
 
 样本与上面的地板/桌面检查相同：默认 3000 帧针孔训练图，以及训练区域（1、2、3、4、6，不含区域 5）的全部全景。`egvia_rules.json` 按子集给出：各规则下关键类别对的 EGVIA 直方图重叠（两类归一化直方图逐 bin 取最小值再求和，1 为相同，0 为完全分开）及全部类别对的平均重叠；各类别距 45°/135° 不到 5° 的像素比例（`v2_1` 与 `paper_eq4` 在这里跳变）；各类别相对相机高度的 p5/中位数/p95（用训练集确定米制范围）。完整重叠矩阵在 `egvia_overlap.csv`，直方图在 `egvia_histograms.csv`。EGVIA 重叠只是代理指标：RGB、LOA、ReD 仍能区分 EGVIA 分不开的类别。
@@ -256,7 +256,7 @@ OMP_NUM_THREADS=1 nice -n 19 python3 1002Pin2Pan/tools/check_input_defects.py \
 python3 1002Pin2Pan/tools/build_target_cache.py \
   --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
   --semantic-labels /data/zhuzhaoziao/cmx/raw/reference_repos/2D-3D-Semantics/assets/semantic_labels.json \
-  --config 0927调参结果/configs/relplus.json --workers 32 \
+  --config 0927调参结果/configs/relplus.json --workers 16 \
   --output <输出目录>/relplus_target
 ```
 
@@ -334,6 +334,40 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py --eight-class-predictions \
 - **全景 REL 的重力来自 `getGDir` 估计；透视 REL+ 使用位姿真值重力。** 一致性报告中给出了每张全景的重力估计角，可用来判断这一差异的影响。
 - **逐图归一化造成的编码差异仍保留在评估输入中。** 如果第1节真实数据也显示 ReD/EGVIA 字节差异很大，应考虑在 Pin2Pan 研究中增加固定物理单位归一化的 REL+ 臂。
 - **REL+ 3.0 的高度仍按每张图 1–99 分位数归一化。** 几乎全是地板的切片会把很小的高度起伏拉伸到整个范围；这对切片评估的影响大于整图评估。
+
+## 9. 极区视角裁剪 `tools/make_polar_crops.py`、`tools/check_polar_crops.py`
+
+训练针孔图的 pitch 只在 ±24° 内，仰角超过 ±60° 的方向从未被看到。这两个工具从**训练区域**（1、2、3、4、6）的全景渲染大俯仰角的针孔裁剪，并在 CPU 上做训练前检查。区域 5 会被拒绝。用了这些裁剪，源域就包含了训练区域有标注的全景，不再是只用针孔的迁移，写作时要说明。都只用 CPU。
+
+**生成。** 每个裁剪是一张正方形的透视视图：pitch 在 ±[55°, 89.5°] 内上下交替，yaw 均匀，水平 FOV 在 45–75° 内均匀（训练视角的范围）。`--total-crops`（默认 7,935，即贪心子集去掉的 15%）平均分到各全景。上限 89.5° 是因为冻结生成器拒绝正好朝下的相机（重力与参考方向夹角 ≥ 179.999°，`rel_plus/geometry.py`）。输出与 `Stanford2D3D_480` 布局相同：`RGB`、`Label`（480×480，存储标签 0..13，0 为未知）、`Depth16`（1080×1080 z-depth，无深度处 65535）、`Pose`（1080 的 K、世界到相机的 3×4 RT、相机位于原点）。世界坐标系取全景自身的坐标系，即假设全景是水平的。样本 ID 为 `<area>/camera_<uuid>_<room>_frame_<1000+k>`，冻结清单格式和按位置分组都仍适用；`--manifest` 可检查与正式清单不重名。`manifest.csv` 可直接交给第5节的缓存工具生成 3.1 缓存：
+
+```bash
+python3 1002Pin2Pan/tools/make_polar_crops.py \
+  --stanford-root /data/zhuzhaoziao/datasets/Stanford2D3D \
+  --semantic-labels <2D-3D-Semantics>/assets/semantic_labels.json \
+  --manifest <full_manifest.csv> --output-root <输出目录>/polar_crops --workers 16
+python3 1002Pin2Pan/tools/relplus_variant_cache.py generate --variant v3_1 \
+  --manifest <输出目录>/polar_crops/manifest.csv \
+  --output-root <输出目录>/polar_crops_cache --workers 16 --authorize-full-cache
+```
+
+**检查**（`check_polar_crops.py`，规则写在工具里，运行前定好）：
+
+- `geometry`：在随机训练区域全景上运行第1节的一致性检查，分别用 Phase 0 的设置（pitch −20/0/20，FOV 60，480 px，全景 1024×2048）和极区 pitch（−80/−60/60/80），保留每条失败信息（高度、半径、EGVIA 角或 LOA 哪一项超过 2 cm / 2°）。Phase 0 的报告只记了 PASS/FAIL，所以 51/60 失败的原因没有留下来。
+- `reproduce`：对随机训练针孔帧，用同一相机位置的全景估计数据集世界坐标与全景坐标之间的旋转（先 0.5° 步长扫 yaw，再用 Nelder-Mead 细化 yaw 和两个倾角，按距离匹配；也试一次 x 轴镜像），用这个旋转从全景渲染该帧自己的视角，再与数据集帧比较。单帧通过：深度相对误差中位数 ≤ 1%，且两边都有标注的像素中标签一致 ≥ 95%；整体通过：≥ 90% 的帧通过。全景相对数据集重力的倾角 p95 ≤ 1° 时，水平假设成立（`level_assumption: OK`），否则需要先对齐。RGB 差异只报告（数据集帧不是从全景渲染的，曝光可能不同），并输出几组并排图（数据集帧、渲染帧、标签一致图）。
+- `sheet`：从生成的裁剪中取若干张，输出 RGB 与标签叠加的拼图，供目视检查。
+
+```bash
+python3 1002Pin2Pan/tools/check_polar_crops.py geometry --stanford-root <Stanford2D3D> \
+  --output <输出目录>/polar_checks/geometry.json --count 10
+python3 1002Pin2Pan/tools/check_polar_crops.py reproduce --stanford-root <Stanford2D3D> \
+  --semantic-labels <semantic_labels.json> --manifest <full_manifest.csv> \
+  --output <输出目录>/polar_checks/reproduce.json --count 100
+python3 1002Pin2Pan/tools/check_polar_crops.py sheet --crop-root <输出目录>/polar_crops \
+  --output <输出目录>/polar_checks/sheet.png
+```
+
+合成房间测试（`tests/test_polar_crops.py`）覆盖：区域 5 与正朝下 pitch 被拒绝、裁剪计划上下均衡且可复现、输出布局、裁剪的标签/深度/RGB 与场景一致、冻结加载器读入正朝下附近的裁剪后地板在相机下 140 cm、冻结缓存工具把裁剪编码成 3.1、`reproduce` 找回 0.5° 的全景倾角并能识别标签错误、`geometry` 记录失败项。还没有在服务器真实数据上运行。训练（把裁剪加入训练列表）不在这一步，等检查结果和你的决定。
 
 ## 测试
 
