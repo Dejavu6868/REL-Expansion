@@ -65,6 +65,8 @@ done
 
 加 `--polar-strips <MARGIN>` 时，一次整景前向改为三次条带前向：仰角 +60° 到 −60° 的中间条带用评估尺寸（1024×2048），上下两个极区条带（|仰角| > 60°）取自缩放 0.5 倍的全景（与 `--infer-scale 0.5` 的输入相同，环形填充 64）。每个条带在 ±60° 外多带 MARGIN 行（按评估尺寸计，并在各自尺度上向上取整到 32 行的倍数）作为上下文，这些行计分前丢弃；核心行的划分与 `elevation_band_confusion.npy` 的分带规则一致。须保持 `--infer-scale 1`。`metrics.json` 的 `polar_strips` 记录边距、极区尺寸和各条带的行范围。实测网络计算量（`results/half_res_poles_2026-10-25/strip_flops.py`）：MARGIN 32 为整景 1147 GMACs 的 71%，MARGIN 64 为 79%。
 
+加 `--erp-tiles M N` 时，一次整景前向改为 M×N 个相互重叠的 ERP 窗口（不重投影），每个窗口 `--erp-tile-size` 像素（默认 384×384，在 1024×2048 上为 67.5°×67.5°）。RGB 和 X 都先在整幅全景上生成（X 的归一化仍是整景范围），再按同一窗口切出，所以 HHA 臂不受倾斜切片重力估计的影响。行窗口恰好铺满高度（3 行时行步长 320，重叠 64 像素），列步长为 W/N（8 列时 256，重叠 128 像素），列索引按宽度取模，跨 180° 接缝的窗口直接环绕，不再加 `--wrap-pad`。每个像素取覆盖它的所有窗口的 softmax 平均后取 argmax；加 `--eight-class-predictions` 时每个窗口的 softmax 只在 8 类上计算。须保持 `--infer-scale 1`，不能与 `--polar-strips` 同用。`metrics.json` 的 `erp_tiles` 记录网格、窗口尺寸和每个窗口的左上角。3×8、384×384 实测为 24 × 34.7 = 834 GMACs（整景 1147 的 73%）。
+
 ### 针孔评估 `tools/eval_pinhole.py`
 
 冻结启动器（`evaluation/run_evaluation.py`）只接受 2026-09-20 的两个第 200 轮检查点。本工具对任意配置和检查点（其他种子、REL+ 3.x、`train_pin2pan.py` 的适配检查点）运行同一个冻结全测试集评估器 `tools/eval_rel_plus_v2_3_full.py`（HHA 臂套用冻结的 `evaluation/input_adapter.py`），测试集仍是区域 5 的 17,593 张针孔图。不加 `--eight-class-predictions` 时计算与冻结评估相同，同一检查点的混淆矩阵应与冻结结果一致；加上后 argmax 只在 SPan8 的 8 类中取，与全景评估的同名参数相同。
