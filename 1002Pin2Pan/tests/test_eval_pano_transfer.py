@@ -131,6 +131,56 @@ def test_bad_polar_strips_are_rejected_before_loading(monkeypatch, tmp_path, ext
     assert not (tmp_path / "output").exists()
 
 
+def test_erp_tile_windows_cover_the_panorama_and_reject_bad_grids():
+    windows = ev.erp_tile_windows(1024, 2048, 3, 8, 384, 384)
+    assert len(windows) == 24
+    assert sorted({top for top, _ in windows}) == [0, 320, 640]
+    assert sorted({left for _, left in windows}) == list(range(0, 2048, 256))
+    count = np.zeros((1024, 2048), dtype=int)
+    for top, left in windows:
+        count[top:top + 384, np.arange(left, left + 384) % 2048] += 1
+    assert count.min() >= 1
+    for grid in [(3, 7, 384, 384), (3, 8, 300, 384), (3, 8, 384, 200), (1, 8, 384, 384), (0, 8, 384, 384)]:
+        with pytest.raises(ValueError):
+            ev.erp_tile_windows(1024, 2048, *grid)
+
+
+def test_erp_tiles_reproduce_the_whole_pass_for_a_pixelwise_net():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb + modal_x
+
+    torch.manual_seed(0)
+    rgb, modal_x = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    windows = ev.erp_tile_windows(64, 128, 3, 8, 32, 32)  # the last column wraps across the seam
+    whole = ev.predict_with_wrap(PixelwiseNet(), rgb, modal_x, 0, "cpu")
+    for channels in (None, [0, 2]):
+        tiled = ev.predict_erp_tiles(PixelwiseNet(), rgb, modal_x, windows, (32, 32), "cpu", channels)
+        assert torch.allclose(tiled, ev.class_probabilities(whole, channels), atol=1e-6)
+        assert torch.equal(ev.predict_classes(tiled, channels), ev.predict_classes(whole, channels))
+    assert torch.allclose(ev.class_probabilities(whole, [0, 2]).sum(dim=1), torch.ones(1, 64, 128))
+    assert (ev.class_probabilities(whole, [0, 2])[:, 1] == 0).all()
+
+
+@pytest.mark.parametrize("extra", [
+    ["--erp-tiles", "3", "7"],
+    ["--erp-tiles", "3", "8", "--polar-strips", "32"],
+    ["--erp-tiles", "3", "8", "--infer-scale", "0.5"],
+])
+def test_bad_erp_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def frozen_attention_class():
     ev.import_frozen(ev.DEFAULT_SOURCE_ROOT)
     from models.encoders.dual_segformer import Attention
