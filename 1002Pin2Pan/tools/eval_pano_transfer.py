@@ -14,6 +14,24 @@ normalisation are the frozen training ones; only the input images change.
   resized with nearest neighbour; ``<UNK>`` becomes ignore 255.
 * Inference is one whole-panorama pass with circular padding on the left and
   right edges, so the 180-degree seam sees context from both sides.
+* ``--infer-scale`` runs that pass on RGB and X resized by the factor (wrap
+  padding scaled with it) and resizes the logits back to the evaluation size
+  before the argmax, so labels and scored pixels stay those of the default run.
+* ``--attention-chunk-mb`` runs every MiT attention with its queries in chunks,
+  so a large input (such as the native 2048x4096 panorama, ``--infer-scale 2``)
+  never holds a whole query-by-key score matrix. Softmax is taken per query, so
+  the result is the frozen forward's up to float rounding.
+* ``--polar-strips MARGIN`` replaces the whole pass by three strips: the bands
+  between +60 and -60 degrees at the evaluation size, and the two polar bands
+  at half size from the panorama resized by 0.5 (as ``--infer-scale 0.5``).
+  Each strip also gets MARGIN rows of context past +-60 degrees (at the
+  evaluation size, rounded up to a multiple of 32 rows at the strip's scale),
+  which are dropped before scoring.
+* ``--erp-tiles M N`` runs the network on an M x N grid of overlapping
+  windows cut from the evaluation-size panorama (RGB and the X encoded on the
+  whole panorama), each ``--erp-tile-size`` pixels. Rows span the height
+  exactly; columns are W/N apart and wrap across the 180-degree seam. Each
+  pixel takes the mean softmax of the tiles covering it.
 
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
@@ -32,6 +50,7 @@ HHA cache report.
 
 import argparse
 import csv
+import functools
 import json
 import sys
 import time
@@ -58,6 +77,12 @@ SUPPORTED_X_MODES = ("rel_plus_v2_1", "hha_frozen_cache")
 ELEVATION_BAND_EDGES_DEG = (90, 60, 25, 0, -25, -60, -90)
 # SPan8 benchmark classes (Trans4PASS+ stanford2d3d_pan8.py maps the other 5 to ignore).
 EIGHT_CLASS_NAMES = ("ceiling", "chair", "door", "floor", "sofa", "table", "wall", "window")
+# --polar-strips: the bands beyond +-60 deg run at this scale; strip heights are multiples of the MiT stride.
+POLAR_STRIP_ELEVATION_DEG = 60
+POLAR_STRIP_SCALE = 0.5
+STRIP_ROW_MULTIPLE = 32
+# --erp-tiles: per-tile class probabilities are averaged over this many tiles per forward pass.
+TILE_BATCH = 8
 
 
 def label_lookup(semantic_labels_path):
@@ -158,7 +183,8 @@ def write_elevation_bands(output, band_confusion, metrics_from_confusion, class_
     return summary
 
 
-def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None):
+def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None, label_size=None):
+    """RGB and X at ``size``; labels at ``label_size`` (default ``size``)."""
     height, width = size
     rgb = frozen["open_image"](str(sample["rgb"]), frozen["rgb_flag"])
     if rgb.ndim != 3 or rgb.shape[2] != 3:
@@ -195,12 +221,16 @@ def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None):
     semantic = cv2.imread(str(sample["semantic"]), cv2.IMREAD_COLOR)
     if semantic is None:
         raise FileNotFoundError(sample["semantic"])
-    semantic = cv2.resize(semantic, (width, height), interpolation=cv2.INTER_NEAREST)
+    label_height, label_width = size if label_size is None else label_size
+    semantic = cv2.resize(semantic, (label_width, label_height), interpolation=cv2.INTER_NEAREST)
     return rgb, modal_x, decode_semantic(semantic, lookup)
 
 
-def predict_with_wrap(network, rgb, modal_x, wrap_pad, device):
-    """Whole-image logits with circular padding along the panorama width."""
+def predict_with_wrap(network, rgb, modal_x, wrap_pad, device, output_size=None):
+    """Whole-image logits with circular padding along the panorama width.
+
+    With ``output_size`` the cropped logits are resized (bilinear) to it.
+    """
     import torch
     import torch.nn.functional as F
 
@@ -213,9 +243,174 @@ def predict_with_wrap(network, rgb, modal_x, wrap_pad, device):
         logits = network(rgb, modal_x)
     if wrap_pad > 0:
         logits = logits[:, :, :, wrap_pad:-wrap_pad]
+    if output_size is not None and tuple(logits.shape[2:]) != tuple(output_size):
+        logits = F.interpolate(logits, size=tuple(output_size), mode="bilinear", align_corners=False)
     if not bool(torch.isfinite(logits).all()):
         raise FloatingPointError("non-finite logits")
     return logits
+
+
+def polar_strip_rows(height, margin, scale=POLAR_STRIP_SCALE):
+    """Row windows of the three-strip pass; the core split is the band rule of ``elevation_band_confusions``.
+
+    ``top_end`` and ``bottom_start`` (evaluation rows) bound the middle core, ``middle`` is the
+    middle strip in evaluation rows, ``top`` and ``bottom`` the polar strips in scaled rows.
+    """
+    elevation = 90.0 - np.arange(height) * 180.0 / height
+    top_end = int((elevation > POLAR_STRIP_ELEVATION_DEG).sum())
+    bottom_start = int(np.argmax(elevation <= -POLAR_STRIP_ELEVATION_DEG))
+    scaled_height = height * scale
+    if scaled_height != int(scaled_height):
+        raise ValueError("--height times the polar scale must be a whole number of rows")
+    scaled_height = int(scaled_height)
+
+    def rounded(rows, limit):
+        return min(limit, STRIP_ROW_MULTIPLE * int(np.ceil(rows / STRIP_ROW_MULTIPLE)))
+
+    middle_need = bottom_start - top_end + 2 * margin
+    middle_rows = rounded(middle_need, height)
+    middle_start = top_end - margin - (middle_rows - middle_need) // 2
+    middle_start = max(0, min(middle_start, height - middle_rows))
+    top_rows = rounded(np.ceil((top_end + margin) * scale), scaled_height)
+    bottom_rows = rounded(np.ceil((height - bottom_start + margin) * scale), scaled_height)
+    for rows in (top_rows, bottom_rows):
+        if rows / scale != int(rows / scale):
+            raise ValueError("a polar strip does not map to whole evaluation rows")
+    return {
+        "top_end": top_end,
+        "bottom_start": bottom_start,
+        "middle": [middle_start, middle_start + middle_rows],
+        "top": [0, top_rows],
+        "bottom": [scaled_height - bottom_rows, scaled_height],
+    }
+
+
+def predict_polar_strips(network, full, polar, rows, wrap_pad, polar_wrap_pad, device):
+    """Evaluation-size logits from the middle strip of ``full`` and the polar strips of ``polar``.
+
+    ``full`` and ``polar`` are (rgb, modal_x) tensors at the evaluation size and at the polar
+    scale. Each strip keeps only its own band's rows; the rest of it is context.
+    """
+    import torch
+
+    height, width = full[0].shape[2:]
+    scale = polar[0].shape[2] / height
+    middle_start, middle_end = rows["middle"]
+    middle = predict_with_wrap(
+        network, full[0][:, :, middle_start:middle_end], full[1][:, :, middle_start:middle_end],
+        wrap_pad, device,
+    )
+    top, bottom = (
+        predict_with_wrap(
+            network, polar[0][:, :, start:end], polar[1][:, :, start:end], polar_wrap_pad, device,
+            output_size=(int(round((end - start) / scale)), width),
+        )
+        for start, end in (rows["top"], rows["bottom"])
+    )
+    bottom_offset = height - bottom.shape[2]
+    return torch.cat([
+        top[:, :, :rows["top_end"]],
+        middle[:, :, rows["top_end"] - middle_start:rows["bottom_start"] - middle_start],
+        bottom[:, :, rows["bottom_start"] - bottom_offset:],
+    ], dim=2)
+
+
+def erp_tile_windows(height, width, rows, columns, tile_height, tile_width):
+    """(top, left) of each tile: rows span the height exactly, columns are ``width / columns`` apart."""
+    if rows < 1 or columns < 1:
+        raise ValueError("the tile grid needs at least one row and one column")
+    if rows == 1:
+        if tile_height != height:
+            raise ValueError("one tile row must be as tall as the panorama")
+        row_stride = 0
+    else:
+        row_stride, remainder = divmod(height - tile_height, rows - 1)
+        if remainder or not 0 < row_stride <= tile_height:
+            raise ValueError("tile rows must cover the height with a whole, positive stride")
+    column_stride, remainder = divmod(width, columns)
+    if remainder or not column_stride <= tile_width <= width:
+        raise ValueError("tile columns must divide the width and cover it")
+    return [
+        (row * row_stride, column * column_stride) for row in range(rows) for column in range(columns)
+    ]
+
+
+def class_probabilities(logits, channels=None):
+    """Softmax over the classes; with channels, over those only (the rest get 0), as an 8-output model would."""
+    import torch
+
+    if channels is None:
+        return logits.softmax(dim=1)
+    masked = torch.full_like(logits, float("-inf"))
+    masked[:, channels] = logits[:, channels]
+    return masked.softmax(dim=1)
+
+
+def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channels=None):
+    """Mean class probabilities over the tiles covering each pixel; columns wrap at the seam."""
+    import torch
+
+    height, width = rgb.shape[2:]
+    tile_height, tile_width = tile_size
+    total, count = None, torch.zeros(1, 1, height, width, device=device)
+    for start in range(0, len(windows), TILE_BATCH):
+        batch = windows[start:start + TILE_BATCH]
+        columns = [torch.arange(left, left + tile_width) % width for _, left in batch]
+        tiles = [
+            torch.cat([image[:, :, top:top + tile_height, cols] for (top, _), cols in zip(batch, columns)])
+            for image in (rgb, modal_x)
+        ]
+        probabilities = class_probabilities(predict_with_wrap(network, *tiles, 0, device), channels)
+        if total is None:
+            total = torch.zeros((1, probabilities.shape[1], height, width), device=device)
+        for tile, (top, _), cols in zip(probabilities, batch, columns):
+            cols = cols.to(device)
+            total[0, :, top:top + tile_height].index_add_(2, cols, tile)
+            count[0, :, top:top + tile_height].index_add_(2, cols, torch.ones_like(tile[:1]))
+    if not bool((count > 0).all()):
+        raise ValueError("the tile grid leaves panorama pixels uncovered")
+    return total / count
+
+
+def _chunked_attention_forward(module, budget_bytes, x, H, W):
+    """The frozen MiT ``Attention.forward`` with the scores computed a chunk of queries at a time."""
+    import torch
+
+    B, N, C = x.shape
+    heads = module.num_heads
+    q = module.q(x).reshape(B, N, heads, C // heads).permute(0, 2, 1, 3)
+    if module.sr_ratio > 1:
+        x_ = x.permute(0, 2, 1).reshape(B, C, H, W)
+        x_ = module.sr(x_).reshape(B, C, -1).permute(0, 2, 1)
+        x_ = module.norm(x_)
+        kv = module.kv(x_).reshape(B, -1, 2, heads, C // heads).permute(2, 0, 3, 1, 4)
+    else:
+        kv = module.kv(x).reshape(B, -1, 2, heads, C // heads).permute(2, 0, 3, 1, 4)
+    k, v = kv[0], kv[1]
+    step = max(1, budget_bytes // (B * heads * k.shape[2] * q.element_size()))
+    out = torch.empty_like(q)
+    for start in range(0, N, step):
+        attn = (q[:, :, start:start + step] @ k.transpose(-2, -1)) * module.scale
+        attn = attn.softmax(dim=-1)
+        attn = module.attn_drop(attn)
+        out[:, :, start:start + step] = attn @ v
+    x = out.transpose(1, 2).reshape(B, N, C)
+    x = module.proj(x)
+    x = module.proj_drop(x)
+    return x
+
+
+def chunk_attention(network, budget_mb):
+    """Chunk every MiT attention so one score chunk holds at most ``budget_mb`` MiB."""
+    from models.encoders.dual_segformer import Attention
+
+    modules = [module for module in network.modules() if isinstance(module, Attention)]
+    if not modules:
+        raise ValueError("the network has no MiT attention to chunk")
+    budget_bytes = int(budget_mb * 2 ** 20)
+    for module in modules:
+        module.forward = functools.partial(_chunked_attention_forward, module, budget_bytes)
+    return len(modules)
 
 
 def eight_class_channels(class_names):
@@ -332,6 +527,29 @@ def main():
     parser.add_argument("--height", type=int, default=1024)
     parser.add_argument("--width", type=int, default=2048)
     parser.add_argument("--wrap-pad", type=int, default=128)
+    parser.add_argument(
+        "--infer-scale", type=float, default=1.0,
+        help="run the network on the panorama resized by this factor; logits are resized "
+        "back to --height x --width, where labels stay",
+    )
+    parser.add_argument(
+        "--attention-chunk-mb", type=int, default=0,
+        help="compute MiT attention scores in query chunks of at most this many MiB "
+        "(same result; for inputs whose score matrix does not fit); 0 keeps the frozen forward",
+    )
+    parser.add_argument(
+        "--polar-strips", type=int, default=None, metavar="MARGIN",
+        help="three passes instead of one: +60..-60 deg at the evaluation size, the two polar "
+        "bands at x{} size, each with MARGIN context rows past +-60 deg".format(POLAR_STRIP_SCALE),
+    )
+    parser.add_argument(
+        "--erp-tiles", type=int, nargs=2, default=None, metavar=("M", "N"),
+        help="M x N overlapping ERP tiles instead of one pass; mean softmax where tiles overlap",
+    )
+    parser.add_argument(
+        "--erp-tile-size", type=int, nargs=2, default=(384, 384), metavar=("H", "W"),
+        help="tile size in evaluation pixels (default 384 x 384, 67.5 degrees at 1024 x 2048)",
+    )
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--hha-cache-report", type=Path, default=None)
@@ -356,6 +574,32 @@ def main():
         parser.error("--height and --width must be positive")
     if not 0 <= args.wrap_pad <= args.width:
         parser.error("--wrap-pad must be between zero and --width")
+    if not np.isfinite(args.infer_scale) or args.infer_scale <= 0:
+        parser.error("--infer-scale must be finite and positive")
+    if args.attention_chunk_mb < 0:
+        parser.error("--attention-chunk-mb must be zero or positive")
+    infer_size = (int(round(args.height * args.infer_scale)), int(round(args.width * args.infer_scale)))
+    infer_wrap_pad = int(round(args.wrap_pad * args.infer_scale))
+    strip_rows = None
+    if args.polar_strips is not None:
+        if args.polar_strips < 0:
+            parser.error("--polar-strips must be zero or positive")
+        if args.infer_scale != 1.0:
+            parser.error("--polar-strips runs the middle strip at the evaluation size; keep --infer-scale 1")
+        try:
+            strip_rows = polar_strip_rows(args.height, args.polar_strips)
+        except ValueError as error:
+            parser.error(str(error))
+        polar_size = (int(args.height * POLAR_STRIP_SCALE), int(round(args.width * POLAR_STRIP_SCALE)))
+        polar_wrap_pad = int(round(args.wrap_pad * POLAR_STRIP_SCALE))
+    tile_windows = None
+    if args.erp_tiles is not None:
+        if args.polar_strips is not None or args.infer_scale != 1.0:
+            parser.error("--erp-tiles cuts the evaluation-size panorama; drop --polar-strips and --infer-scale")
+        try:
+            tile_windows = erp_tile_windows(args.height, args.width, *args.erp_tiles, *args.erp_tile_size)
+        except ValueError as error:
+            parser.error(str(error))
 
     import torch
     import torch.nn as nn
@@ -382,6 +626,9 @@ def main():
     epoch = frozen["load_checkpoint_once"](
         network, args.checkpoint, expected_epoch=args.expected_epoch
     )
+    chunked_attention_modules = 0
+    if args.attention_chunk_mb:
+        chunked_attention_modules = chunk_attention(network, args.attention_chunk_mb)
     network.to(device)
     network.eval()
 
@@ -390,16 +637,29 @@ def main():
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
-            sample, (args.height, args.width), lookup, frozen, None if rgb_only else config.x_mode,
-            hha_recipe,
+            sample, infer_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
+            label_size=(args.height, args.width),
         )
-        logits = predict_with_wrap(
-            network,
-            frozen["normalized_bchw"](rgb, config.norm_mean, config.norm_std),
-            frozen["normalized_bchw"](modal_x, config.norm_mean, config.norm_std),
-            args.wrap_pad,
-            device,
-        )
+        inputs = [
+            frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
+        ]
+        if tile_windows is not None:  # mean probabilities; only their argmax is used below
+            logits = predict_erp_tiles(network, *inputs, tile_windows, args.erp_tile_size, device, channels)
+        elif strip_rows is None:
+            logits = predict_with_wrap(
+                network, *inputs, infer_wrap_pad, device, output_size=(args.height, args.width),
+            )
+        else:
+            polar_rgb, polar_x, _ = load_sample(
+                sample, polar_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
+            )
+            polar_inputs = [
+                frozen["normalized_bchw"](image, config.norm_mean, config.norm_std)
+                for image in (polar_rgb, polar_x)
+            ]
+            logits = predict_polar_strips(
+                network, inputs, polar_inputs, strip_rows, args.wrap_pad, polar_wrap_pad, device
+            )
         prediction = predict_classes(logits, channels)[0].cpu().numpy().astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
         confusion += hist.astype(np.int64)
@@ -434,6 +694,23 @@ def main():
         "areas": args.areas,
         "eval_size": [args.height, args.width],
         "wrap_pad": args.wrap_pad,
+        "infer_scale": args.infer_scale,
+        "infer_size": list(infer_size),
+        "infer_wrap_pad": infer_wrap_pad,
+        "attention_chunk_mb": args.attention_chunk_mb,
+        "chunked_attention_modules": chunked_attention_modules,
+        "polar_strips": None if strip_rows is None else {
+            "margin_rows": args.polar_strips,
+            "polar_scale": POLAR_STRIP_SCALE,
+            "polar_infer_size": list(polar_size),
+            "polar_wrap_pad": polar_wrap_pad,
+            "rows": strip_rows,
+        },
+        "erp_tiles": None if tile_windows is None else {
+            "grid": list(args.erp_tiles),
+            "tile_size": list(args.erp_tile_size),
+            "tile_origins": [list(window) for window in tile_windows],
+        },
         "prediction_classes": list(EIGHT_CLASS_NAMES if channels else config.class_names),
         "sample_count": len(samples),
         "seconds": time.time() - started,

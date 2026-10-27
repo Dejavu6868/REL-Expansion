@@ -46,6 +46,208 @@ def test_wrap_padding_is_cropped_back():
     assert torch.equal(padded, plain)
 
 
+def test_infer_scale_logits_return_to_the_label_size():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb[:, :2] + modal_x[:, :2]
+
+    rgb = torch.randn(1, 3, 10, 40)
+    modal_x = torch.randn(1, 3, 10, 40)
+    net = PixelwiseNet()
+    same = ev.predict_with_wrap(net, rgb, modal_x, 4, "cpu", output_size=(10, 40))
+    assert torch.equal(same, ev.predict_with_wrap(net, rgb, modal_x, 4, "cpu"))
+    resized = ev.predict_with_wrap(net, rgb, modal_x, 5, "cpu", output_size=(8, 32))
+    assert resized.shape == (1, 2, 8, 32)
+
+
+def test_infer_scale_resizes_inputs_but_not_labels(tmp_path):
+    import cv2
+    import cross_projection as cp
+    from test_cross_projection_synthetic import render_erp_raw_depth
+
+    sample = {kind: tmp_path / (kind + ".png") for kind in ("rgb", "depth", "semantic")}
+    assert cv2.imwrite(str(sample["rgb"]), np.full((64, 128, 3), 100, dtype=np.uint8))
+    assert cv2.imwrite(str(sample["depth"]), render_erp_raw_depth(64, 128))
+    assert cv2.imwrite(str(sample["semantic"]), np.zeros((64, 128, 3), dtype=np.uint8))
+    frozen = cp.import_frozen_source(cp.DEFAULT_SOURCE_ROOT)
+    frozen.update(open_image=cv2.imread, rgb_flag=cv2.IMREAD_COLOR)
+    recipe = {"variant": "native_then_resize_linear", "channel_order": [2, 1, 0]}
+    rgb, modal_x, label = ev.load_sample(
+        sample, (40, 80), np.array([0], dtype=np.uint8), frozen,
+        "hha_frozen_cache", recipe, label_size=(32, 64),
+    )
+    assert rgb.shape[:2] == modal_x.shape[:2] == (40, 80)
+    assert label.shape == (32, 64)
+
+
+@pytest.mark.parametrize("margin, middle, polar", [(0, 704, 96), (32, 768, 128), (64, 832, 128)])
+def test_polar_strip_rows_follow_the_band_rule(margin, middle, polar):
+    rows = ev.polar_strip_rows(1024, margin)
+    elevation = 90.0 - np.arange(1024) * 180.0 / 1024
+    assert rows["top_end"] == ((elevation <= 90) & (elevation > 60)).sum() == 171
+    assert rows["bottom_start"] == 1024 - ((elevation <= -60) & (elevation > -90)).sum() == 854
+    start, end = rows["middle"]
+    assert end - start == middle  # the sizes measured in results/half_res_poles_2026-10-25/strip_flops.py
+    assert start <= 171 - margin and end >= 854 + margin
+    assert rows["top"] == [0, polar] and rows["bottom"] == [512 - polar, 512]
+    assert polar / 0.5 >= 171 + margin and polar / 0.5 >= 170 + margin
+
+
+def test_polar_strips_reproduce_the_two_whole_passes_for_a_pixelwise_net():
+    torch = pytest.importorskip("torch")
+    import torch.nn.functional as F
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb[:, :2] + modal_x[:, :2]
+
+    torch.manual_seed(0)
+    full = [torch.randn(1, 3, 192, 384) for _ in range(2)]
+    polar = [F.interpolate(image, size=(96, 192), mode="bilinear", align_corners=False) for image in full]
+    rows = ev.polar_strip_rows(192, 8)
+    net = PixelwiseNet()
+    strips = ev.predict_polar_strips(net, full, polar, rows, 16, 8, "cpu")
+    whole = ev.predict_with_wrap(net, *full, 16, "cpu")
+    half = ev.predict_with_wrap(net, *polar, 8, "cpu", output_size=(192, 384))
+    top_end, bottom_start = rows["top_end"], rows["bottom_start"]
+    assert strips.shape == whole.shape
+    assert torch.allclose(strips[:, :, :top_end], half[:, :, :top_end], atol=1e-6)
+    assert torch.equal(strips[:, :, top_end:bottom_start], whole[:, :, top_end:bottom_start])
+    assert torch.allclose(strips[:, :, bottom_start:], half[:, :, bottom_start:], atol=1e-6)
+
+
+@pytest.mark.parametrize("extra", [["--polar-strips", "-1"], ["--polar-strips", "32", "--infer-scale", "0.5"]])
+def test_bad_polar_strips_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
+def test_erp_tile_windows_cover_the_panorama_and_reject_bad_grids():
+    windows = ev.erp_tile_windows(1024, 2048, 3, 8, 384, 384)
+    assert len(windows) == 24
+    assert sorted({top for top, _ in windows}) == [0, 320, 640]
+    assert sorted({left for _, left in windows}) == list(range(0, 2048, 256))
+    count = np.zeros((1024, 2048), dtype=int)
+    for top, left in windows:
+        count[top:top + 384, np.arange(left, left + 384) % 2048] += 1
+    assert count.min() >= 1
+    for grid in [(3, 7, 384, 384), (3, 8, 300, 384), (3, 8, 384, 200), (1, 8, 384, 384), (0, 8, 384, 384)]:
+        with pytest.raises(ValueError):
+            ev.erp_tile_windows(1024, 2048, *grid)
+
+
+def test_erp_tiles_reproduce_the_whole_pass_for_a_pixelwise_net():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb + modal_x
+
+    torch.manual_seed(0)
+    rgb, modal_x = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    windows = ev.erp_tile_windows(64, 128, 3, 8, 32, 32)  # the last column wraps across the seam
+    whole = ev.predict_with_wrap(PixelwiseNet(), rgb, modal_x, 0, "cpu")
+    for channels in (None, [0, 2]):
+        tiled = ev.predict_erp_tiles(PixelwiseNet(), rgb, modal_x, windows, (32, 32), "cpu", channels)
+        assert torch.allclose(tiled, ev.class_probabilities(whole, channels), atol=1e-6)
+        assert torch.equal(ev.predict_classes(tiled, channels), ev.predict_classes(whole, channels))
+    assert torch.allclose(ev.class_probabilities(whole, [0, 2]).sum(dim=1), torch.ones(1, 64, 128))
+    assert (ev.class_probabilities(whole, [0, 2])[:, 1] == 0).all()
+
+
+@pytest.mark.parametrize("extra", [
+    ["--erp-tiles", "3", "7"],
+    ["--erp-tiles", "3", "8", "--polar-strips", "32"],
+    ["--erp-tiles", "3", "8", "--infer-scale", "0.5"],
+])
+def test_bad_erp_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
+def frozen_attention_class():
+    ev.import_frozen(ev.DEFAULT_SOURCE_ROOT)
+    from models.encoders.dual_segformer import Attention
+
+    return Attention
+
+
+@pytest.mark.parametrize("sr_ratio", [1, 2])
+def test_chunked_attention_matches_the_frozen_forward(sr_ratio):
+    torch = pytest.importorskip("torch")
+    attention_class = frozen_attention_class()
+    torch.manual_seed(0)
+    module = attention_class(dim=16, num_heads=2, sr_ratio=sr_ratio).eval()
+    x = torch.randn(1, 6 * 10, 16)
+    keys = 60 // sr_ratio ** 2
+    with torch.no_grad():
+        frozen = module(x, 6, 10)
+        chunked = ev._chunked_attention_forward(module, 7 * 2 * keys * 4, x, 6, 10)  # 7 queries a chunk
+    assert torch.allclose(chunked, frozen, atol=1e-6)
+
+
+def test_chunk_attention_covers_both_streams_and_keeps_the_logits(tmp_path):
+    torch = pytest.importorskip("torch")
+    frozen = ev.import_frozen(ev.DEFAULT_SOURCE_ROOT)
+    config = json.loads((ev.REPO_ROOT / "0927调参结果" / "configs" / "relplus.json").read_text(encoding="utf-8"))
+    config.update(backbone="mit_b0", decoder_embed_dim=32)
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    torch.manual_seed(0)
+    network = frozen["EncoderDecoder"](
+        cfg=ev.load_config(config_path), criterion=None, norm_layer=torch.nn.BatchNorm2d
+    ).eval()
+    rgb, modal_x = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    with torch.no_grad():
+        plain = network(rgb, modal_x)
+        assert ev.chunk_attention(network, 1 / 1024) == 2 * 8  # mit_b0 depths 2, 2, 2, 2, two streams
+        chunked = network(rgb, modal_x)
+    assert torch.allclose(chunked, plain, atol=1e-5)
+
+
+@pytest.mark.parametrize("scale", ["0", "-1", "nan"])
+def test_bad_infer_scale_is_rejected_before_loading(monkeypatch, tmp_path, scale):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+        "--infer-scale", scale,
+    ])
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
+def test_negative_attention_chunk_is_rejected_before_loading(monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+        "--attention-chunk-mb", "-1",
+    ])
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def test_eight_class_predictions_only_pick_span8_channels():
     torch = pytest.importorskip("torch")
 
