@@ -30,7 +30,7 @@ normalisation are the frozen training ones; only the input images change.
 * ``--erp-tiles M N`` runs the network on an M x N grid of overlapping
   windows cut from the evaluation-size panorama (RGB and the X encoded on the
   whole panorama), each ``--erp-tile-size`` pixels. Rows span the height
-  exactly; columns are W/N apart and wrap across the 180-degree seam. Each
+  exactly; columns start floor(i W / N) apart and wrap across the 180-degree seam. Each
   pixel takes the mean softmax of the tiles covering it.
 * ``--polar-caps SIZE`` replaces the bands beyond +-60 degrees by two
   SIZE x SIZE tiles, 67.5 degrees wide, centred on the poles of the sphere
@@ -333,7 +333,7 @@ def predict_polar_strips(network, full, polar, rows, wrap_pad, polar_wrap_pad, d
 
 
 def erp_tile_windows(height, width, rows, columns, tile_height, tile_width):
-    """(top, left) of each tile: rows span the height exactly, columns are ``width / columns`` apart."""
+    """(top, left) of each tile: rows span the height exactly, column i starts at ``floor(i * width / columns)``."""
     if rows < 1 or columns < 1:
         raise ValueError("the tile grid needs at least one row and one column")
     if rows == 1:
@@ -344,11 +344,10 @@ def erp_tile_windows(height, width, rows, columns, tile_height, tile_width):
         row_stride, remainder = divmod(height - tile_height, rows - 1)
         if remainder or not 0 < row_stride <= tile_height:
             raise ValueError("tile rows must cover the height with a whole, positive stride")
-    column_stride, remainder = divmod(width, columns)
-    if remainder or not column_stride <= tile_width <= width:
-        raise ValueError("tile columns must divide the width and cover it")
+    if not -(-width // columns) <= tile_width <= width:
+        raise ValueError("tile columns must cover the width")
     return [
-        (row * row_stride, column * column_stride) for row in range(rows) for column in range(columns)
+        (row * row_stride, column * width // columns) for row in range(rows) for column in range(columns)
     ]
 
 

@@ -140,7 +140,14 @@ def test_erp_tile_windows_cover_the_panorama_and_reject_bad_grids():
     for top, left in windows:
         count[top:top + 384, np.arange(left, left + 384) % 2048] += 1
     assert count.min() >= 1
-    for grid in [(3, 7, 384, 384), (3, 8, 300, 384), (3, 8, 384, 200), (1, 8, 384, 384), (0, 8, 384, 384)]:
+    windows = ev.erp_tile_windows(2048, 4096, 3, 7, 1080, 1080)  # SMMF's 3 x 7 layout: 4096 / 7 is not whole
+    assert sorted({top for top, _ in windows}) == [0, 484, 968]
+    assert sorted({left for _, left in windows}) == [0, 585, 1170, 1755, 2340, 2925, 3510]
+    count = np.zeros((2048, 4096), dtype=int)
+    for top, left in windows:
+        count[top:top + 1080, np.arange(left, left + 1080) % 4096] += 1
+    assert count.min() >= 1
+    for grid in [(3, 4, 384, 384), (3, 8, 300, 384), (3, 8, 384, 200), (1, 8, 384, 384), (0, 8, 384, 384)]:
         with pytest.raises(ValueError):
             ev.erp_tile_windows(1024, 2048, *grid)
 
@@ -165,7 +172,7 @@ def test_erp_tiles_reproduce_the_whole_pass_for_a_pixelwise_net():
 
 
 @pytest.mark.parametrize("extra", [
-    ["--erp-tiles", "3", "7"],
+    ["--erp-tiles", "3", "4"],
     ["--erp-tiles", "3", "8", "--polar-strips", "32"],
     ["--erp-tiles", "3", "8", "--infer-scale", "0.5"],
 ])
