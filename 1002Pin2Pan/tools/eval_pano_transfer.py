@@ -32,6 +32,12 @@ normalisation are the frozen training ones; only the input images change.
   whole panorama), each ``--erp-tile-size`` pixels. Rows span the height
   exactly; columns are W/N apart and wrap across the 180-degree seam. Each
   pixel takes the mean softmax of the tiles covering it.
+* ``--polar-caps SIZE`` replaces the bands beyond +-60 degrees by two
+  SIZE x SIZE tiles, 67.5 degrees wide, centred on the poles of the sphere
+  turned 90 degrees about the x axis, where the poles lie on the equator and
+  ERP barely stretches. RGB (bilinear) and the X encoded on the whole
+  panorama (nearest) are resampled into each tile; the tile softmax is read
+  back onto the polar rows. It works with the whole pass or ``--erp-tiles``.
 
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
@@ -83,6 +89,10 @@ POLAR_STRIP_SCALE = 0.5
 STRIP_ROW_MULTIPLE = 32
 # --erp-tiles: per-tile class probabilities are averaged over this many tiles per forward pass.
 TILE_BATCH = 8
+# --polar-caps: tile width; it covers the 30-degree caps with 3.75 degrees of context. After the
+# turn the north pole sits at longitude -90 and the south pole at +90 (degrees, latitude 0).
+POLAR_CAP_FOV_DEG = 67.5
+POLAR_CAP_CENTRE_LONGITUDES_DEG = (-90.0, 90.0)
 
 
 def label_lookup(semantic_labels_path):
@@ -250,15 +260,22 @@ def predict_with_wrap(network, rgb, modal_x, wrap_pad, device, output_size=None)
     return logits
 
 
+def polar_band_rows(height):
+    """End of the top band and start of the bottom band (beyond +-60 deg), as ``elevation_band_confusions``."""
+    elevation = 90.0 - np.arange(height) * 180.0 / height
+    return (
+        int((elevation > POLAR_STRIP_ELEVATION_DEG).sum()),
+        int(np.argmax(elevation <= -POLAR_STRIP_ELEVATION_DEG)),
+    )
+
+
 def polar_strip_rows(height, margin, scale=POLAR_STRIP_SCALE):
     """Row windows of the three-strip pass; the core split is the band rule of ``elevation_band_confusions``.
 
     ``top_end`` and ``bottom_start`` (evaluation rows) bound the middle core, ``middle`` is the
     middle strip in evaluation rows, ``top`` and ``bottom`` the polar strips in scaled rows.
     """
-    elevation = 90.0 - np.arange(height) * 180.0 / height
-    top_end = int((elevation > POLAR_STRIP_ELEVATION_DEG).sum())
-    bottom_start = int(np.argmax(elevation <= -POLAR_STRIP_ELEVATION_DEG))
+    top_end, bottom_start = polar_band_rows(height)
     scaled_height = height * scale
     if scaled_height != int(scaled_height):
         raise ValueError("--height times the polar scale must be a whole number of rows")
@@ -370,6 +387,95 @@ def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channel
     if not bool((count > 0).all()):
         raise ValueError("the tile grid leaves panorama pixels uncovered")
     return total / count
+
+
+def unit_directions(longitude, latitude):
+    """Unit vectors with z up and longitude 0 along x (angles in radians)."""
+    return np.stack([
+        np.cos(latitude) * np.cos(longitude), np.cos(latitude) * np.sin(longitude), np.sin(latitude)
+    ], axis=-1)
+
+
+def longitude_latitude(directions):
+    return np.arctan2(directions[..., 1], directions[..., 0]), np.arcsin(np.clip(directions[..., 2], -1, 1))
+
+
+def to_cap_frame(directions):
+    """Turn the sphere 90 degrees about x, (x, y, z) -> (x, -z, y), so the poles land on the equator."""
+    x, y, z = np.moveaxis(directions, -1, 0)
+    return np.stack([x, -z, y], axis=-1)
+
+
+def from_cap_frame(directions):
+    x, y, z = np.moveaxis(directions, -1, 0)
+    return np.stack([x, z, -y], axis=-1)
+
+
+def polar_cap_grids(height, width, size, fov_deg=POLAR_CAP_FOV_DEG):
+    """``grid_sample`` coordinates between the ERP and the two cap tiles (north, south).
+
+    ``tiles`` (2, size, size, 2): where each tile pixel reads the ERP padded by one column on each
+    side, so bilinear sampling wraps at the seam. ``north`` and ``south``: where each pixel of the
+    polar rows (``polar_band_rows``) reads its tile. ERP row 0 is the zenith, column 0 starts at -pi.
+    """
+    top_end, bottom_start = polar_band_rows(height)
+    half = np.radians(fov_deg) / 2
+    steps = (np.arange(size) + 0.5) / size * 2 * half - half
+    centres = np.radians(POLAR_CAP_CENTRE_LONGITUDES_DEG)
+    tiles = []
+    for centre in centres:
+        cap_longitude, cap_latitude = np.meshgrid(centre + steps, -steps)
+        longitude, latitude = longitude_latitude(from_cap_frame(unit_directions(cap_longitude, cap_latitude)))
+        tiles.append(np.stack([longitude / np.pi * width / (width + 2), -latitude / (np.pi / 2)], axis=-1))
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    back = []
+    for rows, centre in zip((slice(0, top_end), slice(bottom_start, height)), centres):
+        cap_longitude, cap_latitude = longitude_latitude(
+            to_cap_frame(unit_directions(longitude[rows], latitude[rows]))
+        )
+        back.append(np.stack([(cap_longitude - centre) / half, -cap_latitude / half], axis=-1))
+    return {
+        "top_end": top_end,
+        "bottom_start": bottom_start,
+        "tiles": np.stack(tiles).astype(np.float32),
+        "north": back[0].astype(np.float32),
+        "south": back[1].astype(np.float32),
+    }
+
+
+def sample_cap_tiles(rgb, modal_x, caps, device):
+    """The two cap tiles: RGB bilinear, X nearest so depth edges are not blended."""
+    import torch
+    import torch.nn.functional as F
+
+    grid = torch.as_tensor(caps["tiles"], device=device)
+    return [
+        F.grid_sample(
+            F.pad(image.to(device), (1, 1, 0, 0), mode="circular").expand(2, -1, -1, -1), grid,
+            mode=mode, padding_mode="border", align_corners=False,
+        )
+        for image, mode in ((rgb, "bilinear"), (modal_x, "nearest"))
+    ]
+
+
+def predict_polar_caps(network, rgb, modal_x, caps, device, channels=None):
+    """Class probabilities of the north and south polar rows, read back from the cap tiles."""
+    import torch
+    import torch.nn.functional as F
+
+    probabilities = class_probabilities(
+        predict_with_wrap(network, *sample_cap_tiles(rgb, modal_x, caps, device), 0, device), channels
+    )
+    return [
+        F.grid_sample(
+            probabilities[index:index + 1], torch.as_tensor(caps[name], device=device)[None],
+            mode="bilinear", align_corners=False,
+        )
+        for index, name in enumerate(("north", "south"))
+    ]
 
 
 def _chunked_attention_forward(module, budget_bytes, x, H, W):
@@ -550,6 +656,12 @@ def main():
         "--erp-tile-size", type=int, nargs=2, default=(384, 384), metavar=("H", "W"),
         help="tile size in evaluation pixels (default 384 x 384, 67.5 degrees at 1024 x 2048)",
     )
+    parser.add_argument(
+        "--polar-caps", type=int, default=None, metavar="SIZE",
+        help="replace the bands beyond +-60 deg by two SIZE x SIZE tiles, {} degrees wide, centred on "
+        "the poles of the sphere turned 90 deg; 384 at 1024 x 2048 and 768 at 2048 x 4096 keep the "
+        "panorama's pixel density".format(POLAR_CAP_FOV_DEG),
+    )
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--hha-cache-report", type=Path, default=None)
@@ -600,6 +712,13 @@ def main():
             tile_windows = erp_tile_windows(args.height, args.width, *args.erp_tiles, *args.erp_tile_size)
         except ValueError as error:
             parser.error(str(error))
+    caps = None
+    if args.polar_caps is not None:
+        if args.polar_caps <= 0 or args.polar_caps % STRIP_ROW_MULTIPLE:
+            parser.error("--polar-caps must be a positive multiple of {}".format(STRIP_ROW_MULTIPLE))
+        if args.polar_strips is not None or args.infer_scale != 1.0:
+            parser.error("--polar-caps samples the evaluation-size panorama; drop --polar-strips and --infer-scale")
+        caps = polar_cap_grids(args.height, args.width, args.polar_caps)
 
     import torch
     import torch.nn as nn
@@ -660,6 +779,12 @@ def main():
             logits = predict_polar_strips(
                 network, inputs, polar_inputs, strip_rows, args.wrap_pad, polar_wrap_pad, device
             )
+        if caps is not None:  # probabilities from here on; only their argmax is used below
+            if tile_windows is None:
+                logits = class_probabilities(logits, channels)
+            logits[:, :, :caps["top_end"]], logits[:, :, caps["bottom_start"]:] = predict_polar_caps(
+                network, *inputs, caps, device, channels
+            )
         prediction = predict_classes(logits, channels)[0].cpu().numpy().astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
         confusion += hist.astype(np.int64)
@@ -710,6 +835,12 @@ def main():
             "grid": list(args.erp_tiles),
             "tile_size": list(args.erp_tile_size),
             "tile_origins": [list(window) for window in tile_windows],
+        },
+        "polar_caps": None if caps is None else {
+            "tile_size": args.polar_caps,
+            "fov_deg": POLAR_CAP_FOV_DEG,
+            "turn": "90 deg about x: (x, y, z) -> (x, -z, y)",
+            "replaced_rows": [caps["top_end"], caps["bottom_start"]],
         },
         "prediction_classes": list(EIGHT_CLASS_NAMES if channels else config.class_names),
         "sample_count": len(samples),

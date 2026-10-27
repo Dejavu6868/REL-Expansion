@@ -181,6 +181,71 @@ def test_bad_erp_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra)
     assert not (tmp_path / "output").exists()
 
 
+def test_polar_caps_turn_the_poles_onto_the_equator_and_cover_the_caps():
+    rng = np.random.default_rng(0)
+    directions = rng.normal(size=(100, 3))
+    directions /= np.linalg.norm(directions, axis=1, keepdims=True)
+    assert np.allclose(ev.from_cap_frame(ev.to_cap_frame(directions)), directions)
+    poles = ev.longitude_latitude(ev.to_cap_frame(np.array([[0.0, 0.0, 1.0], [0.0, 0.0, -1.0]])))
+    assert np.allclose(np.degrees(poles[0]), [-90, 90]) and np.allclose(poles[1], 0)
+    for height, size in ((1024, 384), (2048, 768)):
+        caps = ev.polar_cap_grids(height, 2 * height, size)
+        assert (caps["top_end"], caps["bottom_start"]) == ev.polar_band_rows(height)
+        assert caps["tiles"].shape == (2, size, size, 2) and np.abs(caps["tiles"]).max() <= 1
+        assert caps["north"].shape == (caps["top_end"], 2 * height, 2)
+        assert caps["south"].shape == (height - caps["bottom_start"], 2 * height, 2)
+        for back in (caps["north"], caps["south"]):  # every polar pixel lies inside its tile, with context
+            assert np.abs(back).max() < 30.1 / 33.75
+    caps = ev.polar_cap_grids(1024, 2048, 384)
+    assert caps["top_end"] == 171 and caps["bottom_start"] == 854
+
+
+def test_polar_caps_reproduce_a_smooth_whole_pass_for_a_pixelwise_net():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width, size = 128, 256, 64
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    steps = torch.as_tensor(np.digitize(longitude, [-1, 1]), dtype=torch.float32)[None, None].repeat(1, 3, 1, 1)
+    caps = ev.polar_cap_grids(height, width, size)
+    rgb_tiles, x_tiles = ev.sample_cap_tiles(smooth, steps, caps, "cpu")
+    assert rgb_tiles.shape == x_tiles.shape == (2, 3, size, size)
+    assert x_tiles.unique().tolist() == [0.0, 1.0, 2.0]  # nearest: X values are never blended
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    top_end, bottom_start = caps["top_end"], caps["bottom_start"]
+    for channels in (None, [0, 2]):
+        expected = ev.class_probabilities(whole, channels)
+        north, south = ev.predict_polar_caps(PixelwiseNet(), smooth, smooth, caps, "cpu", channels)
+        assert torch.allclose(north, expected[:, :, :top_end], atol=0.01)  # a mirrored cap is off by 0.14
+        assert torch.allclose(south, expected[:, :, bottom_start:], atol=0.01)
+        assert torch.allclose(north.sum(dim=1), torch.ones(1, top_end, width), atol=1e-5)
+
+
+@pytest.mark.parametrize("extra", [
+    ["--polar-caps", "0"],
+    ["--polar-caps", "400"],
+    ["--polar-caps", "384", "--polar-strips", "32"],
+    ["--polar-caps", "384", "--infer-scale", "0.5"],
+])
+def test_bad_polar_caps_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def frozen_attention_class():
     ev.import_frozen(ev.DEFAULT_SOURCE_ROOT)
     from models.encoders.dual_segformer import Attention
