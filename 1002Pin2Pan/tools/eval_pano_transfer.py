@@ -332,8 +332,11 @@ def predict_polar_strips(network, full, polar, rows, wrap_pad, polar_wrap_pad, d
     ], dim=2)
 
 
-def erp_tile_windows(height, width, rows, columns, tile_height, tile_width):
-    """(top, left) of each tile: rows span the height exactly, column i starts at ``floor(i * width / columns)``."""
+def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, column_stride=None):
+    """(top, left) of each tile: rows span the height exactly, column i starts at ``floor(i * width / columns)``.
+
+    With ``column_stride``, column i starts at ``i * column_stride`` wrapped by the width instead.
+    """
     if rows < 1 or columns < 1:
         raise ValueError("the tile grid needs at least one row and one column")
     if rows == 1:
@@ -344,11 +347,15 @@ def erp_tile_windows(height, width, rows, columns, tile_height, tile_width):
         row_stride, remainder = divmod(height - tile_height, rows - 1)
         if remainder or not 0 < row_stride <= tile_height:
             raise ValueError("tile rows must cover the height with a whole, positive stride")
-    if not -(-width // columns) <= tile_width <= width:
-        raise ValueError("tile columns must cover the width")
-    return [
-        (row * row_stride, column * width // columns) for row in range(rows) for column in range(columns)
-    ]
+    if column_stride is None:
+        if not -(-width // columns) <= tile_width <= width:
+            raise ValueError("tile columns must cover the width")
+        lefts = [column * width // columns for column in range(columns)]
+    else:
+        if not 0 < column_stride <= tile_width <= width or (columns - 1) * column_stride + tile_width < width:
+            raise ValueError("tile columns must cover the width")
+        lefts = [column * column_stride % width for column in range(columns)]
+    return [(row * row_stride, left) for row in range(rows) for left in lefts]
 
 
 def class_probabilities(logits, channels=None):
@@ -656,6 +663,11 @@ def main():
         help="tile size in evaluation pixels (default 384 x 384, 67.5 degrees at 1024 x 2048)",
     )
     parser.add_argument(
+        "--erp-tile-column-stride", type=int, default=None, metavar="S",
+        help="start column i at i * S (wrapping) instead of floor(i * W / N); 720 with --erp-tiles 3 7 "
+        "and 1080 x 1080 tiles at 2048 x 4096 is REL-SF4PASS's stated SMMF stride",
+    )
+    parser.add_argument(
         "--polar-caps", type=int, default=None, metavar="SIZE",
         help="replace the bands beyond +-60 deg by two SIZE x SIZE tiles, {} degrees wide, centred on "
         "the poles of the sphere turned 90 deg; 384 at 1024 x 2048 and 768 at 2048 x 4096 keep the "
@@ -704,11 +716,15 @@ def main():
         polar_size = (int(args.height * POLAR_STRIP_SCALE), int(round(args.width * POLAR_STRIP_SCALE)))
         polar_wrap_pad = int(round(args.wrap_pad * POLAR_STRIP_SCALE))
     tile_windows = None
+    if args.erp_tile_column_stride is not None and args.erp_tiles is None:
+        parser.error("--erp-tile-column-stride needs --erp-tiles")
     if args.erp_tiles is not None:
         if args.polar_strips is not None or args.infer_scale != 1.0:
             parser.error("--erp-tiles cuts the evaluation-size panorama; drop --polar-strips and --infer-scale")
         try:
-            tile_windows = erp_tile_windows(args.height, args.width, *args.erp_tiles, *args.erp_tile_size)
+            tile_windows = erp_tile_windows(
+                args.height, args.width, *args.erp_tiles, *args.erp_tile_size, args.erp_tile_column_stride
+            )
         except ValueError as error:
             parser.error(str(error))
     caps = None
@@ -833,6 +849,7 @@ def main():
         "erp_tiles": None if tile_windows is None else {
             "grid": list(args.erp_tiles),
             "tile_size": list(args.erp_tile_size),
+            "column_stride": args.erp_tile_column_stride,
             "tile_origins": [list(window) for window in tile_windows],
         },
         "polar_caps": None if caps is None else {
