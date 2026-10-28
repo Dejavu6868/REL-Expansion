@@ -664,7 +664,8 @@ def main():
     )
     parser.add_argument(
         "--erp-tile-size", type=int, nargs=2, default=(384, 384), metavar=("H", "W"),
-        help="tile size in evaluation pixels (default 384 x 384, 67.5 degrees at 1024 x 2048)",
+        help="tile size in network-input pixels, i.e. after --infer-scale "
+        "(default 384 x 384, 67.5 degrees at 1024 x 2048)",
     )
     parser.add_argument(
         "--erp-tile-column-stride", type=int, default=None, metavar="S",
@@ -736,11 +737,11 @@ def main():
     if args.erp_tile_exp_sum and args.erp_tiles is None:
         parser.error("--erp-tile-exp-sum needs --erp-tiles")
     if args.erp_tiles is not None:
-        if args.polar_strips is not None or args.infer_scale != 1.0:
-            parser.error("--erp-tiles cuts the evaluation-size panorama; drop --polar-strips and --infer-scale")
-        try:
+        if args.polar_strips is not None:
+            parser.error("--erp-tiles replaces the whole pass; drop --polar-strips")
+        try:  # tiles are cut from the network-input panorama (evaluation size times --infer-scale)
             tile_windows = erp_tile_windows(
-                args.height, args.width, *args.erp_tiles, *args.erp_tile_size,
+                *infer_size, *args.erp_tiles, *args.erp_tile_size,
                 args.erp_tile_column_stride, args.erp_tile_column_offset,
             )
         except ValueError as error:
@@ -799,6 +800,10 @@ def main():
             logits = predict_erp_tiles(
                 network, *inputs, tile_windows, args.erp_tile_size, device, channels, args.erp_tile_exp_sum
             )
+            if tuple(infer_size) != (args.height, args.width):  # fused map to label size, as the whole pass does
+                logits = torch.nn.functional.interpolate(
+                    logits, size=(args.height, args.width), mode="bilinear", align_corners=False
+                )
         elif strip_rows is None:
             logits = predict_with_wrap(
                 network, *inputs, infer_wrap_pad, device, output_size=(args.height, args.width),
@@ -873,6 +878,7 @@ def main():
             "column_offset": args.erp_tile_column_offset,
             "fusion": "sum of exp(logits)" if args.erp_tile_exp_sum else "mean softmax",
             "tile_origins": [list(window) for window in tile_windows],
+            "origins_in": "network-input pixels ({} x {})".format(*infer_size),
         },
         "polar_caps": None if caps is None else {
             "tile_size": args.polar_caps,

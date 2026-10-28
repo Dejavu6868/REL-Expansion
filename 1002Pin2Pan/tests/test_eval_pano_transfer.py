@@ -160,6 +160,13 @@ def test_erp_tile_windows_cover_the_panorama_and_reject_bad_grids():
     for top, left in windows:
         count[top:top + 1080, np.arange(left, left + 1080) % 4096] += 1
     assert count.min() >= 1
+    windows = ev.erp_tile_windows(1536, 3072, 3, 8, 576, 576)  # the 3 x 8 grid at --infer-scale 0.75 of 2048 x 4096
+    assert sorted({top for top, _ in windows}) == [0, 480, 960]
+    assert sorted({left for _, left in windows}) == list(range(0, 3072, 384))
+    count = np.zeros((1536, 3072), dtype=int)
+    for top, left in windows:
+        count[top:top + 576, np.arange(left, left + 576) % 3072] += 1
+    assert count.min() >= 1
     for stride in (1081, 500):  # wider than a tile; 7 x 500 columns leave a gap
         with pytest.raises(ValueError):
             ev.erp_tile_windows(2048, 4096, 3, 7, 1080, 1080, stride)
@@ -196,7 +203,7 @@ def test_erp_tiles_reproduce_the_whole_pass_for_a_pixelwise_net():
     ["--erp-tiles", "3", "7", "--erp-tile-column-offset", "-652"],
     ["--erp-tile-exp-sum"],
     ["--erp-tiles", "3", "8", "--polar-strips", "32"],
-    ["--erp-tiles", "3", "8", "--infer-scale", "0.5"],
+    ["--erp-tiles", "3", "8", "--erp-tile-size", "768", "768", "--infer-scale", "0.25"],  # 768 > 256 input rows
 ])
 def test_bad_erp_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra):
     monkeypatch.setattr(sys, "argv", [
