@@ -332,10 +332,10 @@ def predict_polar_strips(network, full, polar, rows, wrap_pad, polar_wrap_pad, d
     ], dim=2)
 
 
-def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, column_stride=None):
+def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, column_stride=None, column_offset=0):
     """(top, left) of each tile: rows span the height exactly, column i starts at ``floor(i * width / columns)``.
 
-    With ``column_stride``, column i starts at ``i * column_stride`` wrapped by the width instead.
+    With ``column_stride``, column i starts at ``column_offset + i * column_stride`` wrapped by the width instead.
     """
     if rows < 1 or columns < 1:
         raise ValueError("the tile grid needs at least one row and one column")
@@ -354,7 +354,7 @@ def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, colu
     else:
         if not 0 < column_stride <= tile_width <= width or (columns - 1) * column_stride + tile_width < width:
             raise ValueError("tile columns must cover the width")
-        lefts = [column * column_stride % width for column in range(columns)]
+        lefts = [(column_offset + column * column_stride) % width for column in range(columns)]
     return [(row * row_stride, left) for row in range(rows) for left in lefts]
 
 
@@ -369,8 +369,11 @@ def class_probabilities(logits, channels=None):
     return masked.softmax(dim=1)
 
 
-def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channels=None):
-    """Mean class probabilities over the tiles covering each pixel; columns wrap at the seam."""
+def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channels=None, exp_sum=False):
+    """Mean class probabilities over the tiles covering each pixel; columns wrap at the seam.
+
+    With ``exp_sum`` each tile contributes exp(logits): CMX's val_func_process_rgbX returns those, and SMMF sums them.
+    """
     import torch
 
     height, width = rgb.shape[2:]
@@ -383,7 +386,8 @@ def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channel
             torch.cat([image[:, :, top:top + tile_height, cols] for (top, _), cols in zip(batch, columns)])
             for image in (rgb, modal_x)
         ]
-        probabilities = class_probabilities(predict_with_wrap(network, *tiles, 0, device), channels)
+        logits = predict_with_wrap(network, *tiles, 0, device)
+        probabilities = logits.exp() if exp_sum else class_probabilities(logits, channels)
         if total is None:
             total = torch.zeros((1, probabilities.shape[1], height, width), device=device)
         for tile, (top, _), cols in zip(probabilities, batch, columns):
@@ -664,8 +668,17 @@ def main():
     )
     parser.add_argument(
         "--erp-tile-column-stride", type=int, default=None, metavar="S",
-        help="start column i at i * S (wrapping) instead of floor(i * W / N); 720 with --erp-tiles 3 7 "
-        "and 1080 x 1080 tiles at 2048 x 4096 is REL-SF4PASS's stated SMMF stride",
+        help="start column i at O + i * S (wrapping) instead of floor(i * W / N); 720 with --erp-tiles 3 7 "
+        "and 1080 x 1080 tiles at 2048 x 4096 is REL-SF4PASS's SMMF stride",
+    )
+    parser.add_argument(
+        "--erp-tile-column-offset", type=int, default=0, metavar="O",
+        help="first column start for --erp-tile-column-stride; -652 matches SMMF's 652 px cyclic padding",
+    )
+    parser.add_argument(
+        "--erp-tile-exp-sum", action="store_true",
+        help="fuse overlapping tiles by summing exp(logits), as SMMF sums CMX's val_func_process_rgbX "
+        "outputs, instead of averaging the softmax",
     )
     parser.add_argument(
         "--polar-caps", type=int, default=None, metavar="SIZE",
@@ -718,12 +731,17 @@ def main():
     tile_windows = None
     if args.erp_tile_column_stride is not None and args.erp_tiles is None:
         parser.error("--erp-tile-column-stride needs --erp-tiles")
+    if args.erp_tile_column_offset and args.erp_tile_column_stride is None:
+        parser.error("--erp-tile-column-offset needs --erp-tile-column-stride")
+    if args.erp_tile_exp_sum and args.erp_tiles is None:
+        parser.error("--erp-tile-exp-sum needs --erp-tiles")
     if args.erp_tiles is not None:
         if args.polar_strips is not None or args.infer_scale != 1.0:
             parser.error("--erp-tiles cuts the evaluation-size panorama; drop --polar-strips and --infer-scale")
         try:
             tile_windows = erp_tile_windows(
-                args.height, args.width, *args.erp_tiles, *args.erp_tile_size, args.erp_tile_column_stride
+                args.height, args.width, *args.erp_tiles, *args.erp_tile_size,
+                args.erp_tile_column_stride, args.erp_tile_column_offset,
             )
         except ValueError as error:
             parser.error(str(error))
@@ -778,7 +796,9 @@ def main():
             frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
         ]
         if tile_windows is not None:  # mean probabilities; only their argmax is used below
-            logits = predict_erp_tiles(network, *inputs, tile_windows, args.erp_tile_size, device, channels)
+            logits = predict_erp_tiles(
+                network, *inputs, tile_windows, args.erp_tile_size, device, channels, args.erp_tile_exp_sum
+            )
         elif strip_rows is None:
             logits = predict_with_wrap(
                 network, *inputs, infer_wrap_pad, device, output_size=(args.height, args.width),
@@ -850,6 +870,8 @@ def main():
             "grid": list(args.erp_tiles),
             "tile_size": list(args.erp_tile_size),
             "column_stride": args.erp_tile_column_stride,
+            "column_offset": args.erp_tile_column_offset,
+            "fusion": "sum of exp(logits)" if args.erp_tile_exp_sum else "mean softmax",
             "tile_origins": [list(window) for window in tile_windows],
         },
         "polar_caps": None if caps is None else {
