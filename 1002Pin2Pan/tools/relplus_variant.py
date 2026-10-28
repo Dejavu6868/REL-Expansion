@@ -19,6 +19,12 @@ check_egvia_rules.py). It is applied by swapping the generator's
 ``encode_rel_channels`` for a wrapper that rewrites channel 0, and
 ``frozen["getREL"]`` for ``get_rel_banded_metric``, which repeats the ERP
 ``getREL`` statements for LOA and ReD.
+
+REL+ v3.1new (``v3_1new``, Max's own run, checkpoint d42a0afc...) changes only the
+EGVIA fusion: E = (1 - c^2 / 2) A + (c^2 / 2) H, with A the unblended angle code,
+c = clip(n . g, -1, 1) the vertical normal component and H = 255 clip((z - z_lo) /
+(z_hi - z_lo), 0, 1) on the same METRIC_RANGE_CM. Only the ERP path is implemented
+here (panorama evaluation); the pinhole cache comes from Max's own code.
 """
 
 import functools
@@ -28,7 +34,7 @@ from pathlib import Path
 import numpy as np
 
 
-VARIANT_ALPHA = {"v2_1": 45.0, "v3_0": -1.0, "v3_1": None}  # None: not an alpha variant
+VARIANT_ALPHA = {"v2_1": 45.0, "v3_0": -1.0, "v3_1": None, "v3_1new": None}  # None: not an alpha variant
 MARKER_NAME = "relplus_variant.json"  # written into the cache root by relplus_variant_cache.py
 METRIC_RANGE_CM = (-150.0, 210.0)
 BAND_HALF_WIDTH_DEG = 15.0
@@ -38,6 +44,8 @@ def describe(variant):
     """The EGVIA rule of a variant, for reports."""
     if VARIANT_ALPHA[variant] is not None:
         return "alpha {}".format(VARIANT_ALPHA[variant])
+    if variant == "v3_1new":
+        return "smooth c^2 weighting E = (1 - c^2/2) A + (c^2/2) H (metric range {} cm)".format(list(METRIC_RANGE_CM))
     return "banded_metric (metric range {} cm, band half-width {} deg)".format(
         list(METRIC_RANGE_CM), BAND_HALF_WIDTH_DEG
     )
@@ -57,6 +65,13 @@ def banded_metric_egvia(angle, height_cm):
         + smooth_step((degrees - 135.0) / BAND_HALF_WIDTH_DEG)
         + np.clip((height_cm - low) / (high - low), 0.0, 1.0)
     )
+
+
+def smooth_weight_egvia(angle, height_cm, vertical):
+    """v3.1new float EGVIA: the angle code blended with 0..255 height by half the squared vertical normal component."""
+    low, high = METRIC_RANGE_CM
+    weight = 0.5 * vertical ** 2
+    return (1.0 - weight) * angle + weight * 255.0 * np.clip((height_cm - low) / (high - low), 0.0, 1.0)
 
 
 def egvia_byte(egvia, valid):
@@ -80,8 +95,12 @@ def encode_banded_metric(points_for_encoding_cm, normals_aligned, valid_mask, **
     return encoded, debug
 
 
-def get_rel_banded_metric(D):
-    """ERP ``getREL`` with banded_metric EGVIA; LOA and ReD repeat its statements."""
+def encode_pinhole_unavailable(*args, **kwargs):
+    raise NotImplementedError("v3_1new pinhole encoding lives in Max's training code, not in this repo")
+
+
+def get_rel_banded_metric(D, variant="v3_1"):
+    """ERP ``getREL`` with banded_metric (or, for v3_1new, smooth c^2) EGVIA; LOA and ReD repeat its statements."""
     from third_party.rel_original.rgbd_util import processDepthImage_ERP
 
     missingMask = D == 0
@@ -105,7 +124,10 @@ def get_rel_banded_metric(D):
 
     N_z = np.clip(-N[:, :, 2], -1.0, 1.0)
     angle = np.clip((np.arccos(N_z, dtype=np.float32) / np.pi) * 255.0, 0, 255).astype(np.float32)
-    egvia = egvia_byte(banded_metric_egvia(angle, pcRot[:, :, 2]), ~missingMask)
+    if variant == "v3_1new":
+        egvia = egvia_byte(smooth_weight_egvia(angle, pcRot[:, :, 2], N_z), ~missingMask)
+    else:
+        egvia = egvia_byte(banded_metric_egvia(angle, pcRot[:, :, 2]), ~missingMask)
 
     I = np.stack([egvia, HA, RD], axis=2).astype(np.float32)
     I = np.nan_to_num(I, nan=255.0)
@@ -122,9 +144,16 @@ def apply_variant(variant, frozen=None):
     alpha = VARIANT_ALPHA[variant]
     # Both are read by generate_rel_plus_v2 at call time.
     generator.REL_PLUS_V2_ALPHA = VARIANT_ALPHA["v2_1"] if alpha is None else alpha
-    generator.encode_rel_channels = encoding.encode_rel_channels if alpha is not None else encode_banded_metric
+    generator.encode_rel_channels = (
+        encoding.encode_rel_channels if alpha is not None
+        else encode_pinhole_unavailable if variant == "v3_1new" else encode_banded_metric
+    )
     if frozen is not None and "getREL" in frozen:
-        frozen["getREL"] = get_rel_banded_metric if alpha is None else functools.partial(getREL, alpha=alpha)
+        frozen["getREL"] = (
+            functools.partial(getREL, alpha=alpha) if alpha is not None
+            else functools.partial(get_rel_banded_metric, variant="v3_1new") if variant == "v3_1new"
+            else get_rel_banded_metric
+        )
     return alpha
 
 
