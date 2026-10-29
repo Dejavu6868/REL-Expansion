@@ -217,6 +217,73 @@ def test_bad_erp_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra)
     assert not (tmp_path / "output").exists()
 
 
+@pytest.mark.parametrize("middle_height", [32, 48])
+def test_polar_scaled_tiles_keep_each_zone_to_its_own_rows(middle_height):
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb + modal_x
+
+    torch.manual_seed(0)
+    full = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    polar = torch.randn(1, 3, 32, 64), torch.randn(1, 3, 32, 64)  # unrelated, so each row shows its source
+    windows = ev.erp_tile_windows(64, 128, 3, 8, 32, 32)  # rows 0, 16, 32; columns wrap across the seam
+    start = (64 - middle_height) // 2
+    for exp_sum in (False, True):
+        fused = ev.predict_polar_scaled_tiles(
+            PixelwiseNet(), full, polar, windows, (32, 32), (start, start + middle_height), "cpu", None, exp_sum,
+        )
+        to_fused = (lambda logits: logits.exp()) if exp_sum else ev.class_probabilities
+        native = to_fused(full[0] + full[1])
+        small = torch.nn.functional.interpolate(  # the polar tiles reproduce the small whole pass, resized back
+            to_fused(polar[0] + polar[1]), size=(64, 128), mode="bilinear", align_corners=False
+        )
+        rows = torch.zeros(64, dtype=torch.bool)
+        rows[start:start + middle_height] = True
+        assert torch.allclose(fused[:, :, rows], native[:, :, rows], rtol=1e-5, atol=1e-6)
+        assert torch.allclose(fused[:, :, ~rows], small[:, :, ~rows], rtol=1e-5, atol=1e-6)
+
+
+def test_smmf_layout_with_polar_scale_passes_the_argument_checks(monkeypatch, tmp_path):
+    for middle in ([], ["--erp-tile-middle-height", "1366"]):
+        output = tmp_path / "output{}".format(len(middle))
+        monkeypatch.setattr(sys, "argv", [
+            "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+            "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
+            "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
+            "--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
+            "--erp-tile-column-offset", "-652", "--erp-tile-exp-sum", "--erp-tile-polar-scale", "0.5",
+        ] + middle)
+        with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
+            ev.main()
+        assert output.exists()
+
+
+@pytest.mark.parametrize("extra", [
+    ["--erp-tile-polar-scale", "0.5"],
+    ["--erp-tiles", "3", "8", "--erp-tile-middle-height", "512"],
+    ["--erp-tiles", "2", "8", "--erp-tile-size", "512", "384", "--erp-tile-polar-scale", "0.5"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--infer-scale", "0.5"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--polar-caps", "384"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "1"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.3"],  # 384 x 0.3 is not a whole tile
+    ["--erp-tiles", "3", "8", "--erp-tile-size", "400", "384", "--erp-tile-polar-scale", "0.5"],  # rows don't meet
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-middle-height", "383"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-middle-height", "385"],
+])
+def test_bad_polar_scaled_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def test_polar_caps_turn_the_poles_onto_the_equator_and_cover_the_caps():
     rng = np.random.default_rng(0)
     directions = rng.normal(size=(100, 3))

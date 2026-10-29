@@ -399,6 +399,32 @@ def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channel
     return total / count
 
 
+def predict_polar_scaled_tiles(network, full, polar, windows, tile_size, middle_rows, device, channels=None,
+                               exp_sum=False):
+    """Evaluation-size tile fusion with the first and last tile rows run on the smaller ``polar`` inputs.
+
+    ``full`` and ``polar`` are (rgb, modal_x) at the evaluation size and at the polar scale. The rows
+    ``middle_rows`` take only the middle tile row, cut ``middle_rows`` tall from ``full`` at the same columns;
+    every other row takes only the polar tile rows, fused at the polar size and resized back (bilinear).
+    """
+    import torch
+
+    height, width = full[0].shape[2:]
+    scale = polar[0].shape[2] / height
+    top, middle, bottom = sorted({row for row, _ in windows})
+    polar_windows = [(round(row * scale), round(left * scale)) for row, left in windows if row in (top, bottom)]
+    polar_size = tuple(int(round(length * scale)) for length in tile_size)
+    fused = predict_erp_tiles(network, *polar, polar_windows, polar_size, device, channels, exp_sum)
+    fused = torch.nn.functional.interpolate(fused, size=(height, width), mode="bilinear", align_corners=False)
+    start, end = middle_rows
+    middle_windows = [(0, left) for row, left in windows if row == middle]
+    fused[:, :, start:end] = predict_erp_tiles(
+        network, full[0][:, :, start:end], full[1][:, :, start:end], middle_windows,
+        (end - start, tile_size[1]), device, channels, exp_sum,
+    )
+    return fused
+
+
 def unit_directions(longitude, latitude):
     """Unit vectors with z up and longitude 0 along x (angles in radians)."""
     return np.stack([
@@ -682,6 +708,17 @@ def main():
         "outputs, instead of averaging the softmax",
     )
     parser.add_argument(
+        "--erp-tile-polar-scale", type=float, default=None, metavar="S",
+        help="with a 3-row tile grid, cut the top and bottom rows from the panorama resized by S (same place, "
+        "S times smaller) and use them only outside the middle row; the middle row stays at the evaluation "
+        "size. 0.5 with SMMF's 3 x 7 layout halves it beyond +-47.5 deg",
+    )
+    parser.add_argument(
+        "--erp-tile-middle-height", type=int, default=None, metavar="H",
+        help="with --erp-tile-polar-scale, make the middle-row tiles H tall, centred on the equator "
+        "(default the tile height); 1366 at 2048 rows reaches +-60 deg",
+    )
+    parser.add_argument(
         "--polar-caps", type=int, default=None, metavar="SIZE",
         help="replace the bands beyond +-60 deg by two SIZE x SIZE tiles, {} degrees wide, centred on "
         "the poles of the sphere turned 90 deg; 384 at 1024 x 2048 and 768 at 2048 x 4096 keep the "
@@ -746,6 +783,37 @@ def main():
             )
         except ValueError as error:
             parser.error(str(error))
+    polar_tiles = None
+    if args.erp_tile_middle_height is not None and args.erp_tile_polar_scale is None:
+        parser.error("--erp-tile-middle-height needs --erp-tile-polar-scale")
+    if args.erp_tile_polar_scale is not None:
+        scale = args.erp_tile_polar_scale
+        if args.erp_tiles is None or args.erp_tiles[0] != 3:
+            parser.error("--erp-tile-polar-scale needs --erp-tiles with 3 rows")
+        if args.infer_scale != 1.0 or args.polar_caps is not None:
+            parser.error("--erp-tile-polar-scale keeps the middle row at the evaluation size; "
+                         "drop --infer-scale and --polar-caps")
+        if not 0 < scale < 1:
+            parser.error("--erp-tile-polar-scale must be between 0 and 1")
+        if 2 * args.erp_tile_size[0] < args.height:
+            parser.error("--erp-tile-polar-scale needs the top and bottom tile rows to meet")
+        middle_height = args.erp_tile_size[0] if args.erp_tile_middle_height is None else args.erp_tile_middle_height
+        if not args.erp_tile_size[0] <= middle_height <= args.height or (args.height - middle_height) % 2:
+            parser.error("--erp-tile-middle-height must be between the tile height and --height, "
+                         "and leave an even number of rows")
+        tops = (tile_windows[0][0], tile_windows[-1][0])
+        lengths = [args.height, args.width, *args.erp_tile_size] + [
+            value for window in tile_windows if window[0] in tops for value in window
+        ]
+        if any(length * scale != int(length * scale) for length in lengths):
+            parser.error("--erp-tile-polar-scale must map the panorama, the tile size and the "
+                         "polar tile origins to whole pixels")
+        start = (args.height - middle_height) // 2
+        polar_tiles = {
+            "scale": scale,
+            "size": (int(args.height * scale), int(args.width * scale)),
+            "middle_rows": (start, start + middle_height),
+        }
     caps = None
     if args.polar_caps is not None:
         if args.polar_caps <= 0 or args.polar_caps % STRIP_ROW_MULTIPLE:
@@ -796,7 +864,18 @@ def main():
         inputs = [
             frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
         ]
-        if tile_windows is not None:  # mean probabilities; only their argmax is used below
+        if polar_tiles is not None:  # mean probabilities; only their argmax is used below
+            polar_rgb, polar_x, _ = load_sample(
+                sample, polar_tiles["size"], lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
+            )
+            polar_inputs = [
+                frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (polar_rgb, polar_x)
+            ]
+            logits = predict_polar_scaled_tiles(
+                network, inputs, polar_inputs, tile_windows, args.erp_tile_size, polar_tiles["middle_rows"],
+                device, channels, args.erp_tile_exp_sum,
+            )
+        elif tile_windows is not None:  # mean probabilities; only their argmax is used below
             logits = predict_erp_tiles(
                 network, *inputs, tile_windows, args.erp_tile_size, device, channels, args.erp_tile_exp_sum
             )
@@ -879,6 +958,16 @@ def main():
             "fusion": "sum of exp(logits)" if args.erp_tile_exp_sum else "mean softmax",
             "tile_origins": [list(window) for window in tile_windows],
             "origins_in": "network-input pixels ({} x {})".format(*infer_size),
+            "polar_rows": None if polar_tiles is None else {
+                "scale": polar_tiles["scale"],
+                "input_size": list(polar_tiles["size"]),
+                "network_tile_size": [int(length * polar_tiles["scale"]) for length in args.erp_tile_size],
+                "middle_rows": list(polar_tiles["middle_rows"]),
+                "middle_tile_size": [polar_tiles["middle_rows"][1] - polar_tiles["middle_rows"][0],
+                                     args.erp_tile_size[1]],
+                "rule": "middle_rows from the middle tile row only; all other rows from the top and bottom "
+                        "tile rows only, fused at input_size and resized back (bilinear)",
+            },
         },
         "polar_caps": None if caps is None else {
             "tile_size": args.polar_caps,
