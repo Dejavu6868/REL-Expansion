@@ -232,3 +232,32 @@ def test_eval_accepts_a_v3_1_cache(frozen, tmp_path, restore_v2_1):
     assert rv.select_for_eval("v3_1", marked, local) == "v3_1"
     assert local["getREL"] is rv.get_rel_banded_metric
     assert "metric range" in rv.describe("v3_1")
+
+
+def test_erp_v3_1new_blends_height_by_half_the_squared_vertical_component(frozen, room, restore_v2_1):
+    depth, height = room
+    local = dict(frozen)
+    rv.apply_variant("v3_1new", local)
+    encoded = local["getREL"](depth)
+    assert np.array_equal(encoded, rv.get_rel_banded_metric(depth, variant="v3_1new"))
+    v2_1 = frozen["getREL"](depth)
+    assert np.array_equal(encoded[..., 1:], v2_1[..., 1:])
+    assert np.array_equal(encoded[..., 0][depth == 0], v2_1[..., 0][depth == 0])
+    low, high = rv.METRIC_RANGE_CM
+    masks = surfaces(height)
+    for name, value, angle in (("floor", ROOM_MIN[2], 0.0), ("table", TABLE_MAX[2], 0.0), ("ceiling", ROOM_MAX[2], 255.0)):
+        expected = 0.5 * angle + 0.5 * 255.0 * np.clip((value * 100 - low) / (high - low), 0.0, 1.0)  # |c| = 1
+        assert np.median(encoded[..., 0][masks[name]]) == pytest.approx(expected, abs=2)
+    with pytest.raises(NotImplementedError):
+        rv.encode_pinhole_unavailable()
+    assert "c^2" in rv.describe("v3_1new")
+
+
+def test_eval_accepts_a_v3_1new_cache(frozen, tmp_path, restore_v2_1):
+    marked = eval_config(tmp_path, marker="v3_1new")
+    with pytest.raises(ValueError, match="trained on the v3_1new cache"):
+        rv.select_for_eval("v3_1", marked, dict(frozen))
+    local = dict(frozen)
+    assert rv.select_for_eval("v3_1new", marked, local) == "v3_1new"
+    depth = np.full((64, 128), 2.0)
+    assert np.array_equal(local["getREL"](depth), rv.get_rel_banded_metric(depth, variant="v3_1new"))

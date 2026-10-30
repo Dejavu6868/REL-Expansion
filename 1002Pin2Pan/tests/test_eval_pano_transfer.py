@@ -140,7 +140,37 @@ def test_erp_tile_windows_cover_the_panorama_and_reject_bad_grids():
     for top, left in windows:
         count[top:top + 384, np.arange(left, left + 384) % 2048] += 1
     assert count.min() >= 1
-    for grid in [(3, 7, 384, 384), (3, 8, 300, 384), (3, 8, 384, 200), (1, 8, 384, 384), (0, 8, 384, 384)]:
+    windows = ev.erp_tile_windows(2048, 4096, 3, 7, 1080, 1080)  # SMMF's 3 x 7 layout: 4096 / 7 is not whole
+    assert sorted({top for top, _ in windows}) == [0, 484, 968]
+    assert sorted({left for _, left in windows}) == [0, 585, 1170, 1755, 2340, 2925, 3510]
+    count = np.zeros((2048, 4096), dtype=int)
+    for top, left in windows:
+        count[top:top + 1080, np.arange(left, left + 1080) % 4096] += 1
+    assert count.min() >= 1
+    windows = ev.erp_tile_windows(2048, 4096, 3, 7, 1080, 1080, 720)  # REL-SF4PASS's stated stride, wrapping
+    assert sorted({top for top, _ in windows}) == [0, 484, 968]
+    assert [left for top, left in windows if top == 0] == [0, 720, 1440, 2160, 2880, 3600, 224]
+    count = np.zeros((2048, 4096), dtype=int)
+    for top, left in windows:
+        count[top:top + 1080, np.arange(left, left + 1080) % 4096] += 1
+    assert count.min() >= 1
+    windows = ev.erp_tile_windows(2048, 4096, 3, 7, 1080, 1080, 720, -652)  # SMMF's code: 652 px cyclic pad
+    assert [left for top, left in windows if top == 0] == [3444, 68, 788, 1508, 2228, 2948, 3668]
+    count = np.zeros((2048, 4096), dtype=int)
+    for top, left in windows:
+        count[top:top + 1080, np.arange(left, left + 1080) % 4096] += 1
+    assert count.min() >= 1
+    windows = ev.erp_tile_windows(1536, 3072, 3, 8, 576, 576)  # the 3 x 8 grid at --infer-scale 0.75 of 2048 x 4096
+    assert sorted({top for top, _ in windows}) == [0, 480, 960]
+    assert sorted({left for _, left in windows}) == list(range(0, 3072, 384))
+    count = np.zeros((1536, 3072), dtype=int)
+    for top, left in windows:
+        count[top:top + 576, np.arange(left, left + 576) % 3072] += 1
+    assert count.min() >= 1
+    for stride in (1081, 500):  # wider than a tile; 7 x 500 columns leave a gap
+        with pytest.raises(ValueError):
+            ev.erp_tile_windows(2048, 4096, 3, 7, 1080, 1080, stride)
+    for grid in [(3, 4, 384, 384), (3, 8, 300, 384), (3, 8, 384, 200), (1, 8, 384, 384), (0, 8, 384, 384)]:
         with pytest.raises(ValueError):
             ev.erp_tile_windows(1024, 2048, *grid)
 
@@ -160,16 +190,154 @@ def test_erp_tiles_reproduce_the_whole_pass_for_a_pixelwise_net():
         tiled = ev.predict_erp_tiles(PixelwiseNet(), rgb, modal_x, windows, (32, 32), "cpu", channels)
         assert torch.allclose(tiled, ev.class_probabilities(whole, channels), atol=1e-6)
         assert torch.equal(ev.predict_classes(tiled, channels), ev.predict_classes(whole, channels))
+        summed = ev.predict_erp_tiles(PixelwiseNet(), rgb, modal_x, windows, (32, 32), "cpu", channels, True)
+        assert torch.allclose(summed, whole.exp(), rtol=1e-5)
+        assert torch.equal(ev.predict_classes(summed, channels), ev.predict_classes(whole, channels))
     assert torch.allclose(ev.class_probabilities(whole, [0, 2]).sum(dim=1), torch.ones(1, 64, 128))
     assert (ev.class_probabilities(whole, [0, 2])[:, 1] == 0).all()
 
 
 @pytest.mark.parametrize("extra", [
-    ["--erp-tiles", "3", "7"],
+    ["--erp-tiles", "3", "4"],
+    ["--erp-tile-column-stride", "720"],
+    ["--erp-tiles", "3", "7", "--erp-tile-column-offset", "-652"],
+    ["--erp-tile-exp-sum"],
     ["--erp-tiles", "3", "8", "--polar-strips", "32"],
-    ["--erp-tiles", "3", "8", "--infer-scale", "0.5"],
+    ["--erp-tiles", "3", "8", "--erp-tile-size", "768", "768", "--infer-scale", "0.25"],  # 768 > 256 input rows
 ])
 def test_bad_erp_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
+@pytest.mark.parametrize("middle_height", [32, 48])
+def test_polar_scaled_tiles_keep_each_zone_to_its_own_rows(middle_height):
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb + modal_x
+
+    torch.manual_seed(0)
+    full = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    polar = torch.randn(1, 3, 32, 64), torch.randn(1, 3, 32, 64)  # unrelated, so each row shows its source
+    windows = ev.erp_tile_windows(64, 128, 3, 8, 32, 32)  # rows 0, 16, 32; columns wrap across the seam
+    start = (64 - middle_height) // 2
+    for exp_sum in (False, True):
+        fused = ev.predict_polar_scaled_tiles(
+            PixelwiseNet(), full, polar, windows, (32, 32), (start, start + middle_height), "cpu", None, exp_sum,
+        )
+        to_fused = (lambda logits: logits.exp()) if exp_sum else ev.class_probabilities
+        native = to_fused(full[0] + full[1])
+        small = torch.nn.functional.interpolate(  # the polar tiles reproduce the small whole pass, resized back
+            to_fused(polar[0] + polar[1]), size=(64, 128), mode="bilinear", align_corners=False
+        )
+        rows = torch.zeros(64, dtype=torch.bool)
+        rows[start:start + middle_height] = True
+        assert torch.allclose(fused[:, :, rows], native[:, :, rows], rtol=1e-5, atol=1e-6)
+        assert torch.allclose(fused[:, :, ~rows], small[:, :, ~rows], rtol=1e-5, atol=1e-6)
+
+
+def test_smmf_layout_with_polar_scale_passes_the_argument_checks(monkeypatch, tmp_path):
+    for middle in ([], ["--erp-tile-middle-height", "1366"]):
+        output = tmp_path / "output{}".format(len(middle))
+        monkeypatch.setattr(sys, "argv", [
+            "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+            "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
+            "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
+            "--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
+            "--erp-tile-column-offset", "-652", "--erp-tile-exp-sum", "--erp-tile-polar-scale", "0.5",
+        ] + middle)
+        with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
+            ev.main()
+        assert output.exists()
+
+
+@pytest.mark.parametrize("extra", [
+    ["--erp-tile-polar-scale", "0.5"],
+    ["--erp-tiles", "3", "8", "--erp-tile-middle-height", "512"],
+    ["--erp-tiles", "2", "8", "--erp-tile-size", "512", "384", "--erp-tile-polar-scale", "0.5"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--infer-scale", "0.5"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--polar-caps", "384"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "1"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.3"],  # 384 x 0.3 is not a whole tile
+    ["--erp-tiles", "3", "8", "--erp-tile-size", "400", "384", "--erp-tile-polar-scale", "0.5"],  # rows don't meet
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-middle-height", "383"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-middle-height", "385"],
+])
+def test_bad_polar_scaled_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
+def test_polar_caps_turn_the_poles_onto_the_equator_and_cover_the_caps():
+    rng = np.random.default_rng(0)
+    directions = rng.normal(size=(100, 3))
+    directions /= np.linalg.norm(directions, axis=1, keepdims=True)
+    assert np.allclose(ev.from_cap_frame(ev.to_cap_frame(directions)), directions)
+    poles = ev.longitude_latitude(ev.to_cap_frame(np.array([[0.0, 0.0, 1.0], [0.0, 0.0, -1.0]])))
+    assert np.allclose(np.degrees(poles[0]), [-90, 90]) and np.allclose(poles[1], 0)
+    for height, size in ((1024, 384), (2048, 768)):
+        caps = ev.polar_cap_grids(height, 2 * height, size)
+        assert (caps["top_end"], caps["bottom_start"]) == ev.polar_band_rows(height)
+        assert caps["tiles"].shape == (2, size, size, 2) and np.abs(caps["tiles"]).max() <= 1
+        assert caps["north"].shape == (caps["top_end"], 2 * height, 2)
+        assert caps["south"].shape == (height - caps["bottom_start"], 2 * height, 2)
+        for back in (caps["north"], caps["south"]):  # every polar pixel lies inside its tile, with context
+            assert np.abs(back).max() < 30.1 / 33.75
+    caps = ev.polar_cap_grids(1024, 2048, 384)
+    assert caps["top_end"] == 171 and caps["bottom_start"] == 854
+
+
+def test_polar_caps_reproduce_a_smooth_whole_pass_for_a_pixelwise_net():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width, size = 128, 256, 64
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    steps = torch.as_tensor(np.digitize(longitude, [-1, 1]), dtype=torch.float32)[None, None].repeat(1, 3, 1, 1)
+    caps = ev.polar_cap_grids(height, width, size)
+    rgb_tiles, x_tiles = ev.sample_cap_tiles(smooth, steps, caps, "cpu")
+    assert rgb_tiles.shape == x_tiles.shape == (2, 3, size, size)
+    assert x_tiles.unique().tolist() == [0.0, 1.0, 2.0]  # nearest: X values are never blended
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    top_end, bottom_start = caps["top_end"], caps["bottom_start"]
+    for channels in (None, [0, 2]):
+        expected = ev.class_probabilities(whole, channels)
+        north, south = ev.predict_polar_caps(PixelwiseNet(), smooth, smooth, caps, "cpu", channels)
+        assert torch.allclose(north, expected[:, :, :top_end], atol=0.01)  # a mirrored cap is off by 0.14
+        assert torch.allclose(south, expected[:, :, bottom_start:], atol=0.01)
+        assert torch.allclose(north.sum(dim=1), torch.ones(1, top_end, width), atol=1e-5)
+
+
+@pytest.mark.parametrize("extra", [
+    ["--polar-caps", "0"],
+    ["--polar-caps", "400"],
+    ["--polar-caps", "384", "--polar-strips", "32"],
+    ["--polar-caps", "384", "--infer-scale", "0.5"],
+])
+def test_bad_polar_caps_are_rejected_before_loading(monkeypatch, tmp_path, extra):
     monkeypatch.setattr(sys, "argv", [
         "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
         "--semantic-labels", "unused.json", "--config", "unused.json",

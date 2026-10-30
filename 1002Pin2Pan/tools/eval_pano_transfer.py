@@ -30,8 +30,14 @@ normalisation are the frozen training ones; only the input images change.
 * ``--erp-tiles M N`` runs the network on an M x N grid of overlapping
   windows cut from the evaluation-size panorama (RGB and the X encoded on the
   whole panorama), each ``--erp-tile-size`` pixels. Rows span the height
-  exactly; columns are W/N apart and wrap across the 180-degree seam. Each
+  exactly; columns start floor(i W / N) apart and wrap across the 180-degree seam. Each
   pixel takes the mean softmax of the tiles covering it.
+* ``--polar-caps SIZE`` replaces the bands beyond +-60 degrees by two
+  SIZE x SIZE tiles, 67.5 degrees wide, centred on the poles of the sphere
+  turned 90 degrees about the x axis, where the poles lie on the equator and
+  ERP barely stretches. RGB (bilinear) and the X encoded on the whole
+  panorama (nearest) are resampled into each tile; the tile softmax is read
+  back onto the polar rows. It works with the whole pass or ``--erp-tiles``.
 
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
@@ -46,6 +52,10 @@ ERP equivalent.
 An RGB-only checkpoint (``rgb_only.py``, config ``architecture`` set by
 ``train_rgb_only.py``) gets zeros as X, which its network ignores; it needs no
 HHA cache report.
+
+A gated REL+ checkpoint (``gated_relplus.py``, trained by ``train_gated_relplus.py``) runs
+with the whole pass or ERP tiles. Every window gets its own gate choice, and metrics.json
+counts the choices per window row (``gate_counts_per_window_row``).
 """
 
 import argparse
@@ -60,6 +70,7 @@ import cv2
 import numpy as np
 
 import relplus_variant as rv
+import gated_relplus as gr
 import rgb_only as ro
 from cross_projection import decode_erp_depth
 
@@ -83,6 +94,10 @@ POLAR_STRIP_SCALE = 0.5
 STRIP_ROW_MULTIPLE = 32
 # --erp-tiles: per-tile class probabilities are averaged over this many tiles per forward pass.
 TILE_BATCH = 8
+# --polar-caps: tile width; it covers the 30-degree caps with 3.75 degrees of context. After the
+# turn the north pole sits at longitude -90 and the south pole at +90 (degrees, latitude 0).
+POLAR_CAP_FOV_DEG = 67.5
+POLAR_CAP_CENTRE_LONGITUDES_DEG = (-90.0, 90.0)
 
 
 def label_lookup(semantic_labels_path):
@@ -250,15 +265,22 @@ def predict_with_wrap(network, rgb, modal_x, wrap_pad, device, output_size=None)
     return logits
 
 
+def polar_band_rows(height):
+    """End of the top band and start of the bottom band (beyond +-60 deg), as ``elevation_band_confusions``."""
+    elevation = 90.0 - np.arange(height) * 180.0 / height
+    return (
+        int((elevation > POLAR_STRIP_ELEVATION_DEG).sum()),
+        int(np.argmax(elevation <= -POLAR_STRIP_ELEVATION_DEG)),
+    )
+
+
 def polar_strip_rows(height, margin, scale=POLAR_STRIP_SCALE):
     """Row windows of the three-strip pass; the core split is the band rule of ``elevation_band_confusions``.
 
     ``top_end`` and ``bottom_start`` (evaluation rows) bound the middle core, ``middle`` is the
     middle strip in evaluation rows, ``top`` and ``bottom`` the polar strips in scaled rows.
     """
-    elevation = 90.0 - np.arange(height) * 180.0 / height
-    top_end = int((elevation > POLAR_STRIP_ELEVATION_DEG).sum())
-    bottom_start = int(np.argmax(elevation <= -POLAR_STRIP_ELEVATION_DEG))
+    top_end, bottom_start = polar_band_rows(height)
     scaled_height = height * scale
     if scaled_height != int(scaled_height):
         raise ValueError("--height times the polar scale must be a whole number of rows")
@@ -315,8 +337,11 @@ def predict_polar_strips(network, full, polar, rows, wrap_pad, polar_wrap_pad, d
     ], dim=2)
 
 
-def erp_tile_windows(height, width, rows, columns, tile_height, tile_width):
-    """(top, left) of each tile: rows span the height exactly, columns are ``width / columns`` apart."""
+def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, column_stride=None, column_offset=0):
+    """(top, left) of each tile: rows span the height exactly, column i starts at ``floor(i * width / columns)``.
+
+    With ``column_stride``, column i starts at ``column_offset + i * column_stride`` wrapped by the width instead.
+    """
     if rows < 1 or columns < 1:
         raise ValueError("the tile grid needs at least one row and one column")
     if rows == 1:
@@ -327,12 +352,26 @@ def erp_tile_windows(height, width, rows, columns, tile_height, tile_width):
         row_stride, remainder = divmod(height - tile_height, rows - 1)
         if remainder or not 0 < row_stride <= tile_height:
             raise ValueError("tile rows must cover the height with a whole, positive stride")
-    column_stride, remainder = divmod(width, columns)
-    if remainder or not column_stride <= tile_width <= width:
-        raise ValueError("tile columns must divide the width and cover it")
-    return [
-        (row * row_stride, column * column_stride) for row in range(rows) for column in range(columns)
-    ]
+    if column_stride is None:
+        if not -(-width // columns) <= tile_width <= width:
+            raise ValueError("tile columns must cover the width")
+        lefts = [column * width // columns for column in range(columns)]
+    else:
+        if not 0 < column_stride <= tile_width <= width or (columns - 1) * column_stride + tile_width < width:
+            raise ValueError("tile columns must cover the width")
+        lefts = [(column_offset + column * column_stride) % width for column in range(columns)]
+    return [(row * row_stride, left) for row in range(rows) for left in lefts]
+
+
+def gate_rows(windows, polar_tiles=None):
+    """The window row of each network input, in the order the predictors feed them (gated REL+ counts)."""
+    if windows is None:
+        return ["whole"]
+    if polar_tiles is None:
+        return ["row {}".format(top) for top, _ in windows]
+    top, middle, bottom = sorted({row for row, _ in windows})
+    return (["row {} (x{:g})".format(row, polar_tiles["scale"]) for row, _ in windows if row in (top, bottom)]
+            + ["row {}".format(middle) for row, _ in windows if row == middle])
 
 
 def class_probabilities(logits, channels=None):
@@ -346,8 +385,11 @@ def class_probabilities(logits, channels=None):
     return masked.softmax(dim=1)
 
 
-def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channels=None):
-    """Mean class probabilities over the tiles covering each pixel; columns wrap at the seam."""
+def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channels=None, exp_sum=False):
+    """Mean class probabilities over the tiles covering each pixel; columns wrap at the seam.
+
+    With ``exp_sum`` each tile contributes exp(logits): CMX's val_func_process_rgbX returns those, and SMMF sums them.
+    """
     import torch
 
     height, width = rgb.shape[2:]
@@ -360,7 +402,8 @@ def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channel
             torch.cat([image[:, :, top:top + tile_height, cols] for (top, _), cols in zip(batch, columns)])
             for image in (rgb, modal_x)
         ]
-        probabilities = class_probabilities(predict_with_wrap(network, *tiles, 0, device), channels)
+        logits = predict_with_wrap(network, *tiles, 0, device)
+        probabilities = logits.exp() if exp_sum else class_probabilities(logits, channels)
         if total is None:
             total = torch.zeros((1, probabilities.shape[1], height, width), device=device)
         for tile, (top, _), cols in zip(probabilities, batch, columns):
@@ -370,6 +413,121 @@ def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channel
     if not bool((count > 0).all()):
         raise ValueError("the tile grid leaves panorama pixels uncovered")
     return total / count
+
+
+def predict_polar_scaled_tiles(network, full, polar, windows, tile_size, middle_rows, device, channels=None,
+                               exp_sum=False):
+    """Evaluation-size tile fusion with the first and last tile rows run on the smaller ``polar`` inputs.
+
+    ``full`` and ``polar`` are (rgb, modal_x) at the evaluation size and at the polar scale. The rows
+    ``middle_rows`` take only the middle tile row, cut ``middle_rows`` tall from ``full`` at the same columns;
+    every other row takes only the polar tile rows, fused at the polar size and resized back (bilinear).
+    """
+    import torch
+
+    height, width = full[0].shape[2:]
+    scale = polar[0].shape[2] / height
+    top, middle, bottom = sorted({row for row, _ in windows})
+    polar_windows = [(round(row * scale), round(left * scale)) for row, left in windows if row in (top, bottom)]
+    polar_size = tuple(int(round(length * scale)) for length in tile_size)
+    fused = predict_erp_tiles(network, *polar, polar_windows, polar_size, device, channels, exp_sum)
+    fused = torch.nn.functional.interpolate(fused, size=(height, width), mode="bilinear", align_corners=False)
+    start, end = middle_rows
+    middle_windows = [(0, left) for row, left in windows if row == middle]
+    fused[:, :, start:end] = predict_erp_tiles(
+        network, full[0][:, :, start:end], full[1][:, :, start:end], middle_windows,
+        (end - start, tile_size[1]), device, channels, exp_sum,
+    )
+    return fused
+
+
+def unit_directions(longitude, latitude):
+    """Unit vectors with z up and longitude 0 along x (angles in radians)."""
+    return np.stack([
+        np.cos(latitude) * np.cos(longitude), np.cos(latitude) * np.sin(longitude), np.sin(latitude)
+    ], axis=-1)
+
+
+def longitude_latitude(directions):
+    return np.arctan2(directions[..., 1], directions[..., 0]), np.arcsin(np.clip(directions[..., 2], -1, 1))
+
+
+def to_cap_frame(directions):
+    """Turn the sphere 90 degrees about x, (x, y, z) -> (x, -z, y), so the poles land on the equator."""
+    x, y, z = np.moveaxis(directions, -1, 0)
+    return np.stack([x, -z, y], axis=-1)
+
+
+def from_cap_frame(directions):
+    x, y, z = np.moveaxis(directions, -1, 0)
+    return np.stack([x, z, -y], axis=-1)
+
+
+def polar_cap_grids(height, width, size, fov_deg=POLAR_CAP_FOV_DEG):
+    """``grid_sample`` coordinates between the ERP and the two cap tiles (north, south).
+
+    ``tiles`` (2, size, size, 2): where each tile pixel reads the ERP padded by one column on each
+    side, so bilinear sampling wraps at the seam. ``north`` and ``south``: where each pixel of the
+    polar rows (``polar_band_rows``) reads its tile. ERP row 0 is the zenith, column 0 starts at -pi.
+    """
+    top_end, bottom_start = polar_band_rows(height)
+    half = np.radians(fov_deg) / 2
+    steps = (np.arange(size) + 0.5) / size * 2 * half - half
+    centres = np.radians(POLAR_CAP_CENTRE_LONGITUDES_DEG)
+    tiles = []
+    for centre in centres:
+        cap_longitude, cap_latitude = np.meshgrid(centre + steps, -steps)
+        longitude, latitude = longitude_latitude(from_cap_frame(unit_directions(cap_longitude, cap_latitude)))
+        tiles.append(np.stack([longitude / np.pi * width / (width + 2), -latitude / (np.pi / 2)], axis=-1))
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    back = []
+    for rows, centre in zip((slice(0, top_end), slice(bottom_start, height)), centres):
+        cap_longitude, cap_latitude = longitude_latitude(
+            to_cap_frame(unit_directions(longitude[rows], latitude[rows]))
+        )
+        back.append(np.stack([(cap_longitude - centre) / half, -cap_latitude / half], axis=-1))
+    return {
+        "top_end": top_end,
+        "bottom_start": bottom_start,
+        "tiles": np.stack(tiles).astype(np.float32),
+        "north": back[0].astype(np.float32),
+        "south": back[1].astype(np.float32),
+    }
+
+
+def sample_cap_tiles(rgb, modal_x, caps, device):
+    """The two cap tiles: RGB bilinear, X nearest so depth edges are not blended."""
+    import torch
+    import torch.nn.functional as F
+
+    grid = torch.as_tensor(caps["tiles"], device=device)
+    return [
+        F.grid_sample(
+            F.pad(image.to(device), (1, 1, 0, 0), mode="circular").expand(2, -1, -1, -1), grid,
+            mode=mode, padding_mode="border", align_corners=False,
+        )
+        for image, mode in ((rgb, "bilinear"), (modal_x, "nearest"))
+    ]
+
+
+def predict_polar_caps(network, rgb, modal_x, caps, device, channels=None):
+    """Class probabilities of the north and south polar rows, read back from the cap tiles."""
+    import torch
+    import torch.nn.functional as F
+
+    probabilities = class_probabilities(
+        predict_with_wrap(network, *sample_cap_tiles(rgb, modal_x, caps, device), 0, device), channels
+    )
+    return [
+        F.grid_sample(
+            probabilities[index:index + 1], torch.as_tensor(caps[name], device=device)[None],
+            mode="bilinear", align_corners=False,
+        )
+        for index, name in enumerate(("north", "south"))
+    ]
 
 
 def _chunked_attention_forward(module, budget_bytes, x, H, W):
@@ -548,7 +706,39 @@ def main():
     )
     parser.add_argument(
         "--erp-tile-size", type=int, nargs=2, default=(384, 384), metavar=("H", "W"),
-        help="tile size in evaluation pixels (default 384 x 384, 67.5 degrees at 1024 x 2048)",
+        help="tile size in network-input pixels, i.e. after --infer-scale "
+        "(default 384 x 384, 67.5 degrees at 1024 x 2048)",
+    )
+    parser.add_argument(
+        "--erp-tile-column-stride", type=int, default=None, metavar="S",
+        help="start column i at O + i * S (wrapping) instead of floor(i * W / N); 720 with --erp-tiles 3 7 "
+        "and 1080 x 1080 tiles at 2048 x 4096 is REL-SF4PASS's SMMF stride",
+    )
+    parser.add_argument(
+        "--erp-tile-column-offset", type=int, default=0, metavar="O",
+        help="first column start for --erp-tile-column-stride; -652 matches SMMF's 652 px cyclic padding",
+    )
+    parser.add_argument(
+        "--erp-tile-exp-sum", action="store_true",
+        help="fuse overlapping tiles by summing exp(logits), as SMMF sums CMX's val_func_process_rgbX "
+        "outputs, instead of averaging the softmax",
+    )
+    parser.add_argument(
+        "--erp-tile-polar-scale", type=float, default=None, metavar="S",
+        help="with a 3-row tile grid, cut the top and bottom rows from the panorama resized by S (same place, "
+        "S times smaller) and use them only outside the middle row; the middle row stays at the evaluation "
+        "size. 0.5 with SMMF's 3 x 7 layout halves it beyond +-47.5 deg",
+    )
+    parser.add_argument(
+        "--erp-tile-middle-height", type=int, default=None, metavar="H",
+        help="with --erp-tile-polar-scale, make the middle-row tiles H tall, centred on the equator "
+        "(default the tile height); 1366 at 2048 rows reaches +-60 deg",
+    )
+    parser.add_argument(
+        "--polar-caps", type=int, default=None, metavar="SIZE",
+        help="replace the bands beyond +-60 deg by two SIZE x SIZE tiles, {} degrees wide, centred on "
+        "the poles of the sphere turned 90 deg; 384 at 1024 x 2048 and 768 at 2048 x 4096 keep the "
+        "panorama's pixel density".format(POLAR_CAP_FOV_DEG),
     )
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
@@ -593,13 +783,60 @@ def main():
         polar_size = (int(args.height * POLAR_STRIP_SCALE), int(round(args.width * POLAR_STRIP_SCALE)))
         polar_wrap_pad = int(round(args.wrap_pad * POLAR_STRIP_SCALE))
     tile_windows = None
+    if args.erp_tile_column_stride is not None and args.erp_tiles is None:
+        parser.error("--erp-tile-column-stride needs --erp-tiles")
+    if args.erp_tile_column_offset and args.erp_tile_column_stride is None:
+        parser.error("--erp-tile-column-offset needs --erp-tile-column-stride")
+    if args.erp_tile_exp_sum and args.erp_tiles is None:
+        parser.error("--erp-tile-exp-sum needs --erp-tiles")
     if args.erp_tiles is not None:
-        if args.polar_strips is not None or args.infer_scale != 1.0:
-            parser.error("--erp-tiles cuts the evaluation-size panorama; drop --polar-strips and --infer-scale")
-        try:
-            tile_windows = erp_tile_windows(args.height, args.width, *args.erp_tiles, *args.erp_tile_size)
+        if args.polar_strips is not None:
+            parser.error("--erp-tiles replaces the whole pass; drop --polar-strips")
+        try:  # tiles are cut from the network-input panorama (evaluation size times --infer-scale)
+            tile_windows = erp_tile_windows(
+                *infer_size, *args.erp_tiles, *args.erp_tile_size,
+                args.erp_tile_column_stride, args.erp_tile_column_offset,
+            )
         except ValueError as error:
             parser.error(str(error))
+    polar_tiles = None
+    if args.erp_tile_middle_height is not None and args.erp_tile_polar_scale is None:
+        parser.error("--erp-tile-middle-height needs --erp-tile-polar-scale")
+    if args.erp_tile_polar_scale is not None:
+        scale = args.erp_tile_polar_scale
+        if args.erp_tiles is None or args.erp_tiles[0] != 3:
+            parser.error("--erp-tile-polar-scale needs --erp-tiles with 3 rows")
+        if args.infer_scale != 1.0 or args.polar_caps is not None:
+            parser.error("--erp-tile-polar-scale keeps the middle row at the evaluation size; "
+                         "drop --infer-scale and --polar-caps")
+        if not 0 < scale < 1:
+            parser.error("--erp-tile-polar-scale must be between 0 and 1")
+        if 2 * args.erp_tile_size[0] < args.height:
+            parser.error("--erp-tile-polar-scale needs the top and bottom tile rows to meet")
+        middle_height = args.erp_tile_size[0] if args.erp_tile_middle_height is None else args.erp_tile_middle_height
+        if not args.erp_tile_size[0] <= middle_height <= args.height or (args.height - middle_height) % 2:
+            parser.error("--erp-tile-middle-height must be between the tile height and --height, "
+                         "and leave an even number of rows")
+        tops = (tile_windows[0][0], tile_windows[-1][0])
+        lengths = [args.height, args.width, *args.erp_tile_size] + [
+            value for window in tile_windows if window[0] in tops for value in window
+        ]
+        if any(length * scale != int(length * scale) for length in lengths):
+            parser.error("--erp-tile-polar-scale must map the panorama, the tile size and the "
+                         "polar tile origins to whole pixels")
+        start = (args.height - middle_height) // 2
+        polar_tiles = {
+            "scale": scale,
+            "size": (int(args.height * scale), int(args.width * scale)),
+            "middle_rows": (start, start + middle_height),
+        }
+    caps = None
+    if args.polar_caps is not None:
+        if args.polar_caps <= 0 or args.polar_caps % STRIP_ROW_MULTIPLE:
+            parser.error("--polar-caps must be a positive multiple of {}".format(STRIP_ROW_MULTIPLE))
+        if args.polar_strips is not None or args.infer_scale != 1.0:
+            parser.error("--polar-caps samples the evaluation-size panorama; drop --polar-strips and --infer-scale")
+        caps = polar_cap_grids(args.height, args.width, args.polar_caps)
 
     import torch
     import torch.nn as nn
@@ -612,6 +849,9 @@ def main():
     channels = eight_class_channels(config.class_names) if args.eight_class_predictions else None
     relplus_variant = rv.select_for_eval(args.relplus_variant, config, frozen)
     rgb_only = ro.is_rgb_only(config)
+    gated = gr.is_gated(config)
+    if gated and (strip_rows is not None or caps is not None):
+        raise ValueError("gated REL+ is evaluated with the whole pass or ERP tiles only")
     hha_recipe = None
     if config.x_mode == "hha_frozen_cache" and not rgb_only:
         hha_recipe = hha_cache_recipe(
@@ -621,7 +861,7 @@ def main():
     samples = list_panoramas(args.stanford_root, args.areas)[: args.limit]
 
     device = torch.device(args.device)
-    network_class = ro.model_class() if rgb_only else frozen["EncoderDecoder"]
+    network_class = ro.model_class() if rgb_only else gr.model_class() if gated else frozen["EncoderDecoder"]
     network = network_class(cfg=config, criterion=None, norm_layer=nn.BatchNorm2d)
     epoch = frozen["load_checkpoint_once"](
         network, args.checkpoint, expected_epoch=args.expected_epoch
@@ -635,6 +875,8 @@ def main():
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
+    rows = gate_rows(tile_windows, polar_tiles)
+    gate_counts = {row: [0] * gr.BRANCHES for row in rows} if gated else None
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
             sample, infer_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
@@ -643,8 +885,25 @@ def main():
         inputs = [
             frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
         ]
-        if tile_windows is not None:  # mean probabilities; only their argmax is used below
-            logits = predict_erp_tiles(network, *inputs, tile_windows, args.erp_tile_size, device, channels)
+        if polar_tiles is not None:  # mean probabilities; only their argmax is used below
+            polar_rgb, polar_x, _ = load_sample(
+                sample, polar_tiles["size"], lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
+            )
+            polar_inputs = [
+                frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (polar_rgb, polar_x)
+            ]
+            logits = predict_polar_scaled_tiles(
+                network, inputs, polar_inputs, tile_windows, args.erp_tile_size, polar_tiles["middle_rows"],
+                device, channels, args.erp_tile_exp_sum,
+            )
+        elif tile_windows is not None:  # mean probabilities; only their argmax is used below
+            logits = predict_erp_tiles(
+                network, *inputs, tile_windows, args.erp_tile_size, device, channels, args.erp_tile_exp_sum
+            )
+            if tuple(infer_size) != (args.height, args.width):  # fused map to label size, as the whole pass does
+                logits = torch.nn.functional.interpolate(
+                    logits, size=(args.height, args.width), mode="bilinear", align_corners=False
+                )
         elif strip_rows is None:
             logits = predict_with_wrap(
                 network, *inputs, infer_wrap_pad, device, output_size=(args.height, args.width),
@@ -660,6 +919,18 @@ def main():
             logits = predict_polar_strips(
                 network, inputs, polar_inputs, strip_rows, args.wrap_pad, polar_wrap_pad, device
             )
+        if caps is not None:  # probabilities from here on; only their argmax is used below
+            if tile_windows is None:
+                logits = class_probabilities(logits, channels)
+            logits[:, :, :caps["top_end"]], logits[:, :, caps["bottom_start"]:] = predict_polar_caps(
+                network, *inputs, caps, device, channels
+            )
+        if gated:
+            if len(network.gate_log) != len(rows):
+                raise RuntimeError("{} gate choices for {} network inputs".format(len(network.gate_log), len(rows)))
+            for row, choice in zip(rows, network.gate_log):
+                gate_counts[row][choice] += 1
+            network.gate_log.clear()
         prediction = predict_classes(logits, channels)[0].cpu().numpy().astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
         confusion += hist.astype(np.int64)
@@ -709,8 +980,29 @@ def main():
         "erp_tiles": None if tile_windows is None else {
             "grid": list(args.erp_tiles),
             "tile_size": list(args.erp_tile_size),
+            "column_stride": args.erp_tile_column_stride,
+            "column_offset": args.erp_tile_column_offset,
+            "fusion": "sum of exp(logits)" if args.erp_tile_exp_sum else "mean softmax",
             "tile_origins": [list(window) for window in tile_windows],
+            "origins_in": "network-input pixels ({} x {})".format(*infer_size),
+            "polar_rows": None if polar_tiles is None else {
+                "scale": polar_tiles["scale"],
+                "input_size": list(polar_tiles["size"]),
+                "network_tile_size": [int(length * polar_tiles["scale"]) for length in args.erp_tile_size],
+                "middle_rows": list(polar_tiles["middle_rows"]),
+                "middle_tile_size": [polar_tiles["middle_rows"][1] - polar_tiles["middle_rows"][0],
+                                     args.erp_tile_size[1]],
+                "rule": "middle_rows from the middle tile row only; all other rows from the top and bottom "
+                        "tile rows only, fused at input_size and resized back (bilinear)",
+            },
         },
+        "polar_caps": None if caps is None else {
+            "tile_size": args.polar_caps,
+            "fov_deg": POLAR_CAP_FOV_DEG,
+            "turn": "90 deg about x: (x, y, z) -> (x, -z, y)",
+            "replaced_rows": [caps["top_end"], caps["bottom_start"]],
+        },
+        "gate_counts_per_window_row": gate_counts,
         "prediction_classes": list(EIGHT_CLASS_NAMES if channels else config.class_names),
         "sample_count": len(samples),
         "seconds": time.time() - started,

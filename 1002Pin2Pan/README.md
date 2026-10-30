@@ -65,7 +65,15 @@ done
 
 加 `--polar-strips <MARGIN>` 时，一次整景前向改为三次条带前向：仰角 +60° 到 −60° 的中间条带用评估尺寸（1024×2048），上下两个极区条带（|仰角| > 60°）取自缩放 0.5 倍的全景（与 `--infer-scale 0.5` 的输入相同，环形填充 64）。每个条带在 ±60° 外多带 MARGIN 行（按评估尺寸计，并在各自尺度上向上取整到 32 行的倍数）作为上下文，这些行计分前丢弃；核心行的划分与 `elevation_band_confusion.npy` 的分带规则一致。须保持 `--infer-scale 1`。`metrics.json` 的 `polar_strips` 记录边距、极区尺寸和各条带的行范围。实测网络计算量（`results/half_res_poles_2026-10-25/strip_flops.py`）：MARGIN 32 为整景 1147 GMACs 的 71%，MARGIN 64 为 79%。
 
-加 `--erp-tiles M N` 时，一次整景前向改为 M×N 个相互重叠的 ERP 窗口（不重投影），每个窗口 `--erp-tile-size` 像素（默认 384×384，在 1024×2048 上为 67.5°×67.5°）。RGB 和 X 都先在整幅全景上生成（X 的归一化仍是整景范围），再按同一窗口切出，所以 HHA 臂不受倾斜切片重力估计的影响。行窗口恰好铺满高度（3 行时行步长 320，重叠 64 像素），列步长为 W/N（8 列时 256，重叠 128 像素），列索引按宽度取模，跨 180° 接缝的窗口直接环绕，不再加 `--wrap-pad`。每个像素取覆盖它的所有窗口的 softmax 平均后取 argmax；加 `--eight-class-predictions` 时每个窗口的 softmax 只在 8 类上计算。须保持 `--infer-scale 1`，不能与 `--polar-strips` 同用。`metrics.json` 的 `erp_tiles` 记录网格、窗口尺寸和每个窗口的左上角。3×8、384×384 实测为 24 × 34.7 = 834 GMACs（整景 1147 的 73%）。
+加 `--erp-tiles M N` 时，一次整景前向改为 M×N 个相互重叠的 ERP 窗口（不重投影），每个窗口 `--erp-tile-size` 像素（默认 384×384，在 1024×2048 上为 67.5°×67.5°）。RGB 和 X 都先在整幅全景上生成（X 的归一化仍是整景范围），再按同一窗口切出，所以 HHA 臂不受倾斜切片重力估计的影响。行窗口恰好铺满高度（3 行时行步长 320，重叠 64 像素），第 i 列从 floor(i·W/N) 开始（8 列时步长 256，重叠 128 像素；W 不能被 N 整除时步长取整，如 4096 宽上 7 列）；加 `--erp-tile-column-stride S` 时第 i 列改从 O + i·S 开始并按宽度取模，O 由 `--erp-tile-column-offset O` 给出（默认 0）。2048×4096 上 `--erp-tiles 3 7 --erp-tile-size 1080 1080 --erp-tile-column-stride 720 --erp-tile-column-offset -652` 与 REL-SF4PASS 代码中 `scale_process_rgbX_smmf` 的列位置相同（左右各环形填充 652 像素后按步长 720 滑窗，列起点 3444, 68, 788, …, 3668），列索引按宽度取模，跨 180° 接缝的窗口直接环绕，不再加 `--wrap-pad`。每个像素取覆盖它的所有窗口的 softmax 平均后取 argmax；加 `--eight-class-predictions` 时每个窗口的 softmax 只在 8 类上计算。加 `--erp-tile-exp-sum` 时改为累加各窗口的 exp(logits)，与 CMX 评估器相同（`val_func_process_rgbX` 返回 exp(logits)，SMMF 的区域循环累加的就是它的输出；每像素除以窗口数不改变 argmax）。可与 `--infer-scale` 同用：此时窗口从缩放后的网络输入全景上切出（`--erp-tile-size` 以网络输入像素计，如 `--infer-scale 0.75` 时 1536×3072 上的 576×576 仍为 67.5°），融合后的概率图再双线性上采样到评估尺寸计分。不能与 `--polar-strips` 同用。`metrics.json` 的 `erp_tiles` 记录网格、窗口尺寸和每个窗口的左上角。3×8、384×384 实测为 24 × 34.7 = 834 GMACs（整景 1147 的 73%）。
+
+加 `--erp-tile-polar-scale S`（只用于 3 行网格，且不加 `--infer-scale`）时，顶行和底行窗口改从缩小 S 倍的全景上在同一位置切出（尺寸也小 S 倍），只用于中间行以外的行：这些行由顶、底两行在缩小尺寸上融合后双线性上采样回评估尺寸；中间行仍在评估尺寸上运行，并且是其所覆盖各行的唯一来源。`--erp-tile-middle-height H` 把中间行窗口改为 H 行高、以赤道为中心（默认等于窗口高度）。SMMF 的 3×7 布局加 `--erp-tile-polar-scale 0.5` 时，±47.5° 以外为半分辨率（14 个 540² 窗口 + 7 个 1080² 窗口，实测 3,885 GMACs）；再加 `--erp-tile-middle-height 1366` 时分界移到 ±60°（中间行 7 个 1366×1080 窗口，实测 5,006 GMACs）。`metrics.json` 的 `erp_tiles.polar_rows` 记录缩放比例、中间行范围和窗口尺寸。
+
+加 `--polar-caps <SIZE>` 时，|仰角| > 60° 的两个极区改由两个 SIZE×SIZE 的极冠窗口预测：先把球面绕 x 轴转 90°（(x, y, z) → (x, −z, y)），两极落到新赤道上（经度 −90° 和 +90°），那里 ERP 几乎不拉伸。每个窗口以一个极点为中心，宽 67.5°，覆盖半径 30° 的极冠，外侧至少多留 3.75° 的上下文。RGB 用双线性、X（仍在整幅全景上生成）用最近邻重采样到窗口里，所以 HHA 臂同样可用；窗口的 softmax 再用双线性读回极区每个像素，替换整景前向或 `--erp-tiles` 在这些行上的结果。极区行的划分与 `elevation_band_confusion.npy` 的分带规则一致。SIZE 须为 32 的倍数：在 1024×2048 上取 384、在原生 2048×4096（`--height 2048 --width 4096`，标签也是 2048×4096）上取 768 时，窗口的像素密度与全景相同。须保持 `--infer-scale 1`，不能与 `--polar-strips` 同用。`metrics.json` 的 `polar_caps` 记录窗口尺寸、视场、旋转和被替换的行。实测网络计算量：384×384 为 2 × 34.7 = 69 GMACs，768×768 为 2 × 168.5 = 337 GMACs。
+
+### 门控 SMMF 评估 `tools/eval_smmf_gate.py`
+
+评估已训练的门控 SMMF 权重（Pano_MA_Seg 的 `gate_mit_b2` + MLPDecoder，13 类，在全景 fold 1 上有监督训练）。读数据、建模型、严格加载权重、门控和 SMMF 窗口融合（`Evaluator.scale_process_rgbX_smmf`：环形填充、各窗口 exp(logits) 相加、两端相加）全部调用 `--smmf-root` 下的原始代码；本脚本只设置其 config 的评估字段（当前 config.py 选的是 Matterport），按区调用该融合并计分。默认是 SMMF 原布局（1080² 窗口、步长比 2/3、行起点 0/484/968、两侧环形填充 652）。`--polar-scale S`：中间行以外的各行改在缩小 S 倍的全景上运行（RGB、X、纬度均用 INTER_LINEAR，与原多尺度路径相同；窗口、填充和行起点同比缩小），融合后放大回原尺寸，只预测中间行以外的行；中间行仍在原尺寸上运行，是其覆盖各行的唯一来源。`--middle-height H` 把中间行窗口改为 H 行高、居中。`--whole-scale S` 把所有行都放在缩小 S 倍的全景上（对照）。`backbone.Gate` 上的前向钩子按区、按窗口行统计门控选择。输出 `metrics.json`（SMMF 自己的 13 类指标、各区窗口位置、门控计数、权重 SHA-256、原始源码文件的 SHA-256）、`elevation_band_confusion.npy`（13 类 argmax）和 `elevation_band_confusion_8pred.npy`（只在 8 个 SPan8 类中取 argmax）。原始前向会把 gate_selection.txt 和 gate_weights.txt 追加到工作目录，因此推理时工作目录为 `--output`。需要原始工程的 Python 环境（easydict、thop、timm、numba）。
 
 ### 针孔评估 `tools/eval_pinhole.py`
 
@@ -334,7 +342,29 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py --eight-class-predictions \
   --output <评估目录>/rgb_only_s12345_pano_8pred
 ```
 
-## 8. 已知限制
+## 8. 门控 REL+ `tools/gated_relplus.py`、`tools/train_gated_relplus.py`
+
+门控对照臂：冻结 CMX 网络加上 SMMF 的 GlobalGate。门控照搬 Max 的 `Pano_MA_Seg/models/encoders/dual_gate_segformer.py`（`GlobalGate`、`DiffSoftmax` 和门控 `forward_features`），只把门控输入通道数改为随骨干网络确定（MiT-B2 为 128，与原代码相同），键名和形状与他的门控 SMMF 权重一致（`backbone.Gate.*`，15 项，27,288 个参数）。门控读两路第一层 patch embedding，给 5 个分支打分；分支 g 在第 1..g 阶段把 FFM(RGB, X) 送入解码器，其余阶段送 FRM 校正后的 RGB 特征。两路编码器和 FRM 每次都运行。
+
+- **训练**：每个阶段按门控权重混合两者，与原代码的训练模式相同（第 1、2 阶段 RGB 特征权重为 w0、w0 + w1，第 3、4 阶段 FFM 权重为 w3 + w4、w4）。第 1–99 轮用软门控，第 100 轮起用直通（straight-through）硬门控；温度按原代码的 `ExpDecayTemp` 从第 1 轮的 1.0 降到第 100 轮的 0.01，之后继续衰减。冻结训练循环每轮开头调用 `train_sampler.set_epoch(epoch)`（续训后也调用），训练工具在这一调用上设置当轮的门控参数，与原 train.py 设置的位置相同。
+- **评估**：每个样本取 argmax，所以同一批里的每个窗口有自己的选择；某阶段的 FFM 只对用到它的窗口运行，因此每种选择的计算量与原代码逐窗口前向相同。
+
+门控在冻结网络构建之后才建立，所以同一种子下 CMX 部分的初始权重与普通 REL+ 臂相同；冻结循环每轮按 `config.seed` 重新设种，批次和增强也与普通臂相同（CPU 测试中与 CMX 网络逐批比对过）。
+
+**训练。** 输入要配对的普通 REL+ 运行的 resolved 配置（v3.1new 即种子 12345 检查点所用的那份），工具只改架构、臂名和输出路径。缓存标记 `relplus_variant.json` 必须是 `--relplus-variant`（默认 `v3_1new`），否则拒绝运行，以免复制的配置悄悄训练 v2.1。其余与第 7 节相同：world size 必须为 8，每进程 1 个 OpenCV 和 1 个 torch 线程，NaN 损失即停止，`--smoke-iterations N` 只训练一轮 N 步。冻结的 train.log 仍打印 "Architecture: Original CMX" 和 "Gate: False"（配置字段），每轮的门控参数打印为 "Gate epoch N: soft=... temp=..."。
+
+```bash
+python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29514 \
+  1002Pin2Pan/tools/train_gated_relplus.py \
+  --config <v3.1new 种子 12345 的 resolved 配置> \
+  --output <输出目录>/gated_relplus_v31new_s12345
+```
+
+输出目录中有 `resolved_config.json`（评估时作 `--config`）和 `gated_relplus.json`（架构、来源配置、缓存变体、种子、参数量、退火表）。
+
+**评估。** 针孔评估和第 2 节的全景评估按配置中的 `architecture` 构建门控网络。全景评估只支持整图和 ERP 窗口（`--erp-tiles`，包括 `--erp-tile-polar-scale`），在 metrics.json 的 `gate_counts_per_window_row` 中按窗口行统计门控选择（极区行记为 "row R (x0.5)"），用来按实际选择计算 GMACs。
+
+## 9. 已知限制
 
 - **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
 - **HHA 的视差通道在两种投影之间存在系统差异**（见第3节）。
@@ -348,4 +378,4 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py --eight-class-predictions \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、RGB-only 基线（与 CMX 的初始权重和预训练加载一致、输出与 X 无关，以及在小网络上用 CPU 跑通训练、针孔评估和全景评估，并与 CMX 网络逐批比对训练批次）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、RGB-only 基线（与 CMX 的初始权重和预训练加载一致、输出与 X 无关，以及在小网络上用 CPU 跑通训练、针孔评估和全景评估，并与 CMX 网络逐批比对训练批次）、门控 SMMF 评估（窗口区划与逐行组合；设置 SMMF_ROOT 和 SMMF_CKPT_KEYS 后，还在 CPU 上调用原始 SMMF 融合代码核对组合结果，并核对模型与权重的键名和形状）、门控 REL+（退火表与原代码的 `ExpDecayTemp` 逐轮一致，门控键名和形状与 Max 的权重一致，CMX 部分初始权重与普通臂相同，评估时各选择与把相应 FFM 换成 RGB 特征的 CMX 输出一致、g = 4 即 CMX、批内逐窗口独立，训练时按门控权重混合且硬门控下门控仍有梯度，以及在小网络上用 CPU 跑通训练、针孔评估和整图/SMMF/SMMFv2 全景评估，并与 CMX 网络逐批比对训练批次）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。
