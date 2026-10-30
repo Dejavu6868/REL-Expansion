@@ -52,6 +52,10 @@ ERP equivalent.
 An RGB-only checkpoint (``rgb_only.py``, config ``architecture`` set by
 ``train_rgb_only.py``) gets zeros as X, which its network ignores; it needs no
 HHA cache report.
+
+A gated REL+ checkpoint (``gated_relplus.py``, trained by ``train_gated_relplus.py``) runs
+with the whole pass or ERP tiles. Every window gets its own gate choice, and metrics.json
+counts the choices per window row (``gate_counts_per_window_row``).
 """
 
 import argparse
@@ -66,6 +70,7 @@ import cv2
 import numpy as np
 
 import relplus_variant as rv
+import gated_relplus as gr
 import rgb_only as ro
 from cross_projection import decode_erp_depth
 
@@ -356,6 +361,17 @@ def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, colu
             raise ValueError("tile columns must cover the width")
         lefts = [(column_offset + column * column_stride) % width for column in range(columns)]
     return [(row * row_stride, left) for row in range(rows) for left in lefts]
+
+
+def gate_rows(windows, polar_tiles=None):
+    """The window row of each network input, in the order the predictors feed them (gated REL+ counts)."""
+    if windows is None:
+        return ["whole"]
+    if polar_tiles is None:
+        return ["row {}".format(top) for top, _ in windows]
+    top, middle, bottom = sorted({row for row, _ in windows})
+    return (["row {} (x{:g})".format(row, polar_tiles["scale"]) for row, _ in windows if row in (top, bottom)]
+            + ["row {}".format(middle) for row, _ in windows if row == middle])
 
 
 def class_probabilities(logits, channels=None):
@@ -833,6 +849,9 @@ def main():
     channels = eight_class_channels(config.class_names) if args.eight_class_predictions else None
     relplus_variant = rv.select_for_eval(args.relplus_variant, config, frozen)
     rgb_only = ro.is_rgb_only(config)
+    gated = gr.is_gated(config)
+    if gated and (strip_rows is not None or caps is not None):
+        raise ValueError("gated REL+ is evaluated with the whole pass or ERP tiles only")
     hha_recipe = None
     if config.x_mode == "hha_frozen_cache" and not rgb_only:
         hha_recipe = hha_cache_recipe(
@@ -842,7 +861,7 @@ def main():
     samples = list_panoramas(args.stanford_root, args.areas)[: args.limit]
 
     device = torch.device(args.device)
-    network_class = ro.model_class() if rgb_only else frozen["EncoderDecoder"]
+    network_class = ro.model_class() if rgb_only else gr.model_class() if gated else frozen["EncoderDecoder"]
     network = network_class(cfg=config, criterion=None, norm_layer=nn.BatchNorm2d)
     epoch = frozen["load_checkpoint_once"](
         network, args.checkpoint, expected_epoch=args.expected_epoch
@@ -856,6 +875,8 @@ def main():
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
+    rows = gate_rows(tile_windows, polar_tiles)
+    gate_counts = {row: [0] * gr.BRANCHES for row in rows} if gated else None
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
             sample, infer_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
@@ -904,6 +925,12 @@ def main():
             logits[:, :, :caps["top_end"]], logits[:, :, caps["bottom_start"]:] = predict_polar_caps(
                 network, *inputs, caps, device, channels
             )
+        if gated:
+            if len(network.gate_log) != len(rows):
+                raise RuntimeError("{} gate choices for {} network inputs".format(len(network.gate_log), len(rows)))
+            for row, choice in zip(rows, network.gate_log):
+                gate_counts[row][choice] += 1
+            network.gate_log.clear()
         prediction = predict_classes(logits, channels)[0].cpu().numpy().astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
         confusion += hist.astype(np.int64)
@@ -975,6 +1002,7 @@ def main():
             "turn": "90 deg about x: (x, y, z) -> (x, -z, y)",
             "replaced_rows": [caps["top_end"], caps["bottom_start"]],
         },
+        "gate_counts_per_window_row": gate_counts,
         "prediction_classes": list(EIGHT_CLASS_NAMES if channels else config.class_names),
         "sample_count": len(samples),
         "seconds": time.time() - started,

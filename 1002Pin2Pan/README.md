@@ -342,7 +342,29 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py --eight-class-predictions \
   --output <评估目录>/rgb_only_s12345_pano_8pred
 ```
 
-## 8. 已知限制
+## 8. 门控 REL+ `tools/gated_relplus.py`、`tools/train_gated_relplus.py`
+
+门控对照臂：冻结 CMX 网络加上 SMMF 的 GlobalGate。门控照搬 Max 的 `Pano_MA_Seg/models/encoders/dual_gate_segformer.py`（`GlobalGate`、`DiffSoftmax` 和门控 `forward_features`），只把门控输入通道数改为随骨干网络确定（MiT-B2 为 128，与原代码相同），键名和形状与他的门控 SMMF 权重一致（`backbone.Gate.*`，15 项，27,288 个参数）。门控读两路第一层 patch embedding，给 5 个分支打分；分支 g 在第 1..g 阶段把 FFM(RGB, X) 送入解码器，其余阶段送 FRM 校正后的 RGB 特征。两路编码器和 FRM 每次都运行。
+
+- **训练**：每个阶段按门控权重混合两者，与原代码的训练模式相同（第 1、2 阶段 RGB 特征权重为 w0、w0 + w1，第 3、4 阶段 FFM 权重为 w3 + w4、w4）。第 1–99 轮用软门控，第 100 轮起用直通（straight-through）硬门控；温度按原代码的 `ExpDecayTemp` 从第 1 轮的 1.0 降到第 100 轮的 0.01，之后继续衰减。冻结训练循环每轮开头调用 `train_sampler.set_epoch(epoch)`（续训后也调用），训练工具在这一调用上设置当轮的门控参数，与原 train.py 设置的位置相同。
+- **评估**：每个样本取 argmax，所以同一批里的每个窗口有自己的选择；某阶段的 FFM 只对用到它的窗口运行，因此每种选择的计算量与原代码逐窗口前向相同。
+
+门控在冻结网络构建之后才建立，所以同一种子下 CMX 部分的初始权重与普通 REL+ 臂相同；冻结循环每轮按 `config.seed` 重新设种，批次和增强也与普通臂相同（CPU 测试中与 CMX 网络逐批比对过）。
+
+**训练。** 输入要配对的普通 REL+ 运行的 resolved 配置（v3.1new 即种子 12345 检查点所用的那份），工具只改架构、臂名和输出路径。缓存标记 `relplus_variant.json` 必须是 `--relplus-variant`（默认 `v3_1new`），否则拒绝运行，以免复制的配置悄悄训练 v2.1。其余与第 7 节相同：world size 必须为 8，每进程 1 个 OpenCV 和 1 个 torch 线程，NaN 损失即停止，`--smoke-iterations N` 只训练一轮 N 步。冻结的 train.log 仍打印 "Architecture: Original CMX" 和 "Gate: False"（配置字段），每轮的门控参数打印为 "Gate epoch N: soft=... temp=..."。
+
+```bash
+python3 -m torch.distributed.launch --nproc_per_node=8 --master_port=29514 \
+  1002Pin2Pan/tools/train_gated_relplus.py \
+  --config <v3.1new 种子 12345 的 resolved 配置> \
+  --output <输出目录>/gated_relplus_v31new_s12345
+```
+
+输出目录中有 `resolved_config.json`（评估时作 `--config`）和 `gated_relplus.json`（架构、来源配置、缓存变体、种子、参数量、退火表）。
+
+**评估。** 针孔评估和第 2 节的全景评估按配置中的 `architecture` 构建门控网络。全景评估只支持整图和 ERP 窗口（`--erp-tiles`，包括 `--erp-tile-polar-scale`），在 metrics.json 的 `gate_counts_per_window_row` 中按窗口行统计门控选择（极区行记为 "row R (x0.5)"），用来按实际选择计算 GMACs。
+
+## 9. 已知限制
 
 - **原始深度（RGBD）臂不能在全景上评估。** 针孔 z-depth 字节在 ERP 中没有对应定义。
 - **HHA 的视差通道在两种投影之间存在系统差异**（见第3节）。
@@ -356,4 +378,4 @@ python3 1002Pin2Pan/tools/eval_pano_transfer.py --eight-class-predictions \
 cd 1002Pin2Pan && python3 -m pytest -q tests/
 ```
 
-几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、RGB-only 基线（与 CMX 的初始权重和预训练加载一致、输出与 X 无关，以及在小网络上用 CPU 跑通训练、针孔评估和全景评估，并与 CMX 网络逐批比对训练批次）、门控 SMMF 评估（窗口区划与逐行组合；设置 SMMF_ROOT 和 SMMF_CKPT_KEYS 后，还在 CPU 上调用原始 SMMF 融合代码核对组合结果，并核对模型与权重的键名和形状）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。
+几何/HHA 测试需要 numpy、scipy、opencv、pytest；环形推理测试另需 torch。实际 CMX 评估还需要冻结源码依赖的 timm、easydict、Pillow 和 PyYAML。测试包含针孔评估（冻结评估器在 CPU 上端到端跑通，含 8 类预测）、错误重力、非有限几何量、缓存局部错误/失败样本、HHA 生成顺序、裁剪覆盖与拼接几何、仰角分带、水平切片覆盖、训练视角核对、REL+ 3.0 变体（编码、评估门控、缓存工具的多进程生成）、EGVIA 规则离线对比、输入缺陷检查（ReD 偏移、镜像编码与 LOA 重映射、全景倾角与原始 0 值、端到端运行；插值一项需 torch）、领域自适应（特征 KL 损失与伪标签阈值逐项对照 Trans4PASS 原代码，原型记忆更新，跨接缝裁剪，以及在小网络上用 CPU 跑通目标缓存、伪标签、预热和双进程 MPA）、RGB-only 基线（与 CMX 的初始权重和预训练加载一致、输出与 X 无关，以及在小网络上用 CPU 跑通训练、针孔评估和全景评估，并与 CMX 网络逐批比对训练批次）、门控 SMMF 评估（窗口区划与逐行组合；设置 SMMF_ROOT 和 SMMF_CKPT_KEYS 后，还在 CPU 上调用原始 SMMF 融合代码核对组合结果，并核对模型与权重的键名和形状）、门控 REL+（退火表与原代码的 `ExpDecayTemp` 逐轮一致，门控键名和形状与 Max 的权重一致，CMX 部分初始权重与普通臂相同，评估时各选择与把相应 FFM 换成 RGB 特征的 CMX 输出一致、g = 4 即 CMX、批内逐窗口独立，训练时按门控权重混合且硬门控下门控仍有梯度，以及在小网络上用 CPU 跑通训练、针孔评估和整图/SMMF/SMMFv2 全景评估，并与 CMX 网络逐批比对训练批次）、测试区域缺失及空评估参数等回归场景。以上测试在 PyTorch 2.x 和 1.8.1（Python 3.9）上都通过；输入缺陷检查的测试只在无 torch 的 Python 3.13 上跑过，插值一项待在服务器上运行。测试通过不代表已经在真实服务器数据上验证迁移效果。
