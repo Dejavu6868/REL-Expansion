@@ -38,6 +38,8 @@ normalisation are the frozen training ones; only the input images change.
   ERP barely stretches. RGB (bilinear) and the X encoded on the whole
   panorama (nearest) are resampled into each tile; the tile softmax is read
   back onto the polar rows. It works with the whole pass or ``--erp-tiles``.
+* ``--ignore-black-rgb`` drops labelled pixels whose native RGB is (0, 0, 0)
+  from scoring, as Trans4PASS does; prediction is unchanged.
 
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
@@ -128,6 +130,19 @@ def decode_semantic(semantic_bgr, lookup):
     label = stored.astype(np.int16) - 1
     label[stored == 0] = 255
     return label.astype(np.uint8)
+
+
+def black_rgb_mask(rgb_path, size):
+    """Pixels whose native RGB is (0, 0, 0), nearest-resized to ``size`` (height, width) like the labels.
+
+    Trans4PASS's ``_color2id`` (stanford2d3d_pan.py) sets these labels to ignore on the native
+    panorama, before its own nearest resize.
+    """
+    rgb = cv2.imread(str(rgb_path), cv2.IMREAD_COLOR)
+    if rgb is None or rgb.ndim != 3:
+        raise ValueError("{} is not a 3-channel image".format(rgb_path))
+    black = (rgb == 0).all(axis=2).astype(np.uint8)
+    return cv2.resize(black, (size[1], size[0]), interpolation=cv2.INTER_NEAREST).astype(bool)
 
 
 def list_panoramas(stanford_root, areas):
@@ -757,6 +772,10 @@ def main():
             " ".join(EIGHT_CLASS_NAMES)
         ),
     )
+    parser.add_argument(
+        "--ignore-black-rgb", action="store_true",
+        help="score without labelled pixels whose native RGB is black, as Trans4PASS does",
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
         parser.error("--limit must be positive; omit it for full evaluation")
@@ -882,6 +901,8 @@ def main():
             sample, infer_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
             label_size=(args.height, args.width),
         )
+        if args.ignore_black_rgb:
+            label[black_rgb_mask(sample["rgb"], (args.height, args.width))] = 255
         inputs = [
             frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
         ]
@@ -965,6 +986,7 @@ def main():
         "areas": args.areas,
         "eval_size": [args.height, args.width],
         "wrap_pad": args.wrap_pad,
+        "ignore_black_rgb": args.ignore_black_rgb,
         "infer_scale": args.infer_scale,
         "infer_size": list(infer_size),
         "infer_wrap_pad": infer_wrap_pad,
