@@ -245,8 +245,38 @@ def test_polar_scaled_tiles_keep_each_zone_to_its_own_rows(middle_height):
         assert torch.allclose(fused[:, :, ~rows], small[:, :, ~rows], rtol=1e-5, atol=1e-6)
 
 
+@pytest.mark.parametrize("wrap_pad", [0, 8])
+def test_polar_strips_run_each_polar_row_as_one_wrapped_pass(wrap_pad):
+    torch = pytest.importorskip("torch")
+    F = torch.nn.functional
+
+    class RowMeanNet(torch.nn.Module):  # depends on the whole input width, so a strip differs from its tiles
+        def forward(self, rgb, modal_x):
+            return rgb + modal_x + rgb.mean(dim=3, keepdim=True)
+
+    torch.manual_seed(0)
+    full = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    polar = torch.randn(1, 3, 32, 64), torch.randn(1, 3, 32, 64)
+    windows = ev.erp_tile_windows(64, 128, 3, 8, 32, 32)  # rows 0, 16, 32 -> polar strips at rows 0 and 16
+    net = RowMeanNet()
+    fused = ev.predict_polar_scaled_tiles(net, full, polar, windows, (32, 32), (16, 48), "cpu", None, True, wrap_pad)
+
+    def strip(rows):
+        images = [F.pad(image[:, :, rows], (wrap_pad, wrap_pad, 0, 0), mode="circular") for image in polar]
+        return net(*images)[:, :, :, wrap_pad:wrap_pad + 64].exp()
+
+    small = torch.cat([strip(slice(0, 16)), strip(slice(16, 32))], dim=2)
+    expected = F.interpolate(small, size=(64, 128), mode="bilinear", align_corners=False)
+    rows = torch.zeros(64, dtype=torch.bool)
+    rows[16:48] = True
+    assert torch.allclose(fused[:, :, ~rows], expected[:, :, ~rows], rtol=1e-5, atol=1e-6)
+    tiles =ev.predict_polar_scaled_tiles(net, full, polar, windows, (32, 32), (16, 48), "cpu", None, True)
+    assert torch.equal(fused[:, :, rows], tiles[:, :, rows])  # the middle row is unchanged
+    assert not torch.allclose(fused[:, :, ~rows], tiles[:, :, ~rows])  # strips are not the tiles
+
+
 def test_smmf_layout_with_polar_scale_passes_the_argument_checks(monkeypatch, tmp_path):
-    for middle in ([], ["--erp-tile-middle-height", "1366"]):
+    for middle in ([], ["--erp-tile-middle-height", "1366"], ["--erp-tile-polar-strips"]):
         output = tmp_path / "output{}".format(len(middle))
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
@@ -271,6 +301,8 @@ def test_smmf_layout_with_polar_scale_passes_the_argument_checks(monkeypatch, tm
     ["--erp-tiles", "3", "8", "--erp-tile-size", "400", "384", "--erp-tile-polar-scale", "0.5"],  # rows don't meet
     ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-middle-height", "383"],
     ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-middle-height", "385"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-strips"],  # strips need the polar scale
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-polar-strips", "--wrap-pad", "3"],
 ])
 def test_bad_polar_scaled_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra):
     monkeypatch.setattr(sys, "argv", [

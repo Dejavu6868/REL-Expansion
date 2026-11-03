@@ -385,8 +385,11 @@ def gate_rows(windows, polar_tiles=None):
     if polar_tiles is None:
         return ["row {}".format(top) for top, _ in windows]
     top, middle, bottom = sorted({row for row, _ in windows})
-    return (["row {} (x{:g})".format(row, polar_tiles["scale"]) for row, _ in windows if row in (top, bottom)]
-            + ["row {}".format(middle) for row, _ in windows if row == middle])
+    if polar_tiles.get("strip_wrap_pad") is not None:  # one full-width strip per polar row
+        polar = ["row {} (x{:g} strip)".format(row, polar_tiles["scale"]) for row in (top, bottom)]
+    else:
+        polar = ["row {} (x{:g})".format(row, polar_tiles["scale"]) for row, _ in windows if row in (top, bottom)]
+    return polar + ["row {}".format(middle) for row, _ in windows if row == middle]
 
 
 def class_probabilities(logits, channels=None):
@@ -431,12 +434,14 @@ def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channel
 
 
 def predict_polar_scaled_tiles(network, full, polar, windows, tile_size, middle_rows, device, channels=None,
-                               exp_sum=False):
+                               exp_sum=False, strip_wrap_pad=None):
     """Evaluation-size tile fusion with the first and last tile rows run on the smaller ``polar`` inputs.
 
     ``full`` and ``polar`` are (rgb, modal_x) at the evaluation size and at the polar scale. The rows
     ``middle_rows`` take only the middle tile row, cut ``middle_rows`` tall from ``full`` at the same columns;
     every other row takes only the polar tile rows, fused at the polar size and resized back (bilinear).
+    With ``strip_wrap_pad`` each polar tile row runs as one full-width strip (the same rows, circular
+    padding of ``strip_wrap_pad`` columns) instead of its tiles.
     """
     import torch
 
@@ -445,7 +450,23 @@ def predict_polar_scaled_tiles(network, full, polar, windows, tile_size, middle_
     top, middle, bottom = sorted({row for row, _ in windows})
     polar_windows = [(round(row * scale), round(left * scale)) for row, left in windows if row in (top, bottom)]
     polar_size = tuple(int(round(length * scale)) for length in tile_size)
-    fused = predict_erp_tiles(network, *polar, polar_windows, polar_size, device, channels, exp_sum)
+    if strip_wrap_pad is None:
+        fused = predict_erp_tiles(network, *polar, polar_windows, polar_size, device, channels, exp_sum)
+    else:
+        fused = count = None
+        for row in sorted({row for row, _ in polar_windows}):
+            logits = predict_with_wrap(
+                network, *(image[:, :, row:row + polar_size[0]] for image in polar), strip_wrap_pad, device
+            )
+            probabilities = logits.exp() if exp_sum else class_probabilities(logits, channels)
+            if fused is None:
+                fused = torch.zeros((1, probabilities.shape[1]) + tuple(polar[0].shape[2:]), device=device)
+                count = torch.zeros((1, 1) + tuple(polar[0].shape[2:]), device=device)
+            fused[:, :, row:row + polar_size[0]] += probabilities
+            count[:, :, row:row + polar_size[0]] += 1
+        if not bool((count > 0).all()):
+            raise ValueError("the polar strips leave panorama rows uncovered")
+        fused = fused / count
     fused = torch.nn.functional.interpolate(fused, size=(height, width), mode="bilinear", align_corners=False)
     start, end = middle_rows
     middle_windows = [(0, left) for row, left in windows if row == middle]
@@ -750,6 +771,11 @@ def main():
         "(default the tile height); 1366 at 2048 rows reaches +-60 deg",
     )
     parser.add_argument(
+        "--erp-tile-polar-strips", action="store_true",
+        help="with --erp-tile-polar-scale, run each polar tile row as one full-width strip (same rows, "
+        "circular padding of --wrap-pad times the polar scale) instead of its tiles",
+    )
+    parser.add_argument(
         "--polar-caps", type=int, default=None, metavar="SIZE",
         help="replace the bands beyond +-60 deg by two SIZE x SIZE tiles, {} degrees wide, centred on "
         "the poles of the sphere turned 90 deg; 384 at 1024 x 2048 and 768 at 2048 x 4096 keep the "
@@ -821,6 +847,8 @@ def main():
     polar_tiles = None
     if args.erp_tile_middle_height is not None and args.erp_tile_polar_scale is None:
         parser.error("--erp-tile-middle-height needs --erp-tile-polar-scale")
+    if args.erp_tile_polar_strips and args.erp_tile_polar_scale is None:
+        parser.error("--erp-tile-polar-strips needs --erp-tile-polar-scale")
     if args.erp_tile_polar_scale is not None:
         scale = args.erp_tile_polar_scale
         if args.erp_tiles is None or args.erp_tiles[0] != 3:
@@ -848,7 +876,12 @@ def main():
             "scale": scale,
             "size": (int(args.height * scale), int(args.width * scale)),
             "middle_rows": (start, start + middle_height),
+            "strip_wrap_pad": None,
         }
+        if args.erp_tile_polar_strips:
+            if args.wrap_pad * scale != int(args.wrap_pad * scale):
+                parser.error("--erp-tile-polar-strips needs --wrap-pad times the polar scale to be whole")
+            polar_tiles["strip_wrap_pad"] = int(args.wrap_pad * scale)
     caps = None
     if args.polar_caps is not None:
         if args.polar_caps <= 0 or args.polar_caps % STRIP_ROW_MULTIPLE:
@@ -915,7 +948,7 @@ def main():
             ]
             logits = predict_polar_scaled_tiles(
                 network, inputs, polar_inputs, tile_windows, args.erp_tile_size, polar_tiles["middle_rows"],
-                device, channels, args.erp_tile_exp_sum,
+                device, channels, args.erp_tile_exp_sum, polar_tiles["strip_wrap_pad"],
             )
         elif tile_windows is not None:  # mean probabilities; only their argmax is used below
             logits = predict_erp_tiles(
@@ -1016,6 +1049,12 @@ def main():
                                      args.erp_tile_size[1]],
                 "rule": "middle_rows from the middle tile row only; all other rows from the top and bottom "
                         "tile rows only, fused at input_size and resized back (bilinear)",
+                "strips": None if polar_tiles["strip_wrap_pad"] is None else {
+                    "wrap_pad": polar_tiles["strip_wrap_pad"],
+                    "network_input_size": [int(args.erp_tile_size[0] * polar_tiles["scale"]),
+                                           polar_tiles["size"][1] + 2 * polar_tiles["strip_wrap_pad"]],
+                    "rule": "each polar tile row runs as one full-width strip with circular padding",
+                },
             },
         },
         "polar_caps": None if caps is None else {
