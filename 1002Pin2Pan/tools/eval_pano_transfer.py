@@ -32,6 +32,9 @@ normalisation are the frozen training ones; only the input images change.
   whole panorama), each ``--erp-tile-size`` pixels. Rows span the height
   exactly; columns start floor(i W / N) apart and wrap across the 180-degree seam. Each
   pixel takes the mean softmax of the tiles covering it.
+* ``--erp-tile-sliding-stride S`` places the tiles as CMX's own sliding-window
+  evaluation does instead: every S pixels from the top-left corner, the last row and
+  column moved back to the panorama edge, no wrap across the seam.
 * ``--polar-caps SIZE`` replaces the bands beyond +-60 degrees by two
   SIZE x SIZE tiles, 67.5 degrees wide, centred on the poles of the sphere
   turned 90 degrees about the x axis, where the poles lie on the equator and
@@ -376,6 +379,21 @@ def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, colu
             raise ValueError("tile columns must cover the width")
         lefts = [(column_offset + column * column_stride) % width for column in range(columns)]
     return [(row * row_stride, left) for row in range(rows) for left in lefts]
+
+
+def sliding_windows(height, width, tile_height, tile_width, stride):
+    """(top, left) of each tile where CMX's sliding-window evaluation (``scale_process_rgbX``) puts it.
+
+    Tiles start every ``stride`` pixels from the top-left corner, the last row and column moved back
+    to end at the panorama edge. Nothing wraps across the seam.
+    """
+    if not 0 < stride <= min(tile_height, tile_width) or tile_height > height or tile_width > width:
+        raise ValueError("sliding tiles need a stride between 1 and the tile size, and tiles inside the panorama")
+
+    def starts(length, tile):
+        return [min(index * stride + tile, length) - tile for index in range(-(-(length - tile) // stride) + 1)]
+
+    return [(top, left) for top in starts(height, tile_height) for left in starts(width, tile_width)]
 
 
 def gate_rows(windows, polar_tiles=None):
@@ -755,6 +773,12 @@ def main():
         help="first column start for --erp-tile-column-stride; -652 matches SMMF's 652 px cyclic padding",
     )
     parser.add_argument(
+        "--erp-tile-sliding-stride", type=int, default=None, metavar="S",
+        help="instead of --erp-tiles, place --erp-tile-size tiles as CMX's sliding-window evaluation does: every "
+        "S pixels from the top-left corner, the last row and column moved back to the panorama edge, no wrap "
+        "across the seam. 720 with 1080 x 1080 tiles at 2048 x 4096 is REL-SF4PASS's region stride",
+    )
+    parser.add_argument(
         "--erp-tile-exp-sum", action="store_true",
         help="fuse overlapping tiles by summing exp(logits), as SMMF sums CMX's val_func_process_rgbX "
         "outputs, instead of averaging the softmax",
@@ -832,8 +856,17 @@ def main():
         parser.error("--erp-tile-column-stride needs --erp-tiles")
     if args.erp_tile_column_offset and args.erp_tile_column_stride is None:
         parser.error("--erp-tile-column-offset needs --erp-tile-column-stride")
-    if args.erp_tile_exp_sum and args.erp_tiles is None:
-        parser.error("--erp-tile-exp-sum needs --erp-tiles")
+    if args.erp_tile_exp_sum and args.erp_tiles is None and args.erp_tile_sliding_stride is None:
+        parser.error("--erp-tile-exp-sum needs --erp-tiles or --erp-tile-sliding-stride")
+    if args.erp_tile_sliding_stride is not None:
+        if args.erp_tiles is not None:
+            parser.error("--erp-tile-sliding-stride places the tiles itself; drop --erp-tiles")
+        if args.polar_strips is not None:
+            parser.error("--erp-tile-sliding-stride replaces the whole pass; drop --polar-strips")
+        try:  # tiles are cut from the network-input panorama (evaluation size times --infer-scale)
+            tile_windows = sliding_windows(*infer_size, *args.erp_tile_size, args.erp_tile_sliding_stride)
+        except ValueError as error:
+            parser.error(str(error))
     if args.erp_tiles is not None:
         if args.polar_strips is not None:
             parser.error("--erp-tiles replaces the whole pass; drop --polar-strips")
@@ -1033,7 +1066,8 @@ def main():
             "rows": strip_rows,
         },
         "erp_tiles": None if tile_windows is None else {
-            "grid": list(args.erp_tiles),
+            "grid": None if args.erp_tiles is None else list(args.erp_tiles),
+            "sliding_stride": args.erp_tile_sliding_stride,
             "tile_size": list(args.erp_tile_size),
             "column_stride": args.erp_tile_column_stride,
             "column_offset": args.erp_tile_column_offset,
