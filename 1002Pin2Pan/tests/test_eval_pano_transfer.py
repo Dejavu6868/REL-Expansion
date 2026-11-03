@@ -175,6 +175,61 @@ def test_erp_tile_windows_cover_the_panorama_and_reject_bad_grids():
             ev.erp_tile_windows(1024, 2048, *grid)
 
 
+def cmx_sliding_windows(rows, cols, crop, stride_rate):
+    """(top, left) of each window in CMX's scale_process_rgbX loop, copied from Max's Pano_MA_Seg evaluator."""
+    stride = (int(np.ceil(crop[0] * stride_rate)), int(np.ceil(crop[1] * stride_rate)))
+    r_grid = int(np.ceil((rows - crop[0]) / stride[0])) + 1
+    c_grid = int(np.ceil((cols - crop[1]) / stride[1])) + 1
+    windows = []
+    for grid_yidx in range(r_grid):
+        for grid_xidx in range(c_grid):
+            s_x = grid_xidx * stride[0]
+            s_y = grid_yidx * stride[1]
+            e_x = min(s_x + crop[0], cols)
+            e_y = min(s_y + crop[1], rows)
+            windows.append((e_y - crop[1], e_x - crop[0]))
+    return windows
+
+
+def test_sliding_windows_match_cmx_sliding_evaluation():
+    windows = ev.sliding_windows(2048, 4096, 1080, 1080, 720)  # REL-SF4PASS's 1080^2 regions, stride 720
+    assert len(windows) == 18
+    assert sorted({top for top, _ in windows}) == [0, 720, 968]
+    assert sorted({left for _, left in windows}) == [0, 720, 1440, 2160, 2880, 3016]
+    assert all(left + 1080 <= 4096 for _, left in windows)  # nothing wraps across the seam
+    count = np.zeros((2048, 4096), dtype=int)
+    for top, left in windows:
+        count[top:top + 1080, left:left + 1080] += 1
+    assert count.min() >= 1
+    for rows, cols, crop, rate in [(2048, 4096, 1080, 2 / 3), (2048, 4096, 1080, 0.4), (1024, 2048, 540, 2 / 3),
+                                   (64, 128, 32, 0.5), (1080, 1080, 1080, 2 / 3)]:
+        stride = int(np.ceil(crop * rate))
+        assert ev.sliding_windows(rows, cols, crop, crop, stride) == cmx_sliding_windows(rows, cols, (crop, crop), rate)
+    for bad in [(2048, 4096, 1080, 1080, 0), (2048, 4096, 1080, 1080, 1081), (1024, 2048, 1080, 1080, 720)]:
+        with pytest.raises(ValueError):
+            ev.sliding_windows(*bad)
+
+
+def test_sliding_tiles_fuse_their_own_columns_without_wrapping():
+    torch = pytest.importorskip("torch")
+
+    class RowMeanNet(torch.nn.Module):  # depends on the whole tile width, so each tile's own columns matter
+        def forward(self, rgb, modal_x):
+            return rgb + modal_x + rgb.mean(dim=3, keepdim=True)
+
+    torch.manual_seed(0)
+    rgb, modal_x = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    windows = ev.sliding_windows(64, 128, 32, 32, 24)  # rows 0, 24, 32; columns 0, 24, ..., 96
+    net = RowMeanNet()
+    total, count = torch.zeros(1, 3, 64, 128), torch.zeros(1, 1, 64, 128)
+    for top, left in windows:
+        area = (slice(None), slice(None), slice(top, top + 32), slice(left, left + 32))
+        total[area] += net(rgb[area], modal_x[area]).exp()
+        count[area] += 1
+    fused = ev.predict_erp_tiles(net, rgb, modal_x, windows, (32, 32), "cpu", None, True)
+    assert torch.allclose(fused, total / count, rtol=1e-5, atol=1e-6)
+
+
 def test_erp_tiles_reproduce_the_whole_pass_for_a_pixelwise_net():
     torch = pytest.importorskip("torch")
 
@@ -204,6 +259,12 @@ def test_erp_tiles_reproduce_the_whole_pass_for_a_pixelwise_net():
     ["--erp-tile-exp-sum"],
     ["--erp-tiles", "3", "8", "--polar-strips", "32"],
     ["--erp-tiles", "3", "8", "--erp-tile-size", "768", "768", "--infer-scale", "0.25"],  # 768 > 256 input rows
+    ["--erp-tile-sliding-stride", "0"],
+    ["--erp-tile-sliding-stride", "500"],  # wider than the 384 px tile
+    ["--erp-tile-sliding-stride", "720", "--erp-tile-size", "1080", "1080"],  # 1080 > 1024 rows
+    ["--erp-tiles", "3", "8", "--erp-tile-sliding-stride", "256"],
+    ["--erp-tile-sliding-stride", "256", "--polar-strips", "32"],
+    ["--erp-tile-sliding-stride", "256", "--erp-tile-polar-scale", "0.5"],
 ])
 def test_bad_erp_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra):
     monkeypatch.setattr(sys, "argv", [
@@ -288,6 +349,18 @@ def test_smmf_layout_with_polar_scale_passes_the_argument_checks(monkeypatch, tm
         with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
             ev.main()
         assert output.exists()
+
+
+def test_sliding_layout_passes_the_argument_checks(monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"), "--height", "2048", "--width", "4096",
+        "--erp-tile-size", "1080", "1080", "--erp-tile-sliding-stride", "720", "--erp-tile-exp-sum",
+    ])
+    with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
+        ev.main()
+    assert (tmp_path / "output").exists()
 
 
 @pytest.mark.parametrize("extra", [
