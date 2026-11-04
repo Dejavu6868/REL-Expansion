@@ -65,6 +65,9 @@ HHA cache report.
 A gated REL+ checkpoint (``gated_relplus.py``, trained by ``train_gated_relplus.py``) runs
 with the whole pass or ERP tiles. Every window gets its own gate choice, and metrics.json
 counts the choices per window row (``gate_counts_per_window_row``).
+
+A single-channel REL+ checkpoint (config ``single_channel``, trained by ``train_single_channel.py``)
+gets that channel of the ERP ``getREL`` output copied into all three X channels (``single_channel.py``).
 """
 
 import argparse
@@ -81,6 +84,7 @@ import numpy as np
 import relplus_variant as rv
 import gated_relplus as gr
 import rgb_only as ro
+import single_channel as sc
 from cross_projection import decode_erp_depth
 
 
@@ -1024,6 +1028,9 @@ def main():
     config = load_config(args.config)
     channels = eight_class_channels(config.class_names) if args.eight_class_predictions else None
     relplus_variant = rv.select_for_eval(args.relplus_variant, config, frozen)
+    single_channel = sc.channel_of(config)
+    if single_channel is not None:
+        frozen["getREL"] = sc.wrap_get_rel(frozen["getREL"], single_channel)
     rgb_only = ro.is_rgb_only(config)
     gated = gr.is_gated(config)
     if gated and (strip_rows is not None or caps is not None):
@@ -1136,13 +1143,17 @@ def main():
         "architecture": config.get("architecture"),
         "panorama_x_input": (
             "none: the RGB-only network ignores X" if rgb_only
-            else "ERP getREL ({}) on nearest-resized depth".format(rv.describe(relplus_variant))
+            else "ERP getREL ({}) on nearest-resized depth{}".format(
+                rv.describe(relplus_variant),
+                "" if single_channel is None else ", {} only, copied into all three channels".format(single_channel),
+            )
             if hha_recipe is None
             else "ERP HHA (hha.erp_hha), {}, channel order {}".format(
                 hha_recipe["variant"], hha_recipe["channel_order"]
             )
         ),
         "relplus_variant": relplus_variant,
+        "single_channel": single_channel,
         "hha_cache_report": None if hha_recipe is None else str(args.hha_cache_report),
         "hha_recipe": hha_recipe,
         "areas": args.areas,
