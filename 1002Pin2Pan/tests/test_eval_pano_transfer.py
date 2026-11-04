@@ -436,6 +436,90 @@ def test_polar_caps_reproduce_a_smooth_whole_pass_for_a_pixelwise_net():
         assert torch.allclose(north.sum(dim=1), torch.ones(1, top_end, width), atol=1e-5)
 
 
+def test_pole_patches_cover_the_caps_without_mirroring():
+    for size, focal in ((540, 294.25), (1080, 588.50)):
+        patches = ev.pole_patch_grids(2048, 4096, size, (484, 1564))  # SMMF's middle row: caps beyond +-47.46 deg
+        assert abs(patches["cap_radius_deg"] - 42.539) < 1e-3 and abs(patches["focal_px"] - focal) < 0.01
+        assert patches["tiles"].shape == (2, size, size, 2) and np.abs(patches["tiles"]).max() <= 1
+        assert patches["north"].shape == (484, 4096, 2) and patches["south"].shape == (484, 4096, 2)
+        for back in (patches["north"], patches["south"]):  # every polar pixel lies inside the inscribed circle
+            assert np.hypot(back[..., 0], back[..., 1]).max() < 1
+    patches = ev.pole_patch_grids(256, 512, 64, (60, 196))
+    centre = -patches["tiles"][:, 31:33, 31:33, 1].mean(axis=(1, 2)) * 90  # latitude read at the patch centre
+    assert centre[0] > 88 and centre[1] < -88
+    for name, row in (("north", 5), ("south", -6)):  # ERP right/down map to a patch turn, not a mirror
+        back = patches[name]
+        jacobian = np.stack([back[row, 101] - back[row, 100], back[row + 1, 100] - back[row, 100]], axis=1)
+        assert np.linalg.det(jacobian) > 0
+    with pytest.raises(ValueError):
+        ev.pole_patch_grids(256, 512, 64, (60, 190))
+
+
+def test_pole_patches_reproduce_a_smooth_whole_pass_and_keep_p47s_middle_row():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width, size = 128, 256, 64
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    windows = ev.erp_tile_windows(height, width, 3, 8, 64, 64)  # rows 0, 32, 64: the middle row is 32..96
+    patches = ev.pole_patch_grids(height, width, size, (32, 96))
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    rows = torch.zeros(height, dtype=torch.bool)
+    rows[32:96] = True
+    for channels in (None, [0, 2]):
+        fused = ev.predict_pole_patches(PixelwiseNet(), (smooth, smooth), windows, (64, 64), (32, 96), patches,
+                                        "cpu", channels)
+        expected = ev.class_probabilities(whole, channels)
+        assert torch.allclose(fused[:, :, ~rows], expected[:, :, ~rows], atol=0.01)
+        half = torch.nn.functional.interpolate(smooth, scale_factor=0.5, mode="bilinear", align_corners=False)
+        p47 = ev.predict_polar_scaled_tiles(PixelwiseNet(), (smooth, smooth), (half, half), windows, (64, 64),
+                                            (32, 96), "cpu", channels)
+        assert torch.equal(fused[:, :, rows], p47[:, :, rows])  # the same native middle windows
+
+
+def test_smmf_layout_with_pole_patches_passes_the_argument_checks(monkeypatch, tmp_path):
+    for size in ("540", "1080"):
+        output = tmp_path / ("output" + size)
+        monkeypatch.setattr(sys, "argv", [
+            "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+            "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
+            "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
+            "--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
+            "--erp-tile-column-offset", "-652", "--erp-tile-exp-sum", "--erp-tile-pole-patches", size,
+        ])
+        with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
+            ev.main()
+        assert output.exists()
+
+
+@pytest.mark.parametrize("extra", [
+    ["--erp-tile-pole-patches", "384"],
+    ["--erp-tiles", "2", "8", "--erp-tile-size", "512", "384", "--erp-tile-pole-patches", "384"],
+    ["--erp-tiles", "3", "8", "--erp-tile-pole-patches", "0"],
+    ["--erp-tiles", "3", "8", "--erp-tile-pole-patches", "384", "--erp-tile-polar-scale", "0.5"],
+    ["--erp-tiles", "3", "8", "--erp-tile-pole-patches", "384", "--polar-caps", "384"],
+    ["--erp-tiles", "3", "8", "--erp-tile-pole-patches", "384", "--infer-scale", "0.5"],
+    ["--erp-tile-size", "384", "384", "--erp-tile-sliding-stride", "320", "--erp-tile-pole-patches", "384"],
+])
+def test_bad_pole_patches_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 @pytest.mark.parametrize("extra", [
     ["--polar-caps", "0"],
     ["--polar-caps", "400"],
