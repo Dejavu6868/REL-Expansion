@@ -8,7 +8,9 @@ arm) on a resolved arm config JSON and any checkpoint: seed runs, REL+ 3.x runs 
 adapted checkpoints from ``train_pin2pan.py``. An RGB-only checkpoint
 (``train_rgb_only.py``) is built with ``rgb_only.model_class()`` and evaluated on the
 HHA arm's inputs, which its network ignores. A gated REL+ checkpoint
-(``train_gated_relplus.py``) is built with ``gated_relplus.model_class()``.
+(``train_gated_relplus.py``) is built with ``gated_relplus.model_class()``. A single-channel
+REL+ checkpoint (``train_single_channel.py``) reads the same cache with its channel copied into
+all three X channels.
 
 ``--eight-class-predictions`` restricts the per-pixel argmax to the 8 SPan8 classes, as
 ``eval_pano_transfer.py --eight-class-predictions`` does on panoramas. Without it the
@@ -36,6 +38,7 @@ import numpy as np
 import gated_relplus as gr
 import relplus_variant as rv
 import rgb_only as ro
+import single_channel as sc
 from eval_pano_transfer import (
     DEFAULT_SOURCE_ROOT,
     EIGHT_CLASS_NAMES,
@@ -176,6 +179,7 @@ def main():
         view = types.ModuleType("models.builder")
         view.EncoderDecoder = ro.model_class() if ro.is_rgb_only(config) else gr.model_class()
         sys.modules["models.builder"] = view
+    single_channel = sc.install_loader(config, modules["dataloader.RGBXDataset"].RGBXDataset)
     marker = rv.read_marker(Path(config.x_root_folder).parent) if config.x_mode == "rel_plus_v2_1" else None
 
     module = types.ModuleType("eval_pinhole_config")
@@ -204,6 +208,7 @@ def main():
         "relplus_cache_variant": None if config.x_mode != "rel_plus_v2_1" else (
             "v2_1" if marker is None else marker["variant"]
         ),
+        "single_channel": single_channel,
         "hha_input_adapter": None if adapter is None else str(adapter),
         "source_root": str(Path(args.source_root).resolve()),
         "prediction_classes": list(
