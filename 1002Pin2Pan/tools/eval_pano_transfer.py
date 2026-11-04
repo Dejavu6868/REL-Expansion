@@ -32,6 +32,10 @@ normalisation are the frozen training ones; only the input images change.
   whole panorama), each ``--erp-tile-size`` pixels. Rows span the height
   exactly; columns start floor(i W / N) apart and wrap across the 180-degree seam. Each
   pixel takes the mean softmax of the tiles covering it.
+* ``--erp-tile-pole-patches SIZE``, with a 3-row tile grid, replaces the top and
+  bottom tile rows by one SIZE x SIZE pinhole view centred on each pole (looking
+  straight up or down). Its inscribed circle is the cap beyond the middle tile row,
+  which stays the only source inside it.
 * ``--erp-tile-sliding-stride S`` places the tiles as CMX's own sliding-window
   evaluation does instead: every S pixels from the top-left corner, the last row and
   column moved back to the panorama edge, no wrap across the seam.
@@ -396,10 +400,13 @@ def sliding_windows(height, width, tile_height, tile_width, stride):
     return [(top, left) for top in starts(height, tile_height) for left in starts(width, tile_width)]
 
 
-def gate_rows(windows, polar_tiles=None):
+def gate_rows(windows, polar_tiles=None, pole_patches=None):
     """The window row of each network input, in the order the predictors feed them (gated REL+ counts)."""
     if windows is None:
         return ["whole"]
+    if pole_patches is not None:
+        middle = pole_patches["middle_rows"][0]
+        return ["north patch", "south patch"] + ["row {}".format(middle) for row, _ in windows if row == middle]
     if polar_tiles is None:
         return ["row {}".format(top) for top, _ in windows]
     top, middle, bottom = sorted({row for row, _ in windows})
@@ -582,6 +589,69 @@ def predict_polar_caps(network, rgb, modal_x, caps, device, channels=None):
         )
         for index, name in enumerate(("north", "south"))
     ]
+
+
+def pole_patch_grids(height, width, size, middle_rows):
+    """``grid_sample`` coordinates between the ERP and one pinhole patch centred on each pole (north, south).
+
+    The north patch looks straight up and the south one straight down, with image x along +x and the
+    same handedness as the ERP image (not mirrored against it). Each patch's inscribed circle is the cap beyond ``middle_rows`` (rows above
+    its first and below its last). ``tiles`` (2, size, size, 2): where each patch pixel reads the ERP
+    padded by one column on each side (as ``sample_cap_tiles`` expects). ``north`` and ``south``: where
+    each ERP pixel above and below ``middle_rows`` reads its patch.
+    """
+    start, end = middle_rows
+    if not 0 < start < end < height or start != height - end:
+        raise ValueError("the middle rows must be centred on the equator")
+    radius = start * np.pi / height  # angle from the pole to the top edge of the middle rows
+    half = np.tan(radius)
+    steps = ((np.arange(size) + 0.5) / size * 2 - 1) * half
+    a, b = np.meshgrid(steps, steps)  # image x to the right, image y down
+    one = np.ones_like(a)
+    tiles = []
+    for direction in (np.stack([a, -b, one], axis=-1), np.stack([a, b, -one], axis=-1)):
+        longitude, latitude = longitude_latitude(direction / np.linalg.norm(direction, axis=-1, keepdims=True))
+        tiles.append(np.stack([longitude / np.pi * width / (width + 2), -latitude / (np.pi / 2)], axis=-1))
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    north = unit_directions(longitude[:start], latitude[:start])
+    south = unit_directions(longitude[end:], latitude[end:])
+    focal = size / 2 / half
+    return {
+        "size": size,
+        "middle_rows": (start, end),
+        "cap_radius_deg": float(np.degrees(radius)),
+        "focal_px": float(focal),
+        "tiles": np.stack(tiles).astype(np.float32),
+        "north": (np.stack([north[..., 0], -north[..., 1]], axis=-1) / north[..., 2:] / half).astype(np.float32),
+        "south": (np.stack([-south[..., 0], -south[..., 1]], axis=-1) / south[..., 2:] / half).astype(np.float32),
+    }
+
+
+def predict_pole_patches(network, full, windows, tile_size, middle_rows, patches, device, channels=None,
+                         exp_sum=False):
+    """The middle rows from the middle tile row only, as P47; every other row read back from its pole patch."""
+    import torch
+    import torch.nn.functional as F
+
+    height, width = full[0].shape[2:]
+    logits = predict_with_wrap(network, *sample_cap_tiles(*full, patches, device), 0, device)
+    probabilities = logits.exp() if exp_sum else class_probabilities(logits, channels)
+    start, end = middle_rows
+    fused = torch.zeros((1, probabilities.shape[1], height, width), device=device)
+    for index, (name, rows) in enumerate((("north", slice(0, start)), ("south", slice(end, height)))):
+        fused[:, :, rows] = F.grid_sample(
+            probabilities[index:index + 1], torch.as_tensor(patches[name], device=device)[None],
+            mode="bilinear", align_corners=False,
+        )
+    middle_windows = [(0, left) for row, left in windows if row == start]
+    fused[:, :, start:end] = predict_erp_tiles(
+        network, full[0][:, :, start:end], full[1][:, :, start:end], middle_windows,
+        (end - start, tile_size[1]), device, channels, exp_sum,
+    )
+    return fused
 
 
 def _chunked_attention_forward(module, budget_bytes, x, H, W):
@@ -800,6 +870,12 @@ def main():
         "circular padding of --wrap-pad times the polar scale) instead of its tiles",
     )
     parser.add_argument(
+        "--erp-tile-pole-patches", type=int, default=None, metavar="SIZE",
+        help="with a 3-row tile grid, replace the top and bottom tile rows by one SIZE x SIZE pinhole view centred "
+        "on each pole, whose inscribed circle is the cap beyond the middle tile row; the middle row stays the only "
+        "source inside it. With SMMF's 3 x 7 layout the caps are beyond +-47.5 deg",
+    )
+    parser.add_argument(
         "--polar-caps", type=int, default=None, metavar="SIZE",
         help="replace the bands beyond +-60 deg by two SIZE x SIZE tiles, {} degrees wide, centred on "
         "the poles of the sphere turned 90 deg; 384 at 1024 x 2048 and 768 at 2048 x 4096 keep the "
@@ -915,6 +991,21 @@ def main():
             if args.wrap_pad * scale != int(args.wrap_pad * scale):
                 parser.error("--erp-tile-polar-strips needs --wrap-pad times the polar scale to be whole")
             polar_tiles["strip_wrap_pad"] = int(args.wrap_pad * scale)
+    pole_patches = None
+    if args.erp_tile_pole_patches is not None:
+        if args.erp_tiles is None or args.erp_tiles[0] != 3:
+            parser.error("--erp-tile-pole-patches needs --erp-tiles with 3 rows")
+        if args.erp_tile_polar_scale is not None or args.polar_caps is not None or args.infer_scale != 1.0:
+            parser.error("--erp-tile-pole-patches replaces the polar tile rows at the evaluation size; "
+                         "drop --erp-tile-polar-scale, --polar-caps and --infer-scale")
+        if args.erp_tile_pole_patches <= 0:
+            parser.error("--erp-tile-pole-patches must be positive")
+        start, remainder = divmod(args.height - args.erp_tile_size[0], 2)
+        if remainder or start not in {top for top, _ in tile_windows}:
+            parser.error("--erp-tile-pole-patches needs a tile row centred on the equator")
+        pole_patches = pole_patch_grids(
+            args.height, args.width, args.erp_tile_pole_patches, (start, start + args.erp_tile_size[0])
+        )
     caps = None
     if args.polar_caps is not None:
         if args.polar_caps <= 0 or args.polar_caps % STRIP_ROW_MULTIPLE:
@@ -960,7 +1051,7 @@ def main():
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
-    rows = gate_rows(tile_windows, polar_tiles)
+    rows = gate_rows(tile_windows, polar_tiles, pole_patches)
     gate_counts = {row: [0] * gr.BRANCHES for row in rows} if gated else None
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
@@ -972,7 +1063,12 @@ def main():
         inputs = [
             frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
         ]
-        if polar_tiles is not None:  # mean probabilities; only their argmax is used below
+        if pole_patches is not None:  # only the argmax is used below
+            logits = predict_pole_patches(
+                network, inputs, tile_windows, args.erp_tile_size, pole_patches["middle_rows"], pole_patches,
+                device, channels, args.erp_tile_exp_sum,
+            )
+        elif polar_tiles is not None:  # mean probabilities; only their argmax is used below
             polar_rgb, polar_x, _ = load_sample(
                 sample, polar_tiles["size"], lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
             )
@@ -1090,6 +1186,17 @@ def main():
                     "rule": "each polar tile row runs as one full-width strip with circular padding",
                 },
             },
+        },
+        "pole_patches": None if pole_patches is None else {
+            "size": [pole_patches["size"]] * 2,
+            "projection": "pinhole (gnomonic), centred on each pole, looking straight up / down",
+            "cap_radius_deg": pole_patches["cap_radius_deg"],
+            "boundary_latitude_deg": 90 - pole_patches["cap_radius_deg"],
+            "focal_px": pole_patches["focal_px"],
+            "centre_px_per_deg": pole_patches["focal_px"] * np.pi / 180,
+            "middle_rows": list(pole_patches["middle_rows"]),
+            "rule": "middle_rows from the middle tile row only; all other rows read back (bilinear) from the "
+                    "patch of their pole; RGB sampled bilinear, X nearest",
         },
         "polar_caps": None if caps is None else {
             "tile_size": args.polar_caps,
