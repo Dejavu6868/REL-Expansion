@@ -36,6 +36,11 @@ normalisation are the frozen training ones; only the input images change.
   bottom tile rows by one SIZE x SIZE pinhole view centred on each pole (looking
   straight up or down). Its inscribed circle is the cap beyond the middle tile row,
   which stays the only source inside it.
+* ``--sphere-views SIZE`` replaces the whole pass by 22 SIZE x SIZE pinhole views
+  on the sphere, with no roll, in ``eval_pano_crops.py``'s layout and field of view
+  (8 at pitch 0, 6 at +-45, 1 at +-80; 62.48 degrees). RGB (bilinear) and the X
+  encoded on the whole panorama (nearest) are sampled into each view; each pixel
+  fuses every view that sees it.
 * ``--erp-tile-sliding-stride S`` places the tiles as CMX's own sliding-window
   evaluation does instead: every S pixels from the top-left corner, the last row and
   column moved back to the panorama edge, no wrap across the seam.
@@ -107,6 +112,12 @@ TILE_BATCH = 8
 # turn the north pole sits at longitude -90 and the south pole at +90 (degrees, latitude 0).
 POLAR_CAP_FOV_DEG = 67.5
 POLAR_CAP_CENTRE_LONGITUDES_DEG = (-90.0, 90.0)
+# --sphere-views: eval_pano_crops.py's CROP_FOV_DEG (median S2D training field of view) and CROP_LAYOUT,
+# as (yaw, pitch) in degrees; yaw is the ERP longitude of the view centre.
+SPHERE_VIEW_FOV_DEG = 62.47653165897473
+SPHERE_VIEW_LAYOUT = tuple((float(yaw), 0.0) for yaw in range(0, 360, 45)) + tuple(
+    (float(yaw), pitch) for pitch in (45.0, -45.0) for yaw in range(0, 360, 60)
+) + ((0.0, 80.0), (0.0, -80.0))
 
 
 def label_lookup(semantic_labels_path):
@@ -400,8 +411,10 @@ def sliding_windows(height, width, tile_height, tile_width, stride):
     return [(top, left) for top in starts(height, tile_height) for left in starts(width, tile_width)]
 
 
-def gate_rows(windows, polar_tiles=None, pole_patches=None):
+def gate_rows(windows, polar_tiles=None, pole_patches=None, sphere_views=None):
     """The window row of each network input, in the order the predictors feed them (gated REL+ counts)."""
+    if sphere_views is not None:
+        return ["pitch {:g}".format(pitch) for _, pitch in sphere_views["layout"]]
     if windows is None:
         return ["whole"]
     if pole_patches is not None:
@@ -567,7 +580,7 @@ def sample_cap_tiles(rgb, modal_x, caps, device):
     grid = torch.as_tensor(caps["tiles"], device=device)
     return [
         F.grid_sample(
-            F.pad(image.to(device), (1, 1, 0, 0), mode="circular").expand(2, -1, -1, -1), grid,
+            F.pad(image.to(device), (1, 1, 0, 0), mode="circular").expand(len(grid), -1, -1, -1), grid,
             mode=mode, padding_mode="border", align_corners=False,
         )
         for image, mode in ((rgb, "bilinear"), (modal_x, "nearest"))
@@ -652,6 +665,73 @@ def predict_pole_patches(network, full, windows, tile_size, middle_rows, patches
         (end - start, tile_size[1]), device, channels, exp_sum,
     )
     return fused
+
+
+def sphere_view_grids(height, width, size, layout=SPHERE_VIEW_LAYOUT, fov_deg=SPHERE_VIEW_FOV_DEG):
+    """``grid_sample`` coordinates between the ERP and square pinhole views on the sphere.
+
+    View i looks at longitude ``layout[i][0]`` and latitude ``layout[i][1]`` (degrees) with no roll: image x
+    along +longitude (the ERP's handedness, not mirrored), image y down. ``tiles`` (views, size, size, 2):
+    where each view pixel reads the ERP padded by one column on each side (as ``sample_cap_tiles`` expects).
+    ``back``: per view, the flat indices of the ERP pixels it sees and where each reads the view.
+    """
+    half = np.tan(np.radians(fov_deg) / 2)
+    steps = ((np.arange(size) + 0.5) / size * 2 - 1) * half
+    a, b = np.meshgrid(steps, steps)
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    erp = unit_directions(longitude, latitude).reshape(-1, 3)
+    tiles, back = [], []
+    seen = np.zeros(height * width, dtype=np.int64)
+    for yaw, pitch in layout:
+        forward = unit_directions(np.radians(yaw), np.radians(pitch))
+        right = np.array([-np.sin(np.radians(yaw)), np.cos(np.radians(yaw)), 0.0])
+        down = np.cross(right, forward)
+        rays = forward + a[..., None] * right + b[..., None] * down
+        view_longitude, view_latitude = longitude_latitude(rays / np.linalg.norm(rays, axis=-1, keepdims=True))
+        tiles.append(np.stack([view_longitude / np.pi * width / (width + 2), -view_latitude / (np.pi / 2)], axis=-1))
+        depth = erp @ forward
+        with np.errstate(divide="ignore", invalid="ignore"):
+            x, y = erp @ right / depth / half, erp @ down / depth / half
+        inside = np.flatnonzero((depth > 0) & (np.abs(x) <= 1) & (np.abs(y) <= 1))
+        back.append((inside, np.stack([x[inside], y[inside]], axis=-1).astype(np.float32)))
+        seen[inside] += 1
+    if not seen.all():
+        raise ValueError("the sphere views leave panorama pixels unseen")
+    return {
+        "size": size,
+        "fov_deg": fov_deg,
+        "layout": tuple(layout),
+        "focal_px": float(size / 2 / half),
+        "tiles": np.stack(tiles).astype(np.float32),
+        "back": back,
+        "views_per_pixel": {"min": int(seen.min()), "max": int(seen.max()), "mean": float(seen.mean())},
+    }
+
+
+def predict_sphere_views(network, full, views, device, channels=None, exp_sum=False):
+    """Each panorama pixel: the mean probabilities (or exp(logits) with ``exp_sum``) of the views that see it."""
+    import torch
+    import torch.nn.functional as F
+
+    height, width = full[0].shape[2:]
+    total = count = None
+    for start in range(0, len(views["tiles"]), TILE_BATCH):
+        batch = {"tiles": views["tiles"][start:start + TILE_BATCH]}
+        logits = predict_with_wrap(network, *sample_cap_tiles(*full, batch, device), 0, device)
+        probabilities = logits.exp() if exp_sum else class_probabilities(logits, channels)
+        if total is None:
+            total = torch.zeros((probabilities.shape[1], height * width), device=device)
+            count = torch.zeros(height * width, device=device)
+        for view, (inside, where) in zip(probabilities, views["back"][start:start + TILE_BATCH]):
+            inside = torch.as_tensor(inside, device=device)
+            sampled = F.grid_sample(view[None], torch.as_tensor(where, device=device)[None, None],
+                                    mode="bilinear", padding_mode="border", align_corners=False)
+            total.index_add_(1, inside, sampled[0, :, 0])
+            count.index_add_(0, inside, torch.ones(len(inside), device=device))
+    return (total / count).reshape(1, -1, height, width)
 
 
 def _chunked_attention_forward(module, budget_bytes, x, H, W):
@@ -876,6 +956,13 @@ def main():
         "source inside it. With SMMF's 3 x 7 layout the caps are beyond +-47.5 deg",
     )
     parser.add_argument(
+        "--sphere-views", type=int, default=None, metavar="SIZE",
+        help="instead of one pass, {} SIZE x SIZE pinhole views on the sphere, {:.2f} deg wide, with no roll: "
+        "8 at pitch 0, 6 at +-45 and 1 at +-80 (eval_pano_crops.py's layout), cut from the evaluation-size "
+        "panorama; each pixel fuses every view that sees it. 480 is the training crop size".format(
+            len(SPHERE_VIEW_LAYOUT), SPHERE_VIEW_FOV_DEG),
+    )
+    parser.add_argument(
         "--polar-caps", type=int, default=None, metavar="SIZE",
         help="replace the bands beyond +-60 deg by two SIZE x SIZE tiles, {} degrees wide, centred on "
         "the poles of the sphere turned 90 deg; 384 at 1024 x 2048 and 768 at 2048 x 4096 keep the "
@@ -932,8 +1019,9 @@ def main():
         parser.error("--erp-tile-column-stride needs --erp-tiles")
     if args.erp_tile_column_offset and args.erp_tile_column_stride is None:
         parser.error("--erp-tile-column-offset needs --erp-tile-column-stride")
-    if args.erp_tile_exp_sum and args.erp_tiles is None and args.erp_tile_sliding_stride is None:
-        parser.error("--erp-tile-exp-sum needs --erp-tiles or --erp-tile-sliding-stride")
+    if (args.erp_tile_exp_sum and args.erp_tiles is None and args.erp_tile_sliding_stride is None
+            and args.sphere_views is None):
+        parser.error("--erp-tile-exp-sum needs --erp-tiles, --erp-tile-sliding-stride or --sphere-views")
     if args.erp_tile_sliding_stride is not None:
         if args.erp_tiles is not None:
             parser.error("--erp-tile-sliding-stride places the tiles itself; drop --erp-tiles")
@@ -1013,6 +1101,14 @@ def main():
         if args.polar_strips is not None or args.infer_scale != 1.0:
             parser.error("--polar-caps samples the evaluation-size panorama; drop --polar-strips and --infer-scale")
         caps = polar_cap_grids(args.height, args.width, args.polar_caps)
+    sphere_views = None
+    if args.sphere_views is not None:
+        if args.sphere_views <= 0:
+            parser.error("--sphere-views must be positive")
+        if tile_windows is not None or strip_rows is not None or caps is not None or args.infer_scale != 1.0:
+            parser.error("--sphere-views replaces the whole pass at the evaluation size; drop --erp-tiles, "
+                         "--erp-tile-sliding-stride, --polar-strips, --polar-caps and --infer-scale")
+        sphere_views = sphere_view_grids(args.height, args.width, args.sphere_views)
 
     import torch
     import torch.nn as nn
@@ -1051,7 +1147,7 @@ def main():
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
-    rows = gate_rows(tile_windows, polar_tiles, pole_patches)
+    rows = gate_rows(tile_windows, polar_tiles, pole_patches, sphere_views)
     gate_counts = {row: [0] * gr.BRANCHES for row in rows} if gated else None
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
@@ -1063,7 +1159,9 @@ def main():
         inputs = [
             frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
         ]
-        if pole_patches is not None:  # only the argmax is used below
+        if sphere_views is not None:  # only the argmax is used below
+            logits = predict_sphere_views(network, inputs, sphere_views, device, channels, args.erp_tile_exp_sum)
+        elif pole_patches is not None:  # only the argmax is used below
             logits = predict_pole_patches(
                 network, inputs, tile_windows, args.erp_tile_size, pole_patches["middle_rows"], pole_patches,
                 device, channels, args.erp_tile_exp_sum,
@@ -1197,6 +1295,17 @@ def main():
             "middle_rows": list(pole_patches["middle_rows"]),
             "rule": "middle_rows from the middle tile row only; all other rows read back (bilinear) from the "
                     "patch of their pole; RGB sampled bilinear, X nearest",
+        },
+        "sphere_views": None if sphere_views is None else {
+            "size": [sphere_views["size"]] * 2,
+            "projection": "pinhole (gnomonic), no roll, image x along +longitude",
+            "fov_deg": sphere_views["fov_deg"],
+            "focal_px": sphere_views["focal_px"],
+            "centre_px_per_deg": sphere_views["focal_px"] * np.pi / 180,
+            "layout_yaw_pitch_deg": [list(view) for view in sphere_views["layout"]],
+            "views_per_pixel": sphere_views["views_per_pixel"],
+            "fusion": "sum of exp(logits)" if args.erp_tile_exp_sum else "mean softmax",
+            "rule": "each pixel fuses every view that sees it, read back bilinear; RGB sampled bilinear, X nearest",
         },
         "polar_caps": None if caps is None else {
             "tile_size": args.polar_caps,

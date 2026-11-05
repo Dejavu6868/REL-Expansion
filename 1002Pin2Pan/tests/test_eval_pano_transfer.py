@@ -520,6 +520,93 @@ def test_bad_pole_patches_are_rejected_before_loading(monkeypatch, tmp_path, ext
     assert not (tmp_path / "output").exists()
 
 
+def test_sphere_views_are_the_crop_tools_views_and_see_every_pixel():
+    pytest.importorskip("cv2")
+    import cross_projection as cp
+    import eval_pano_crops as crops
+
+    assert ev.SPHERE_VIEW_LAYOUT == crops.CROP_LAYOUT and ev.SPHERE_VIEW_FOV_DEG == crops.CROP_FOV_DEG
+    height, width, size = 128, 256, 48
+    views = ev.sphere_view_grids(height, width, size)
+    assert views["tiles"].shape == (22, size, size, 2) and views["views_per_pixel"]["min"] >= 1
+    assert abs(views["focal_px"] - 24 / np.tan(np.radians(ev.SPHERE_VIEW_FOV_DEG / 2))) < 1e-9
+    k_json = cp.crop_intrinsics(size, ev.SPHERE_VIEW_FOV_DEG)
+    for tile, (yaw, pitch) in zip(views["tiles"], ev.SPHERE_VIEW_LAYOUT):  # same rays as eval_pano_crops' crops
+        _, rays = cp.crop_rays(size, k_json, cp.crop_camera_to_world(yaw, pitch))
+        ours = ev.unit_directions(tile[..., 0] * np.pi * (width + 2) / width, -tile[..., 1] * np.pi / 2)
+        assert np.abs(ours - np.stack([rays[..., 1], rays[..., 0], rays[..., 2]], axis=-1)).max() < 1e-5
+    for (inside, where), tile in zip(views["back"], views["tiles"]):  # each seen pixel reads its own ray back
+        assert np.abs(where).max() <= 1
+        rows, columns = np.divmod(inside, width)
+        longitude = (columns + 0.5) / width * 2 * np.pi - np.pi
+        latitude = np.pi / 2 - (rows + 0.5) / height * np.pi
+        assert np.all(np.hypot(where[:, 0], where[:, 1]) <= np.sqrt(2))
+        pick = np.abs(where).max(axis=1) < 1 - 2 / size
+        j = np.rint((where[pick, 0] + 1) / 2 * size - 0.5).astype(int)
+        i = np.rint((where[pick, 1] + 1) / 2 * size - 0.5).astype(int)
+        read = ev.unit_directions(tile[i, j, 0] * np.pi * (width + 2) / width, -tile[i, j, 1] * np.pi / 2)
+        assert np.degrees(np.arccos(np.clip(
+            (read * ev.unit_directions(longitude[pick], latitude[pick])).sum(axis=-1), -1, 1))).max() < 2.0
+    level = views["tiles"][0]  # pitch 0: right is +longitude and down is -latitude (not mirrored)
+    assert level[24, 40, 0] > level[24, 8, 0] and level[40, 24, 1] > level[8, 24, 1]
+
+
+def test_sphere_views_reproduce_a_smooth_whole_pass():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width = 128, 256
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    views = ev.sphere_view_grids(height, width, 64)
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    for channels in (None, [0, 2]):
+        fused = ev.predict_sphere_views(PixelwiseNet(), (smooth, smooth), views, "cpu", channels)
+        assert fused.shape == (1, 3, height, width)
+        assert torch.allclose(fused, ev.class_probabilities(whole, channels), atol=0.01)
+    fused = ev.predict_sphere_views(PixelwiseNet(), (smooth, smooth), views, "cpu", exp_sum=True)
+    assert torch.allclose(fused, whole.exp(), rtol=0.03)
+
+
+def test_sphere_views_at_the_native_size_pass_the_argument_checks(monkeypatch, tmp_path):
+    output = tmp_path / "output"
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
+        "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
+        "--sphere-views", "480", "--erp-tile-exp-sum",
+    ])
+    with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
+        ev.main()
+    assert output.exists()
+
+
+@pytest.mark.parametrize("extra", [
+    ["--sphere-views", "0"],
+    ["--sphere-views", "384", "--erp-tiles", "3", "8"],
+    ["--sphere-views", "384", "--erp-tile-size", "384", "384", "--erp-tile-sliding-stride", "320"],
+    ["--sphere-views", "384", "--polar-strips", "32"],
+    ["--sphere-views", "384", "--polar-caps", "384"],
+    ["--sphere-views", "384", "--infer-scale", "0.5"],
+])
+def test_bad_sphere_views_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 @pytest.mark.parametrize("extra", [
     ["--polar-caps", "0"],
     ["--polar-caps", "400"],

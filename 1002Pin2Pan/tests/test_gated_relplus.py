@@ -326,11 +326,12 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
     p47 = smmf + ["--erp-tile-polar-scale", "0.5"]
     sliding = ["--erp-tile-size", "136", "136", "--erp-tile-sliding-stride", "90", "--erp-tile-exp-sum"]
     for name, extra in (("whole", []), ("smmf", smmf), ("p47", p47), ("p47strips", p47 + ["--erp-tile-polar-strips"]),
-                        ("sliding", sliding), ("patches", smmf + ["--erp-tile-pole-patches", "136"])):
+                        ("sliding", sliding), ("patches", smmf + ["--erp-tile-pole-patches", "136"]),
+                        ("views", ["--sphere-views", "136", "--erp-tile-exp-sum"])):
         result = run([str(TOOLS / "eval_pano_transfer.py")] + common + extra + ["--output", str(tmp_path / name)])
         assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
     counts = {name: json.loads((tmp_path / name / "metrics.json").read_text())["gate_counts_per_window_row"]
-              for name in ("whole", "smmf", "p47", "p47strips", "sliding", "patches")}
+              for name in ("whole", "smmf", "p47", "p47strips", "sliding", "patches", "views")}
     assert {row: sum(c) for row, c in counts["whole"].items()} == {"whole": 2}
     assert {row: sum(c) for row, c in counts["smmf"].items()} == {"row 0": 14, "row 60": 14, "row 120": 14}
     assert {row: sum(c) for row, c in counts["p47"].items()} == {"row 0 (x0.5)": 14, "row 120 (x0.5)": 14,
@@ -342,6 +343,8 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
     assert {row: sum(c) for row, c in counts["sliding"].items()} == {"row 0": 12, "row 90": 12, "row 120": 12}
     assert {row: sum(c) for row, c in counts["patches"].items()} == {"north patch": 2, "south patch": 2, "row 60": 14}
     assert counts["patches"]["row 60"] == counts["smmf"]["row 60"]
+    assert {row: sum(c) for row, c in counts["views"].items()} == {"pitch 0": 16, "pitch 45": 12, "pitch -45": 12,
+                                                                 "pitch 80": 2, "pitch -80": 2}
 
     refused = run([str(TOOLS / "eval_pano_transfer.py")] + common + ["--polar-strips", "8", "--output",
                                                                       str(tmp_path / "strips")])
