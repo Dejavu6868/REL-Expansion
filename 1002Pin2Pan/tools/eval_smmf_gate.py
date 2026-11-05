@@ -15,6 +15,10 @@ once per zone, and scores the result.
   inside it. ``--middle-height H`` makes the middle windows H rows tall, centred.
 * ``--whole-scale S``: every row on the panorama resized by S (the control).
 
+``--x-root`` reads X from another folder of the same layout, e.g. the REL+ v3.1new cache of
+``build_supervised_pano_cache.py`` (its v3_1new marker is required); pass the new checkpoint's
+sha256 with ``--expected-sha256``.
+
 The gate is unchanged: each window picks its own branch. A forward hook on ``backbone.Gate``
 counts the choices per zone and row. Scores are SMMF's own 13-class metric (its
 ``compute_score``), plus per-band confusions for the 13-class argmax and for the argmax over
@@ -33,6 +37,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+import relplus_variant as rv
 from eval_pano_transfer import EIGHT_CLASS_NAMES, elevation_band_confusions
 
 CLASS_NAMES = ["beam", "board", "bookcase", "ceiling", "chair", "clutter", "column", "door",
@@ -240,11 +245,11 @@ def build_network(smmf, stride_rate):
     return network
 
 
-def data_setting(root):
+def data_setting(root, x_root=None):
     return {
         "rgb_root": str(root / "image"), "rgb_format": "_rgb.png",
         "gt_root": str(root / "label"), "gt_format": "_semantic.png", "transform_gt": True,
-        "x_root": str(root / "rle"), "x_format": "_hha.png", "x_single_channel": False,
+        "x_root": str(x_root or root / "rle"), "x_format": "_hha.png", "x_single_channel": False,
         "regions_root": "", "regions_format": "", "lw_root": "", "lw_format": "",
         "train_source": str(root / "fold1_train.txt"), "eval_source": str(root / "fold1_test.txt"),
         "class_names": CLASS_NAMES,
@@ -256,6 +261,8 @@ def main():
     parser.add_argument("--smmf-root", required=True, type=Path, help="original Pano_MA_Seg folder")
     parser.add_argument("--data-root", required=True, type=Path, help="datasets/Stanford2D3DPano")
     parser.add_argument("--checkpoint", required=True, type=Path)
+    parser.add_argument("--x-root", type=Path, default=None,
+                        help="X folder (default <data-root>/rle); a REL+ cache's X folder needs its v3_1new marker")
     parser.add_argument("--expected-sha256", default=EXPECTED_SHA256)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--stride-rate", type=float, default=2 / 3)
@@ -269,6 +276,12 @@ def main():
     args = parser.parse_args()
     for name in ("smmf_root", "data_root", "checkpoint", "output"):  # inference runs from --output
         setattr(args, name, getattr(args, name).resolve())
+    marker = None
+    if args.x_root is not None:
+        args.x_root = args.x_root.resolve()
+        marker = rv.read_marker(args.x_root.parent)
+        if marker is None or marker["variant"] != "v3_1new":
+            parser.error("--x-root {} has no v3_1new marker in its parent".format(args.x_root))
 
     plan = zone_plan(2048, 4096, args.rows, args.pad, args.stride_rate, args.polar_scale,
                      args.middle_height, args.whole_scale)
@@ -294,7 +307,7 @@ def main():
         lambda module, inputs, weight: gate_log.append(int(weight.argmax(1)[0]))
     )
 
-    dataset = smmf["RGBXDataset"](data_setting(args.data_root), "val", smmf["ValPre"]())
+    dataset = smmf["RGBXDataset"](data_setting(args.data_root, args.x_root), "val", smmf["ValPre"]())
     dataset._file_names = dataset._file_names[: args.limit]
     segmentor = smmf["Evaluator"](dataset, config.num_classes, config.norm_mean, config.norm_std, network,
                                   config.eval_scale_array, config.eval_flip, [args.device])
@@ -337,6 +350,8 @@ def main():
         "torch_version": torch.__version__,
         "config": dict({key: getattr(config, key) for key in EVAL_CONFIG}, eval_stride_rate=args.stride_rate),
         "data_root": str(args.data_root),
+        "x_root": str(args.x_root or args.data_root / "rle"),
+        "relplus_marker": marker,
         "panoramas": len(names),
         "first_panoramas": names[:3],
         "panorama_size": [2048, 4096],
@@ -355,7 +370,7 @@ def main():
         "freq_iou_percent": 100 * float(freq_iou),
         "mean_pixel_accuracy_percent": 100 * float(mean_pixel_acc),
         "per_class_iou_percent": dict(zip(CLASS_NAMES, (100 * iou).round(3).tolist())),
-        "reported_smmf_mIoU_13_percent": REPORTED_MIOU_PERCENT,
+        "reported_smmf_mIoU_13_percent": REPORTED_MIOU_PERCENT if digest == EXPECTED_SHA256 else None,
         "seconds": round(time.time() - started),
     }
     (output / "metrics.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
