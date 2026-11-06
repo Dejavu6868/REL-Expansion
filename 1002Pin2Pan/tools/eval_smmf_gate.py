@@ -14,6 +14,10 @@ once per zone, and scores the result.
   prediction only outside the middle row. The middle row runs native and is the only source
   inside it. ``--middle-height H`` makes the middle windows H rows tall, centred.
 * ``--whole-scale S``: every row on the panorama resized by S (the control).
+* ``--input-pool RGB X``: SMMF's own pass, with a fixed 2x2 pooling of RGB and X (avg, max or
+  nearest) in front of the network and a 2x bilinear upsampling of its logits behind it
+  (``eval_pano_transfer.input_pool_network``). Avg on both is ``--whole-scale 0.5`` as one
+  model-level change.
 
 The gate is unchanged: each window picks its own branch. A forward hook on ``backbone.Gate``
 counts the choices per zone and row. Scores are SMMF's own 13-class metric (its
@@ -33,7 +37,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from eval_pano_transfer import EIGHT_CLASS_NAMES, elevation_band_confusions
+from eval_pano_transfer import EIGHT_CLASS_NAMES, INPUT_POOL_MODES, elevation_band_confusions, input_pool_network
 
 CLASS_NAMES = ["beam", "board", "bookcase", "ceiling", "chair", "clutter", "column", "door",
                "floor", "sofa", "table", "wall", "window"]
@@ -264,6 +268,9 @@ def main():
     parser.add_argument("--polar-scale", type=float, default=None)
     parser.add_argument("--middle-height", type=int, default=None)
     parser.add_argument("--whole-scale", type=float, default=None)
+    parser.add_argument("--input-pool", nargs=2, default=None, metavar=("RGB", "X"),
+                        help="2x2 pooling of RGB and X ({}) in front of the network, logits upsampled 2x "
+                        "behind it; SMMF's own pass only".format(", ".join(INPUT_POOL_MODES)))
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
     args = parser.parse_args()
@@ -272,6 +279,14 @@ def main():
 
     plan = zone_plan(2048, 4096, args.rows, args.pad, args.stride_rate, args.polar_scale,
                      args.middle_height, args.whole_scale)
+    if args.input_pool is not None:
+        if any(mode not in INPUT_POOL_MODES for mode in args.input_pool):
+            parser.error("--input-pool modes are {} (bilinear by 0.5 is avg)".format(", ".join(INPUT_POOL_MODES)))
+        if args.polar_scale or args.whole_scale:
+            parser.error("--input-pool goes in front of SMMF's own pass; drop --polar-scale and --whole-scale")
+        geometry = list(CROP) + list(args.rows) + [args.pad] + list(plan[0]["columns"])
+        if any(value % 2 for value in geometry):
+            parser.error("--input-pool needs even window sizes, rows, padding and columns")
     output = args.output
     if output.exists() and any(output.iterdir()):
         raise FileExistsError("{} is not empty; refusing to overwrite".format(output))
@@ -298,7 +313,7 @@ def main():
     dataset._file_names = dataset._file_names[: args.limit]
     segmentor = smmf["Evaluator"](dataset, config.num_classes, config.norm_mean, config.norm_std, network,
                                   config.eval_scale_array, config.eval_flip, [args.device])
-    segmentor.val_func = network
+    segmentor.val_func = network if args.input_pool is None else input_pool_network(network, *args.input_pool)
 
     eight = np.asarray([CLASS_NAMES.index(name) for name in EIGHT_CLASS_NAMES])
     gate_counts = [np.zeros((len(z["rows"]), GATE_BRANCHES), dtype=np.int64) for z in plan]
@@ -350,6 +365,10 @@ def main():
             for z, counts in zip(plan, gate_counts)
         ],
         "fusion": "original scale_process_rgbX_smmf: sum of exp(logits), cyclic ends added",
+        "input_pool": None if args.input_pool is None else {
+            "rgb": args.input_pool[0], "x": args.input_pool[1], "factor": 2,
+            "logits": "upsampled 2x (bilinear) to the window size before exp and fusion",
+        },
         "mIoU_13_percent": 100 * float(mean_iou),
         "pixel_accuracy_percent": 100 * float(pixel_acc),
         "freq_iou_percent": 100 * float(freq_iou),

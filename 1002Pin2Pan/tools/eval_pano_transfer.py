@@ -39,6 +39,11 @@ normalisation are the frozen training ones; only the input images change.
 * ``--erp-tile-sliding-stride S`` places the tiles as CMX's own sliding-window
   evaluation does instead: every S pixels from the top-left corner, the last row and
   column moved back to the panorama edge, no wrap across the seam.
+* ``--input-pool RGB X`` puts a fixed 2x2 pooling (avg, max or nearest) in front of
+  the network and a 2x bilinear upsampling of its logits behind it, so each
+  ``--erp-tiles`` window runs at half size and its logits return to the window's
+  size before fusion. With SMMF's layout this is SMMF050 as one model-level change,
+  except that X is pooled from the native encoding instead of re-encoded at half size.
 * ``--polar-caps SIZE`` replaces the bands beyond +-60 degrees by two
   SIZE x SIZE tiles, 67.5 degrees wide, centred on the poles of the sphere
   turned 90 degrees about the x axis, where the poles lie on the equator and
@@ -654,6 +659,49 @@ def predict_pole_patches(network, full, windows, tile_size, middle_rows, patches
     return fused
 
 
+INPUT_POOL_MODES = ("avg", "max", "nearest")
+
+
+def pool_half(image, mode):
+    """A fixed 2x2 pooling of a (B, C, H, W) tensor. "avg" equals bilinear resizing by exactly 0.5 (and
+    cv2.INTER_LINEAR); "nearest" keeps the top-left pixel of each block, as cv2.INTER_NEAREST does."""
+    import torch.nn.functional as F
+
+    if mode == "avg":
+        return F.avg_pool2d(image, 2)
+    if mode == "max":
+        return F.max_pool2d(image, 2)
+    if mode == "nearest":
+        return image[:, :, ::2, ::2]
+    raise ValueError("unknown pooling mode: " + str(mode))
+
+
+def input_pool_network(network, rgb_mode, x_mode):
+    """``network`` behind a 2x2 pooling of RGB and X and in front of a 2x bilinear upsampling of its logits.
+
+    Other forward arguments pass through unchanged. ``gate_log`` is the wrapped network's (gated REL+).
+    """
+    import torch
+    import torch.nn.functional as F
+
+    class InputPool(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.network = network
+
+        @property
+        def gate_log(self):
+            return self.network.gate_log
+
+        def forward(self, rgb, modal_x, *rest):
+            if rgb.shape[2] % 2 or rgb.shape[3] % 2:
+                raise ValueError("2x2 pooling needs even input sizes, got {}".format(tuple(rgb.shape[2:])))
+            logits = self.network(pool_half(rgb, rgb_mode), pool_half(modal_x, x_mode), *rest)
+            return F.interpolate(logits, size=rgb.shape[2:], mode="bilinear", align_corners=False)
+
+    return InputPool()
+
+
 def _chunked_attention_forward(module, budget_bytes, x, H, W):
     """The frozen MiT ``Attention.forward`` with the scores computed a chunk of queries at a time."""
     import torch
@@ -876,6 +924,11 @@ def main():
         "source inside it. With SMMF's 3 x 7 layout the caps are beyond +-47.5 deg",
     )
     parser.add_argument(
+        "--input-pool", nargs=2, default=None, metavar=("RGB", "X"),
+        help="with --erp-tiles, pool RGB and X 2x2 ({}) in front of the network and upsample its logits 2x "
+        "(bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(", ".join(INPUT_POOL_MODES)),
+    )
+    parser.add_argument(
         "--polar-caps", type=int, default=None, metavar="SIZE",
         help="replace the bands beyond +-60 deg by two SIZE x SIZE tiles, {} degrees wide, centred on "
         "the poles of the sphere turned 90 deg; 384 at 1024 x 2048 and 768 at 2048 x 4096 keep the "
@@ -1013,6 +1066,16 @@ def main():
         if args.polar_strips is not None or args.infer_scale != 1.0:
             parser.error("--polar-caps samples the evaluation-size panorama; drop --polar-strips and --infer-scale")
         caps = polar_cap_grids(args.height, args.width, args.polar_caps)
+    if args.input_pool is not None:
+        if any(mode not in INPUT_POOL_MODES for mode in args.input_pool):
+            parser.error("--input-pool modes are {} (bilinear by 0.5 is avg)".format(", ".join(INPUT_POOL_MODES)))
+        if (args.erp_tiles is None or args.infer_scale != 1.0 or polar_tiles is not None or pole_patches is not None
+                or caps is not None):
+            parser.error("--input-pool goes in front of plain --erp-tiles; drop --infer-scale, "
+                         "--erp-tile-polar-scale, --erp-tile-pole-patches and --polar-caps")
+        if any(value % 2 for value in list(args.erp_tile_size) + [v for window in tile_windows for v in window]):
+            parser.error("--input-pool needs even tile sizes and tile origins, so pooling each tile equals "
+                         "cutting it from the pooled panorama")
 
     import torch
     import torch.nn as nn
@@ -1045,6 +1108,8 @@ def main():
     chunked_attention_modules = 0
     if args.attention_chunk_mb:
         chunked_attention_modules = chunk_attention(network, args.attention_chunk_mb)
+    if args.input_pool is not None:
+        network = input_pool_network(network, *args.input_pool)
     network.to(device)
     network.eval()
 
@@ -1197,6 +1262,13 @@ def main():
             "middle_rows": list(pole_patches["middle_rows"]),
             "rule": "middle_rows from the middle tile row only; all other rows read back (bilinear) from the "
                     "patch of their pole; RGB sampled bilinear, X nearest",
+        },
+        "input_pool": None if args.input_pool is None else {
+            "rgb": args.input_pool[0],
+            "x": args.input_pool[1],
+            "factor": 2,
+            "network_tile_size": [length // 2 for length in args.erp_tile_size],
+            "logits": "upsampled 2x (bilinear) to the tile size before fusion",
         },
         "polar_caps": None if caps is None else {
             "tile_size": args.polar_caps,
