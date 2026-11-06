@@ -594,15 +594,44 @@ def test_pooled_smmf_is_smmf_on_the_pooled_panorama():
     assert (fused.argmax(1) == smmf050.argmax(1)).float().mean() > 0.999
 
 
+def test_pooled_pole_patches_and_pooled_zones_share_the_middle_row():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width, size = 128, 256, 64
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    windows = ev.erp_tile_windows(height, width, 3, 8, 64, 64)  # rows 0, 32, 64: the middle row is 32..96
+    patches = ev.pole_patch_grids(height, width, size, (32, 96))
+    pooled = ev.input_pool_network(PixelwiseNet(), "avg", "avg")
+    rows = torch.zeros(height, dtype=torch.bool)
+    rows[32:96] = True
+    expected = ev.class_probabilities(ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu"))
+    warped = ev.predict_pole_patches(pooled, (smooth, smooth), windows, (64, 64), (32, 96), patches, "cpu")
+    zones = ev.predict_polar_scaled_tiles(pooled, (smooth, smooth), (smooth, smooth), windows, (64, 64), (32, 96),
+                                          "cpu")  # --erp-tile-polar-scale 1: ERP polar rows at the evaluation size
+    assert torch.equal(warped[:, :, rows], zones[:, :, rows])  # the same pooled middle windows
+    for fused in (warped, zones):  # on a smooth panorama both reproduce the whole pass outside the middle row
+        assert torch.allclose(fused[:, :, ~rows], expected[:, :, ~rows], atol=0.03)  # 2x upsampling at the edges
+
+
 def test_smmf_layout_with_input_pool_passes_the_argument_checks(monkeypatch, tmp_path):
-    for modes in (("avg", "avg"), ("max", "max"), ("avg", "nearest")):
-        output = tmp_path / ("output" + "_".join(modes))
+    for modes, polar in ((("avg", "avg"), []), (("max", "max"), []), (("avg", "nearest"), []),
+                         (("avg", "avg"), ["--erp-tile-pole-patches", "1080"]),
+                         (("avg", "avg"), ["--erp-tile-polar-scale", "1"])):
+        output = tmp_path / ("output" + "_".join(modes) + "_".join(polar))
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
             "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
             "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
             "--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
-            "--erp-tile-column-offset", "-652", "--erp-tile-exp-sum", "--input-pool", *modes,
+            "--erp-tile-column-offset", "-652", "--erp-tile-exp-sum", "--input-pool", *modes, *polar,
         ])
         with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
             ev.main()
@@ -614,7 +643,9 @@ def test_smmf_layout_with_input_pool_passes_the_argument_checks(monkeypatch, tmp
     ["--erp-tiles", "3", "8", "--input-pool", "bilinear", "avg"],
     ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--infer-scale", "0.5"],
     ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--erp-tile-polar-scale", "0.5"],
-    ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--erp-tile-pole-patches", "384"],
+    ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--erp-tile-pole-patches", "385"],  # odd patch
+    ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--erp-tile-polar-scale", "1", "--erp-tile-polar-strips"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "1.5"],
     ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--polar-caps", "384"],
     ["--erp-tiles", "3", "7", "--input-pool", "avg", "avg"],  # columns start at 0, 292, 585 ...: odd
     ["--erp-tile-size", "384", "384", "--erp-tile-sliding-stride", "320", "--input-pool", "avg", "avg"],
