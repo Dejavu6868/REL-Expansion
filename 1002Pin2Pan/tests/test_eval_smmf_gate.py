@@ -211,6 +211,68 @@ def test_original_smmf_fusion_composes_the_zones(smmf, monkeypatch, middle_heigh
     assert [c.sum() for c in counts] == [len(z["rows"]) * len(z["columns"]) for z in plan]
 
 
+def test_input_pool_in_front_of_the_original_fusion_is_whole_scale_half(smmf, monkeypatch):
+    torch = pytest.importorskip("torch")
+    import eval_pano_transfer as ept
+
+    monkeypatch.setattr(torch.Tensor, "cuda", lambda self, *args, **kwargs: self)
+    weights = torch.from_numpy(np.random.default_rng(1).normal(size=(6, 13)).astype(np.float32))
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x, lat):
+            return torch.einsum("bchw,ck->bkhw", torch.cat([rgb, modal_x], 1), weights)
+
+    gate_log = []
+
+    def network(segmentor, input_data, input_modal_x, lat, device):  # the original's tensor handling, on CPU
+        gate_log.append(0)
+        rgb, modal_x = (torch.from_numpy(np.ascontiguousarray(a[None], dtype=np.float32))
+                        for a in (input_data, input_modal_x))
+        return torch.exp(segmentor.val_func(rgb, modal_x, lat)[0])
+
+    config = smmf["config"]
+    eg.configure(config, 2 / 3)
+    segmentor = smmf["Evaluator"].__new__(smmf["Evaluator"])
+    segmentor.class_num = 13
+    segmentor.norm_mean = segmentor.norm_mean_x = config.norm_mean
+    segmentor.norm_std = segmentor.norm_std_x = config.norm_std
+    monkeypatch.setattr(smmf["Evaluator"], "val_func_process_rgbX", network)
+
+    rows, columns = np.meshgrid(np.linspace(0, 1, 512), np.linspace(0, 1, 256))
+    image = (255 * np.stack([rows, columns, rows * columns], -1)).round().astype(np.uint8)  # smooth
+    modal_x = image[:, :, ::-1].copy()
+    lat = np.cos(np.linspace(-1.5, 1.5, 256))[:, None].repeat(512, 1)
+    fused = {}
+    for name, kwargs, val_func in (("pooled", {}, ept.input_pool_network(PixelwiseNet(), "avg", "avg")),
+                                   ("half", {"whole_scale": 0.5}, PixelwiseNet())):
+        plan = eg.zone_plan(256, 512, [0, 64, 128], 80, 2 / 3, crop=(128, 128), **kwargs)  # even geometry
+        segmentor.val_func = val_func
+        counts = [np.zeros((len(z["rows"]), 5), dtype=np.int64) for z in plan]
+        fused[name] = eg.fused_scores(segmentor, config, plan, image, modal_x, lat, "cpu", gate_log, counts)
+    # The original sums exp(logits) over windows and resizes the sum, so where the window count changes the
+    # half-size pass blurs it over one native pixel; the pooled pass keeps it sharp. Elsewhere they agree.
+    relative = np.abs(fused["pooled"] - fused["half"]) / fused["half"]
+    assert np.median(relative) < 0.02
+    assert (fused["pooled"].argmax(2) == fused["half"].argmax(2)).mean() > 0.99
+
+
+@pytest.mark.parametrize("extra", [
+    ["--input-pool", "avg", "avg", "--whole-scale", "0.5"],
+    ["--input-pool", "avg", "avg", "--polar-scale", "0.5"],
+    ["--input-pool", "bilinear", "avg"],
+    ["--input-pool", "avg", "avg", "--pad", "651"],
+])
+def test_bad_input_pools_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_smmf_gate.py", "--smmf-root", str(tmp_path), "--data-root", str(tmp_path),
+        "--checkpoint", str(tmp_path / "missing.pth"), "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        eg.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def test_original_model_matches_the_checkpoint_keys(smmf, tmp_path, monkeypatch):
     torch = pytest.importorskip("torch")
     keys_path = os.environ.get("SMMF_CKPT_KEYS")
