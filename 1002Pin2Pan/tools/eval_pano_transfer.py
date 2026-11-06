@@ -44,6 +44,8 @@ normalisation are the frozen training ones; only the input images change.
   ``--erp-tiles`` window runs at half size and its logits return to the window's
   size before fusion. With SMMF's layout this is SMMF050 as one model-level change,
   except that X is pooled from the native encoding instead of re-encoded at half size.
+  It also goes in front of ``--erp-tile-pole-patches`` (the patches are pooled too) and of
+  ``--erp-tile-polar-scale 1`` (polar rows at the evaluation size, used only outside the middle row).
 * ``--polar-caps SIZE`` replaces the bands beyond +-60 degrees by two
   SIZE x SIZE tiles, 67.5 degrees wide, centred on the poles of the sphere
   turned 90 degrees about the x axis, where the poles lie on the equator and
@@ -905,7 +907,7 @@ def main():
         "--erp-tile-polar-scale", type=float, default=None, metavar="S",
         help="with a 3-row tile grid, cut the top and bottom rows from the panorama resized by S (same place, "
         "S times smaller) and use them only outside the middle row; the middle row stays at the evaluation "
-        "size. 0.5 with SMMF's 3 x 7 layout halves it beyond +-47.5 deg",
+        "size. 0.5 with SMMF's 3 x 7 layout halves it beyond +-47.5 deg; 1 keeps every row at the evaluation size",
     )
     parser.add_argument(
         "--erp-tile-middle-height", type=int, default=None, metavar="H",
@@ -1018,8 +1020,8 @@ def main():
         if args.infer_scale != 1.0 or args.polar_caps is not None:
             parser.error("--erp-tile-polar-scale keeps the middle row at the evaluation size; "
                          "drop --infer-scale and --polar-caps")
-        if not 0 < scale < 1:
-            parser.error("--erp-tile-polar-scale must be between 0 and 1")
+        if not 0 < scale <= 1:
+            parser.error("--erp-tile-polar-scale must be above 0 and at most 1")
         if 2 * args.erp_tile_size[0] < args.height:
             parser.error("--erp-tile-polar-scale needs the top and bottom tile rows to meet")
         middle_height = args.erp_tile_size[0] if args.erp_tile_middle_height is None else args.erp_tile_middle_height
@@ -1069,13 +1071,17 @@ def main():
     if args.input_pool is not None:
         if any(mode not in INPUT_POOL_MODES for mode in args.input_pool):
             parser.error("--input-pool modes are {} (bilinear by 0.5 is avg)".format(", ".join(INPUT_POOL_MODES)))
-        if (args.erp_tiles is None or args.infer_scale != 1.0 or polar_tiles is not None or pole_patches is not None
-                or caps is not None):
-            parser.error("--input-pool goes in front of plain --erp-tiles; drop --infer-scale, "
-                         "--erp-tile-polar-scale, --erp-tile-pole-patches and --polar-caps")
-        if any(value % 2 for value in list(args.erp_tile_size) + [v for window in tile_windows for v in window]):
-            parser.error("--input-pool needs even tile sizes and tile origins, so pooling each tile equals "
-                         "cutting it from the pooled panorama")
+        if (args.erp_tiles is None or args.infer_scale != 1.0 or caps is not None or polar_tiles is not None
+                and (polar_tiles["scale"] != 1 or polar_tiles["strip_wrap_pad"] is not None)):
+            parser.error("--input-pool goes in front of --erp-tiles at the evaluation size, also with "
+                         "--erp-tile-pole-patches or --erp-tile-polar-scale 1; drop --infer-scale, --polar-caps, "
+                         "--erp-tile-polar-strips and polar scales below 1")
+        lengths = list(args.erp_tile_size) + [v for window in tile_windows for v in window]
+        lengths += [] if pole_patches is None else [pole_patches["size"]]
+        lengths += [] if polar_tiles is None else list(polar_tiles["middle_rows"])
+        if any(value % 2 for value in lengths):
+            parser.error("--input-pool needs even tile sizes, tile origins, middle rows and pole patch sizes, "
+                         "so pooling each tile equals cutting it from the pooled panorama")
 
     import torch
     import torch.nn as nn
@@ -1268,6 +1274,7 @@ def main():
             "x": args.input_pool[1],
             "factor": 2,
             "network_tile_size": [length // 2 for length in args.erp_tile_size],
+            "network_pole_patch_size": None if pole_patches is None else [pole_patches["size"] // 2] * 2,
             "logits": "upsampled 2x (bilinear) to the tile size before fusion",
         },
         "polar_caps": None if caps is None else {
