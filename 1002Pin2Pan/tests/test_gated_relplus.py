@@ -327,11 +327,17 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
     sliding = ["--erp-tile-size", "136", "136", "--erp-tile-sliding-stride", "90", "--erp-tile-exp-sum"]
     for name, extra in (("whole", []), ("smmf", smmf), ("p47", p47), ("p47strips", p47 + ["--erp-tile-polar-strips"]),
                         ("sliding", sliding), ("patches", smmf + ["--erp-tile-pole-patches", "136"]),
-                        ("views", ["--sphere-views", "136", "--erp-tile-exp-sum"])):
+                        ("views", ["--sphere-views", "136", "--erp-tile-exp-sum"]),
+                        ("pooled", smmf + ["--input-pool", "avg", "avg"]),
+                        ("pooledpatches", smmf + ["--erp-tile-pole-patches", "136", "--input-pool", "avg", "avg"]),
+                        ("pooledzones", smmf + ["--erp-tile-polar-scale", "1", "--input-pool", "avg", "avg"]),
+                        ("tileviews", smmf + ["--sphere-views", "136"]),
+                        ("pooledtileviews", smmf + ["--sphere-views", "136", "--input-pool", "avg", "avg"])):
         result = run([str(TOOLS / "eval_pano_transfer.py")] + common + extra + ["--output", str(tmp_path / name)])
         assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
     counts = {name: json.loads((tmp_path / name / "metrics.json").read_text())["gate_counts_per_window_row"]
-              for name in ("whole", "smmf", "p47", "p47strips", "sliding", "patches", "views")}
+              for name in ("whole", "smmf", "p47", "p47strips", "sliding", "patches", "views", "pooled",
+                           "pooledpatches", "pooledzones", "tileviews", "pooledtileviews")}
     assert {row: sum(c) for row, c in counts["whole"].items()} == {"whole": 2}
     assert {row: sum(c) for row, c in counts["smmf"].items()} == {"row 0": 14, "row 60": 14, "row 120": 14}
     assert {row: sum(c) for row, c in counts["p47"].items()} == {"row 0 (x0.5)": 14, "row 120 (x0.5)": 14,
@@ -345,6 +351,14 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
     assert counts["patches"]["row 60"] == counts["smmf"]["row 60"]
     assert {row: sum(c) for row, c in counts["views"].items()} == {"pitch 0": 16, "pitch 45": 12, "pitch -45": 12,
                                                                  "pitch 80": 2, "pitch -80": 2}
+    assert {row: sum(c) for row, c in counts["pooled"].items()} == {"row 0": 14, "row 60": 14, "row 120": 14}
+    assert {row: sum(c) for row, c in counts["pooledpatches"].items()} == {"north patch": 2, "south patch": 2,
+                                                                        "row 60": 14}
+    assert {row: sum(c) for row, c in counts["pooledzones"].items()} == {"row 0 (x1)": 14, "row 120 (x1)": 14,
+                                                                      "row 60": 14}
+    assert counts["pooledpatches"]["row 60"] == counts["pooledzones"]["row 60"] == counts["pooled"]["row 60"]
+    for name in ("tileviews", "pooledtileviews"):  # one view per SMMF window, counted under the window's row
+        assert {row: sum(c) for row, c in counts[name].items()} == {"row 0": 14, "row 60": 14, "row 120": 14}
 
     refused = run([str(TOOLS / "eval_pano_transfer.py")] + common + ["--polar-strips", "8", "--output",
                                                                       str(tmp_path / "strips")])
