@@ -36,6 +36,14 @@ normalisation are the frozen training ones; only the input images change.
   bottom tile rows by one SIZE x SIZE pinhole view centred on each pole (looking
   straight up or down). Its inscribed circle is the cap beyond the middle tile row,
   which stays the only source inside it.
+* ``--sphere-views SIZE`` replaces the whole pass by 22 SIZE x SIZE pinhole views
+  on the sphere, with no roll, in ``eval_pano_crops.py``'s layout and field of view
+  (8 at pitch 0, 6 at +-45, 1 at +-80; 62.48 degrees). RGB (bilinear) and the X
+  encoded on the whole panorama (nearest) are sampled into each view; each pixel
+  fuses every view that sees it. With ``--erp-tiles`` there is one view per tile
+  instead, centred on the tile and as wide as it (SMMF's partition on the sphere);
+  ``--sphere-views-middle-row`` turns only the middle tile row into views, and
+  ``--sphere-views-poles`` replaces the top and bottom tile rows by one view per pole.
 * ``--erp-tile-sliding-stride S`` places the tiles as CMX's own sliding-window
   evaluation does instead: every S pixels from the top-left corner, the last row and
   column moved back to the panorama edge, no wrap across the seam.
@@ -114,6 +122,14 @@ TILE_BATCH = 8
 # turn the north pole sits at longitude -90 and the south pole at +90 (degrees, latitude 0).
 POLAR_CAP_FOV_DEG = 67.5
 POLAR_CAP_CENTRE_LONGITUDES_DEG = (-90.0, 90.0)
+# --sphere-views: eval_pano_crops.py's CROP_FOV_DEG (median S2D training field of view) and CROP_LAYOUT,
+# as (yaw, pitch) in degrees; yaw is the ERP longitude of the view centre.
+# --sphere-views-poles: the views straight up and down, oriented as --erp-tile-pole-patches' patches.
+POLE_VIEWS = ((-90.0, 90.0), (-90.0, -90.0))
+SPHERE_VIEW_FOV_DEG = 62.47653165897473
+SPHERE_VIEW_LAYOUT = tuple((float(yaw), 0.0) for yaw in range(0, 360, 45)) + tuple(
+    (float(yaw), pitch) for pitch in (45.0, -45.0) for yaw in range(0, 360, 60)
+) + ((0.0, 80.0), (0.0, -80.0))
 
 
 def label_lookup(semantic_labels_path):
@@ -407,8 +423,17 @@ def sliding_windows(height, width, tile_height, tile_width, stride):
     return [(top, left) for top in starts(height, tile_height) for left in starts(width, tile_width)]
 
 
-def gate_rows(windows, polar_tiles=None, pole_patches=None):
+def gate_rows(windows, polar_tiles=None, pole_patches=None, sphere_views=None):
     """The window row of each network input, in the order the predictors feed them (gated REL+ counts)."""
+    if sphere_views is not None and windows is None:
+        return ["pitch {:g}".format(pitch) for _, pitch in sphere_views["layout"]]
+    if sphere_views is not None and sphere_views["pole_views"]:  # the middle row's views, then one per pole
+        middle = sorted({top for top, _ in windows})[1]
+        return ["row {}".format(middle)] * (len(sphere_views["layout"]) - 2) + ["north view", "south view"]
+    if sphere_views is not None and sphere_views["middle_row"] is not None:  # ERP tiles first, then the views
+        middle = sphere_views["middle_row"]
+        return ["row {}".format(top) for top, _ in windows if top != middle] + ["row {}".format(middle)] * len(
+            sphere_views["layout"])
     if windows is None:
         return ["whole"]
     if pole_patches is not None:
@@ -435,10 +460,12 @@ def class_probabilities(logits, channels=None):
     return masked.softmax(dim=1)
 
 
-def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channels=None, exp_sum=False):
+def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channels=None, exp_sum=False,
+                      return_sums=False):
     """Mean class probabilities over the tiles covering each pixel; columns wrap at the seam.
 
     With ``exp_sum`` each tile contributes exp(logits): CMX's val_func_process_rgbX returns those, and SMMF sums them.
+    With ``return_sums``: the per-pixel sum and tile count instead, without the coverage check.
     """
     import torch
 
@@ -460,6 +487,8 @@ def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channel
             cols = cols.to(device)
             total[0, :, top:top + tile_height].index_add_(2, cols, tile)
             count[0, :, top:top + tile_height].index_add_(2, cols, torch.ones_like(tile[:1]))
+    if return_sums:
+        return total, count
     if not bool((count > 0).all()):
         raise ValueError("the tile grid leaves panorama pixels uncovered")
     return total / count
@@ -574,7 +603,7 @@ def sample_cap_tiles(rgb, modal_x, caps, device):
     grid = torch.as_tensor(caps["tiles"], device=device)
     return [
         F.grid_sample(
-            F.pad(image.to(device), (1, 1, 0, 0), mode="circular").expand(2, -1, -1, -1), grid,
+            F.pad(image.to(device), (1, 1, 0, 0), mode="circular").expand(len(grid), -1, -1, -1), grid,
             mode=mode, padding_mode="border", align_corners=False,
         )
         for image, mode in ((rgb, "bilinear"), (modal_x, "nearest"))
@@ -659,6 +688,102 @@ def predict_pole_patches(network, full, windows, tile_size, middle_rows, patches
         (end - start, tile_size[1]), device, channels, exp_sum,
     )
     return fused
+
+
+def sphere_view_grids(height, width, size, layout=SPHERE_VIEW_LAYOUT, fov_deg=SPHERE_VIEW_FOV_DEG, require_full=True):
+    """``grid_sample`` coordinates between the ERP and square pinhole views on the sphere.
+
+    View i looks at longitude ``layout[i][0]`` and latitude ``layout[i][1]`` (degrees) with no roll: image x
+    along +longitude (the ERP's handedness, not mirrored), image y down. ``tiles`` (views, size, size, 2):
+    where each view pixel reads the ERP padded by one column on each side (as ``sample_cap_tiles`` expects).
+    ``back``: per view, the flat indices of the ERP pixels it sees and where each reads the view.
+    """
+    half = np.tan(np.radians(fov_deg) / 2)
+    steps = ((np.arange(size) + 0.5) / size * 2 - 1) * half
+    a, b = np.meshgrid(steps, steps)
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    erp = unit_directions(longitude, latitude).reshape(-1, 3)
+    tiles, back = [], []
+    seen = np.zeros(height * width, dtype=np.int64)
+    for yaw, pitch in layout:
+        forward = unit_directions(np.radians(yaw), np.radians(pitch))
+        right = np.array([-np.sin(np.radians(yaw)), np.cos(np.radians(yaw)), 0.0])
+        down = np.cross(right, forward)
+        rays = forward + a[..., None] * right + b[..., None] * down
+        view_longitude, view_latitude = longitude_latitude(rays / np.linalg.norm(rays, axis=-1, keepdims=True))
+        tiles.append(np.stack([view_longitude / np.pi * width / (width + 2), -view_latitude / (np.pi / 2)], axis=-1))
+        depth = erp @ forward
+        with np.errstate(divide="ignore", invalid="ignore"):
+            x, y = erp @ right / depth / half, erp @ down / depth / half
+        inside = np.flatnonzero((depth > 0) & (np.abs(x) <= 1) & (np.abs(y) <= 1))
+        back.append((inside, np.stack([x[inside], y[inside]], axis=-1).astype(np.float32)))
+        seen[inside] += 1
+    if require_full and not seen.all():
+        raise ValueError("the sphere views leave panorama pixels unseen")
+    return {
+        "size": size,
+        "fov_deg": fov_deg,
+        "layout": tuple(layout),
+        "focal_px": float(size / 2 / half),
+        "tiles": np.stack(tiles).astype(np.float32),
+        "back": back,
+        "views_per_pixel": {"min": int(seen.min()), "max": int(seen.max()), "mean": float(seen.mean())},
+    }
+
+
+def tile_view_layout(height, width, windows, tile_size):
+    """(yaw, pitch) in degrees of a view centred on each tile, and the tile's width in degrees.
+
+    A 2:1 ERP has as many pixels per degree down as across, so a square tile spans the same angle both ways.
+    """
+    tile_height, tile_width = tile_size
+    layout = tuple(
+        ((left + tile_width / 2) / width * 360 - 180, 90 - (top + tile_height / 2) / height * 180)
+        for top, left in windows
+    )
+    return layout, tile_width / width * 360
+
+
+def predict_sphere_views(network, full, views, device, channels=None, exp_sum=False, return_sums=False):
+    """Each panorama pixel: the mean probabilities (or exp(logits) with ``exp_sum``) of the views that see it.
+
+    With ``return_sums``: the per-pixel sum and view count instead.
+    """
+    import torch
+    import torch.nn.functional as F
+
+    height, width = full[0].shape[2:]
+    total = count = None
+    for start in range(0, len(views["tiles"]), TILE_BATCH):
+        batch = {"tiles": views["tiles"][start:start + TILE_BATCH]}
+        logits = predict_with_wrap(network, *sample_cap_tiles(*full, batch, device), 0, device)
+        probabilities = logits.exp() if exp_sum else class_probabilities(logits, channels)
+        if total is None:
+            total = torch.zeros((probabilities.shape[1], height * width), device=device)
+            count = torch.zeros(height * width, device=device)
+        for view, (inside, where) in zip(probabilities, views["back"][start:start + TILE_BATCH]):
+            inside = torch.as_tensor(inside, device=device)
+            sampled = F.grid_sample(view[None], torch.as_tensor(where, device=device)[None, None],
+                                    mode="bilinear", padding_mode="border", align_corners=False)
+            total.index_add_(1, inside, sampled[0, :, 0])
+            count.index_add_(0, inside, torch.ones(len(inside), device=device))
+    total, count = total.reshape(1, -1, height, width), count.reshape(1, 1, height, width)
+    return (total, count) if return_sums else total / count
+
+
+def predict_tiles_and_views(network, full, windows, tile_size, views, device, channels=None, exp_sum=False):
+    """ERP ``windows`` plus sphere ``views``: each pixel takes the mean over every tile and view that sees it
+    (of exp(logits) with ``exp_sum``), as SMMF fuses its overlapping tiles."""
+    tile_total, tile_count = predict_erp_tiles(network, *full, windows, tile_size, device, channels, exp_sum,
+                                               return_sums=True)
+    view_total, view_count = predict_sphere_views(network, full, views, device, channels, exp_sum, return_sums=True)
+    count = tile_count + view_count
+    if not bool((count > 0).all()):
+        raise ValueError("the tiles and sphere views leave panorama pixels unseen")
+    return (tile_total + view_total) / count
 
 
 INPUT_POOL_MODES = ("avg", "max", "nearest")
@@ -926,9 +1051,28 @@ def main():
         "source inside it. With SMMF's 3 x 7 layout the caps are beyond +-47.5 deg",
     )
     parser.add_argument(
+        "--sphere-views", type=int, default=None, metavar="SIZE",
+        help="instead of one pass, {} SIZE x SIZE pinhole views on the sphere, {:.2f} deg wide, with no roll: "
+        "8 at pitch 0, 6 at +-45 and 1 at +-80 (eval_pano_crops.py's layout), cut from the evaluation-size "
+        "panorama; each pixel fuses every view that sees it. 480 is the training crop size. With --erp-tiles, "
+        "one view per tile instead, centred on the tile and as wide as it (square tiles)".format(
+            len(SPHERE_VIEW_LAYOUT), SPHERE_VIEW_FOV_DEG),
+    )
+    parser.add_argument(
+        "--sphere-views-middle-row", action="store_true",
+        help="with --sphere-views and a 3-row --erp-tiles grid, only the middle tile row becomes sphere views; "
+        "the top and bottom rows stay ERP tiles, and each pixel fuses every tile and view that sees it",
+    )
+    parser.add_argument(
+        "--sphere-views-poles", action="store_true",
+        help="with --sphere-views and a 3-row --erp-tiles grid, one view per middle-row tile plus one view straight "
+        "up and one straight down, all as wide as a tile; each pixel fuses every view that sees it",
+    )
+    parser.add_argument(
         "--input-pool", nargs=2, default=None, metavar=("RGB", "X"),
-        help="with --erp-tiles, pool RGB and X 2x2 ({}) in front of the network and upsample its logits 2x "
-        "(bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(", ".join(INPUT_POOL_MODES)),
+        help="with --erp-tiles (also with --sphere-views), pool RGB and X 2x2 ({}) in front of the network and "
+        "upsample its logits 2x (bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(
+            ", ".join(INPUT_POOL_MODES)),
     )
     parser.add_argument(
         "--polar-caps", type=int, default=None, metavar="SIZE",
@@ -987,8 +1131,9 @@ def main():
         parser.error("--erp-tile-column-stride needs --erp-tiles")
     if args.erp_tile_column_offset and args.erp_tile_column_stride is None:
         parser.error("--erp-tile-column-offset needs --erp-tile-column-stride")
-    if args.erp_tile_exp_sum and args.erp_tiles is None and args.erp_tile_sliding_stride is None:
-        parser.error("--erp-tile-exp-sum needs --erp-tiles or --erp-tile-sliding-stride")
+    if (args.erp_tile_exp_sum and args.erp_tiles is None and args.erp_tile_sliding_stride is None
+            and args.sphere_views is None):
+        parser.error("--erp-tile-exp-sum needs --erp-tiles, --erp-tile-sliding-stride or --sphere-views")
     if args.erp_tile_sliding_stride is not None:
         if args.erp_tiles is not None:
             parser.error("--erp-tile-sliding-stride places the tiles itself; drop --erp-tiles")
@@ -1068,20 +1213,59 @@ def main():
         if args.polar_strips is not None or args.infer_scale != 1.0:
             parser.error("--polar-caps samples the evaluation-size panorama; drop --polar-strips and --infer-scale")
         caps = polar_cap_grids(args.height, args.width, args.polar_caps)
+    sphere_views = None
+    if (args.sphere_views_middle_row or args.sphere_views_poles) and args.sphere_views is None:
+        parser.error("--sphere-views-middle-row and --sphere-views-poles need --sphere-views")
+    if args.sphere_views is not None:
+        if args.sphere_views <= 0:
+            parser.error("--sphere-views must be positive")
+        if (args.erp_tile_sliding_stride is not None or polar_tiles is not None or pole_patches is not None
+                or strip_rows is not None or caps is not None or args.infer_scale != 1.0):
+            parser.error("--sphere-views replaces the whole pass, or the --erp-tiles windows, at the evaluation "
+                         "size; drop --erp-tile-sliding-stride, --erp-tile-polar-scale, --erp-tile-pole-patches, "
+                         "--polar-strips, --polar-caps and --infer-scale")
+        if (args.sphere_views_middle_row or args.sphere_views_poles) and (
+                args.erp_tiles is None or args.erp_tiles[0] != 3):
+            parser.error("--sphere-views-middle-row and --sphere-views-poles need --erp-tiles with 3 rows")
+        if args.sphere_views_middle_row and args.sphere_views_poles:
+            parser.error("--sphere-views-poles replaces the polar tile rows that --sphere-views-middle-row keeps; "
+                         "use one of them")
+        if tile_windows is None:
+            sphere_views = sphere_view_grids(args.height, args.width, args.sphere_views)
+            sphere_views["middle_row"], sphere_views["pole_views"] = None, False
+        else:  # one view per tile (or per middle-row tile), as wide as the tile
+            if args.erp_tile_size[0] * args.width != 2 * args.erp_tile_size[1] * args.height or (
+                    2 * args.erp_tile_size[1] >= args.width):
+                parser.error("--sphere-views with --erp-tiles needs tiles that span the same angle across and "
+                             "down, less than 180 degrees")
+            centre = (args.height - args.erp_tile_size[0]) // 2  # the middle tile row
+            middle = centre if args.sphere_views_middle_row else None
+            as_views = [window for window in tile_windows
+                        if not (args.sphere_views_middle_row or args.sphere_views_poles) or window[0] == centre]
+            layout, fov_deg = tile_view_layout(args.height, args.width, as_views, args.erp_tile_size)
+            if args.sphere_views_poles:
+                layout += POLE_VIEWS
+            try:
+                sphere_views = sphere_view_grids(args.height, args.width, args.sphere_views, layout, fov_deg,
+                                                 require_full=middle is None)
+            except ValueError as error:
+                parser.error(str(error))
+            sphere_views["middle_row"], sphere_views["pole_views"] = middle, args.sphere_views_poles
     if args.input_pool is not None:
         if any(mode not in INPUT_POOL_MODES for mode in args.input_pool):
             parser.error("--input-pool modes are {} (bilinear by 0.5 is avg)".format(", ".join(INPUT_POOL_MODES)))
         if (args.erp_tiles is None or args.infer_scale != 1.0 or caps is not None or polar_tiles is not None
                 and (polar_tiles["scale"] != 1 or polar_tiles["strip_wrap_pad"] is not None)):
             parser.error("--input-pool goes in front of --erp-tiles at the evaluation size, also with "
-                         "--erp-tile-pole-patches or --erp-tile-polar-scale 1; drop --infer-scale, --polar-caps, "
-                         "--erp-tile-polar-strips and polar scales below 1")
+                         "--erp-tile-pole-patches, --erp-tile-polar-scale 1 or --sphere-views; drop --infer-scale, "
+                         "--polar-caps, --erp-tile-polar-strips and polar scales below 1")
         lengths = list(args.erp_tile_size) + [v for window in tile_windows for v in window]
         lengths += [] if pole_patches is None else [pole_patches["size"]]
         lengths += [] if polar_tiles is None else list(polar_tiles["middle_rows"])
+        lengths += [] if sphere_views is None else [sphere_views["size"]]
         if any(value % 2 for value in lengths):
-            parser.error("--input-pool needs even tile sizes, tile origins, middle rows and pole patch sizes, "
-                         "so pooling each tile equals cutting it from the pooled panorama")
+            parser.error("--input-pool needs even tile sizes, tile origins, middle rows, pole patch sizes and "
+                         "sphere view sizes, so pooling each tile equals cutting it from the pooled panorama")
 
     import torch
     import torch.nn as nn
@@ -1122,7 +1306,7 @@ def main():
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
-    rows = gate_rows(tile_windows, polar_tiles, pole_patches)
+    rows = gate_rows(tile_windows, polar_tiles, pole_patches, sphere_views)
     gate_counts = {row: [0] * gr.BRANCHES for row in rows} if gated else None
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
@@ -1134,7 +1318,14 @@ def main():
         inputs = [
             frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
         ]
-        if pole_patches is not None:  # only the argmax is used below
+        if sphere_views is not None and sphere_views["middle_row"] is not None:  # only the argmax is used below
+            logits = predict_tiles_and_views(
+                network, inputs, [window for window in tile_windows if window[0] != sphere_views["middle_row"]],
+                args.erp_tile_size, sphere_views, device, channels, args.erp_tile_exp_sum,
+            )
+        elif sphere_views is not None:  # only the argmax is used below
+            logits = predict_sphere_views(network, inputs, sphere_views, device, channels, args.erp_tile_exp_sum)
+        elif pole_patches is not None:  # only the argmax is used below
             logits = predict_pole_patches(
                 network, inputs, tile_windows, args.erp_tile_size, pole_patches["middle_rows"], pole_patches,
                 device, channels, args.erp_tile_exp_sum,
@@ -1269,12 +1460,30 @@ def main():
             "rule": "middle_rows from the middle tile row only; all other rows read back (bilinear) from the "
                     "patch of their pole; RGB sampled bilinear, X nearest",
         },
+        "sphere_views": None if sphere_views is None else {
+            "size": [sphere_views["size"]] * 2,
+            "projection": "pinhole (gnomonic), no roll, image x along +longitude",
+            "fov_deg": sphere_views["fov_deg"],
+            "focal_px": sphere_views["focal_px"],
+            "centre_px_per_deg": sphere_views["focal_px"] * np.pi / 180,
+            "layout_yaw_pitch_deg": [list(view) for view in sphere_views["layout"]],
+            "views_per_pixel": sphere_views["views_per_pixel"],
+            "fusion": "sum of exp(logits)" if args.erp_tile_exp_sum else "mean softmax",
+            "centred_on_erp_tiles": tile_windows is not None,
+            "middle_tile_row_only": sphere_views["middle_row"] is not None,
+            "pole_views": sphere_views["pole_views"],
+            "rule": ("the middle tile row as views, the other tile rows as ERP tiles; each pixel fuses every tile and "
+                     "view that sees it" if sphere_views["middle_row"] is not None else
+                     "each pixel fuses every view that sees it")
+                    + ", read back bilinear; RGB sampled bilinear, X nearest",
+        },
         "input_pool": None if args.input_pool is None else {
             "rgb": args.input_pool[0],
             "x": args.input_pool[1],
             "factor": 2,
             "network_tile_size": [length // 2 for length in args.erp_tile_size],
             "network_pole_patch_size": None if pole_patches is None else [pole_patches["size"] // 2] * 2,
+            "network_sphere_view_size": None if sphere_views is None else [sphere_views["size"] // 2] * 2,
             "logits": "upsampled 2x (bilinear) to the tile size before fusion",
         },
         "polar_caps": None if caps is None else {

@@ -520,6 +520,211 @@ def test_bad_pole_patches_are_rejected_before_loading(monkeypatch, tmp_path, ext
     assert not (tmp_path / "output").exists()
 
 
+def test_sphere_views_are_the_crop_tools_views_and_see_every_pixel():
+    pytest.importorskip("cv2")
+    import cross_projection as cp
+    import eval_pano_crops as crops
+
+    assert ev.SPHERE_VIEW_LAYOUT == crops.CROP_LAYOUT and ev.SPHERE_VIEW_FOV_DEG == crops.CROP_FOV_DEG
+    height, width, size = 128, 256, 48
+    views = ev.sphere_view_grids(height, width, size)
+    assert views["tiles"].shape == (22, size, size, 2) and views["views_per_pixel"]["min"] >= 1
+    assert abs(views["focal_px"] - 24 / np.tan(np.radians(ev.SPHERE_VIEW_FOV_DEG / 2))) < 1e-9
+    k_json = cp.crop_intrinsics(size, ev.SPHERE_VIEW_FOV_DEG)
+    for tile, (yaw, pitch) in zip(views["tiles"], ev.SPHERE_VIEW_LAYOUT):  # same rays as eval_pano_crops' crops
+        _, rays = cp.crop_rays(size, k_json, cp.crop_camera_to_world(yaw, pitch))
+        ours = ev.unit_directions(tile[..., 0] * np.pi * (width + 2) / width, -tile[..., 1] * np.pi / 2)
+        assert np.abs(ours - np.stack([rays[..., 1], rays[..., 0], rays[..., 2]], axis=-1)).max() < 1e-5
+    for (inside, where), tile in zip(views["back"], views["tiles"]):  # each seen pixel reads its own ray back
+        assert np.abs(where).max() <= 1
+        rows, columns = np.divmod(inside, width)
+        longitude = (columns + 0.5) / width * 2 * np.pi - np.pi
+        latitude = np.pi / 2 - (rows + 0.5) / height * np.pi
+        assert np.all(np.hypot(where[:, 0], where[:, 1]) <= np.sqrt(2))
+        pick = np.abs(where).max(axis=1) < 1 - 2 / size
+        j = np.rint((where[pick, 0] + 1) / 2 * size - 0.5).astype(int)
+        i = np.rint((where[pick, 1] + 1) / 2 * size - 0.5).astype(int)
+        read = ev.unit_directions(tile[i, j, 0] * np.pi * (width + 2) / width, -tile[i, j, 1] * np.pi / 2)
+        assert np.degrees(np.arccos(np.clip(
+            (read * ev.unit_directions(longitude[pick], latitude[pick])).sum(axis=-1), -1, 1))).max() < 2.0
+    level = views["tiles"][0]  # pitch 0: right is +longitude and down is -latitude (not mirrored)
+    assert level[24, 40, 0] > level[24, 8, 0] and level[40, 24, 1] > level[8, 24, 1]
+
+
+def test_sphere_views_reproduce_a_smooth_whole_pass():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width = 128, 256
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    views = ev.sphere_view_grids(height, width, 64)
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    for channels in (None, [0, 2]):
+        fused = ev.predict_sphere_views(PixelwiseNet(), (smooth, smooth), views, "cpu", channels)
+        assert fused.shape == (1, 3, height, width)
+        assert torch.allclose(fused, ev.class_probabilities(whole, channels), atol=0.01)
+    fused = ev.predict_sphere_views(PixelwiseNet(), (smooth, smooth), views, "cpu", exp_sum=True)
+    assert torch.allclose(fused, whole.exp(), rtol=0.03)
+
+
+def test_tile_views_are_centred_on_the_tiles_and_as_wide_as_them():
+    height, width, size = 128, 256, 64
+    windows = ev.erp_tile_windows(height, width, 3, 7, 64, 64, 40, -24)  # SMMF-like, wraps the seam
+    layout, fov_deg = ev.tile_view_layout(height, width, windows, (64, 64))
+    assert fov_deg == 90 and [pitch for _, pitch in layout] == [45.0] * 7 + [0.0] * 7 + [-45.0] * 7
+    views = ev.sphere_view_grids(height, width, size, layout, fov_deg)
+    assert views["views_per_pixel"]["min"] >= 2
+    for (top, left), (inside, _) in zip(windows, views["back"]):
+        rows, columns = np.divmod(inside, width)
+        middle = (left + 31) % width  # half a pixel left of the tile's centre line
+        assert np.array_equal(np.sort(rows[columns == middle]), np.arange(top, top + 64))
+        if top == 32:  # pitch 0: rows within +-33 deg (clear of the view's corners) span exactly the tile's columns
+            for row in (40, 63, 87):
+                assert np.array_equal(np.sort(columns[rows == row]), np.sort(np.arange(left, left + 64) % width))
+
+
+def test_pooled_tile_views_reproduce_a_smooth_whole_pass():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width = 128, 256
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    windows = ev.erp_tile_windows(height, width, 3, 7, 64, 64, 40, -24)
+    views = ev.sphere_view_grids(height, width, 64, *ev.tile_view_layout(height, width, windows, (64, 64)))
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    pooled = ev.input_pool_network(PixelwiseNet(), "avg", "avg")
+    fused = ev.predict_sphere_views(pooled, (smooth, smooth), views, "cpu", exp_sum=True)
+    assert torch.allclose(fused, whole.exp(), rtol=0.05)
+
+
+def test_middle_row_views_keep_the_polar_tiles():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width = 128, 256
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    windows = ev.erp_tile_windows(height, width, 3, 7, 64, 64, 40, -24)  # rows 0, 32, 64
+    middle = [window for window in windows if window[0] == 32]
+    polar = [window for window in windows if window[0] != 32]
+    views = ev.sphere_view_grids(height, width, 64, *ev.tile_view_layout(height, width, middle, (64, 64)),
+                                 require_full=False)
+    assert views["views_per_pixel"]["min"] == 0  # the middle-row views do not reach the poles
+    pooled = ev.input_pool_network(PixelwiseNet(), "avg", "avg")
+    fused = ev.predict_tiles_and_views(pooled, (smooth, smooth), polar, (64, 64), views, "cpu", exp_sum=True)
+    pooled_smmf = ev.predict_erp_tiles(pooled, smooth, smooth, windows, (64, 64), "cpu", exp_sum=True)
+    rows = torch.zeros(height, dtype=torch.bool)
+    rows[32:96] = True  # the middle tile row; outside it only the same polar tiles see a pixel
+    assert torch.allclose(fused[:, :, ~rows], pooled_smmf[:, :, ~rows], atol=1e-6)
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")  # where views and tiles mix
+    assert torch.allclose(fused[:, :, rows], whole.exp()[:, :, rows], rtol=0.05)
+
+
+def test_pole_views_are_the_pole_patches_widened_and_cover_the_sphere_with_the_middle_row():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    patches = ev.pole_patch_grids(128, 256, 64, (32, 96))  # same orientation as the pole patches
+    same = ev.sphere_view_grids(128, 256, 64, ev.POLE_VIEWS, 2 * patches["cap_radius_deg"], require_full=False)
+    assert np.allclose(same["tiles"], patches["tiles"], atol=1e-5)
+    height, width = 256, 512
+    windows = ev.erp_tile_windows(height, width, 3, 7, 136, 136, 90, -54)  # as in the gated end-to-end test
+    layout, fov_deg = ev.tile_view_layout(height, width, [w for w in windows if w[0] == 60], (136, 136))
+    views = ev.sphere_view_grids(height, width, 136, layout + ev.POLE_VIEWS, fov_deg)  # raises if a pixel is unseen
+    assert views["views_per_pixel"]["min"] >= 1 and len(views["layout"]) == 9
+    with pytest.raises(ValueError):  # the pole patches' own width (the cap beyond the middle row) leaves a gap
+        ev.sphere_view_grids(height, width, 136, layout + ev.POLE_VIEWS, 2 * 60 / height * 180)
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    pooled = ev.input_pool_network(PixelwiseNet(), "avg", "avg")
+    fused = ev.predict_sphere_views(pooled, (smooth, smooth), views, "cpu", exp_sum=True)
+    assert torch.allclose(fused, whole.exp(), rtol=0.05)
+
+
+def test_sphere_views_at_the_native_size_pass_the_argument_checks(monkeypatch, tmp_path):
+    smmf = ["--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
+            "--erp-tile-column-offset", "-652"]
+    for name, extra in (("views22", ["--sphere-views", "480"]),
+                        ("tileviews", smmf + ["--sphere-views", "1080"]),
+                        ("pooledtileviews", smmf + ["--sphere-views", "1080", "--input-pool", "avg", "avg"]),
+                        ("pooledmiddleviews", smmf + ["--sphere-views", "1080", "--sphere-views-middle-row",
+                                                      "--input-pool", "avg", "avg"]),
+                        ("pooledpoleviews", smmf + ["--sphere-views", "1080", "--sphere-views-poles",
+                                                    "--input-pool", "avg", "avg"])):
+        output = tmp_path / name
+        monkeypatch.setattr(sys, "argv", [
+            "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+            "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
+            "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
+            "--erp-tile-exp-sum",
+        ] + extra)
+        with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
+            ev.main()
+        assert output.exists()
+
+
+@pytest.mark.parametrize("extra", [
+    ["--sphere-views", "0"],
+    ["--sphere-views", "384", "--erp-tiles", "3", "8", "--erp-tile-size", "384", "512"],  # not square
+    ["--sphere-views", "384", "--erp-tiles", "1", "4", "--erp-tile-size", "1024", "1024"],  # 180 degrees wide
+    ["--sphere-views", "384", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512", "--erp-tile-polar-scale",
+     "0.5"],
+    ["--sphere-views", "384", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512", "--erp-tile-pole-patches",
+     "384"],
+    ["--sphere-views", "384", "--input-pool", "avg", "avg"],  # the 22-view layout has no pooled mode
+    ["--sphere-views", "385", "--erp-tiles", "3", "8", "--input-pool", "avg", "avg"],  # odd view size
+    ["--sphere-views-middle-row", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512"],
+    ["--sphere-views", "384", "--sphere-views-middle-row"],  # the 22-view layout has no tile rows
+    ["--sphere-views", "384", "--sphere-views-middle-row", "--erp-tiles", "2", "8", "--erp-tile-size", "512", "512"],
+    ["--sphere-views-poles", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512"],
+    ["--sphere-views", "384", "--sphere-views-poles"],
+    ["--sphere-views", "384", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512", "--sphere-views-poles",
+     "--sphere-views-middle-row"],
+    ["--sphere-views", "384", "--erp-tiles", "3", "7", "--erp-tile-size", "512", "512", "--sphere-views-poles"],  # gap
+    ["--sphere-views", "384", "--erp-tile-size", "384", "384", "--erp-tile-sliding-stride", "320"],
+    ["--sphere-views", "384", "--polar-strips", "32"],
+    ["--sphere-views", "384", "--polar-caps", "384"],
+    ["--sphere-views", "384", "--infer-scale", "0.5"],
+])
+def test_bad_sphere_views_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def test_input_pool_modes_match_the_resizes():
     torch = pytest.importorskip("torch")
     cv2 = pytest.importorskip("cv2")
