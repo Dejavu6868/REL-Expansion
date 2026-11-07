@@ -611,12 +611,43 @@ def test_pooled_tile_views_reproduce_a_smooth_whole_pass():
     assert torch.allclose(fused, whole.exp(), rtol=0.05)
 
 
+def test_middle_row_views_keep_the_polar_tiles():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width = 128, 256
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    windows = ev.erp_tile_windows(height, width, 3, 7, 64, 64, 40, -24)  # rows 0, 32, 64
+    middle = [window for window in windows if window[0] == 32]
+    polar = [window for window in windows if window[0] != 32]
+    views = ev.sphere_view_grids(height, width, 64, *ev.tile_view_layout(height, width, middle, (64, 64)),
+                                 require_full=False)
+    assert views["views_per_pixel"]["min"] == 0  # the middle-row views do not reach the poles
+    pooled = ev.input_pool_network(PixelwiseNet(), "avg", "avg")
+    fused = ev.predict_tiles_and_views(pooled, (smooth, smooth), polar, (64, 64), views, "cpu", exp_sum=True)
+    pooled_smmf = ev.predict_erp_tiles(pooled, smooth, smooth, windows, (64, 64), "cpu", exp_sum=True)
+    rows = torch.zeros(height, dtype=torch.bool)
+    rows[32:96] = True  # the middle tile row; outside it only the same polar tiles see a pixel
+    assert torch.allclose(fused[:, :, ~rows], pooled_smmf[:, :, ~rows], atol=1e-6)
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")  # where views and tiles mix
+    assert torch.allclose(fused[:, :, rows], whole.exp()[:, :, rows], rtol=0.05)
+
+
 def test_sphere_views_at_the_native_size_pass_the_argument_checks(monkeypatch, tmp_path):
     smmf = ["--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
             "--erp-tile-column-offset", "-652"]
     for name, extra in (("views22", ["--sphere-views", "480"]),
                         ("tileviews", smmf + ["--sphere-views", "1080"]),
-                        ("pooledtileviews", smmf + ["--sphere-views", "1080", "--input-pool", "avg", "avg"])):
+                        ("pooledtileviews", smmf + ["--sphere-views", "1080", "--input-pool", "avg", "avg"]),
+                        ("pooledmiddleviews", smmf + ["--sphere-views", "1080", "--sphere-views-middle-row",
+                                                      "--input-pool", "avg", "avg"])):
         output = tmp_path / name
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
@@ -639,6 +670,9 @@ def test_sphere_views_at_the_native_size_pass_the_argument_checks(monkeypatch, t
      "384"],
     ["--sphere-views", "384", "--input-pool", "avg", "avg"],  # the 22-view layout has no pooled mode
     ["--sphere-views", "385", "--erp-tiles", "3", "8", "--input-pool", "avg", "avg"],  # odd view size
+    ["--sphere-views-middle-row", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512"],
+    ["--sphere-views", "384", "--sphere-views-middle-row"],  # the 22-view layout has no tile rows
+    ["--sphere-views", "384", "--sphere-views-middle-row", "--erp-tiles", "2", "8", "--erp-tile-size", "512", "512"],
     ["--sphere-views", "384", "--erp-tile-size", "384", "384", "--erp-tile-sliding-stride", "320"],
     ["--sphere-views", "384", "--polar-strips", "32"],
     ["--sphere-views", "384", "--polar-caps", "384"],

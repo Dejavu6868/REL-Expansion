@@ -332,12 +332,14 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
                         ("pooledpatches", smmf + ["--erp-tile-pole-patches", "136", "--input-pool", "avg", "avg"]),
                         ("pooledzones", smmf + ["--erp-tile-polar-scale", "1", "--input-pool", "avg", "avg"]),
                         ("tileviews", smmf + ["--sphere-views", "136"]),
-                        ("pooledtileviews", smmf + ["--sphere-views", "136", "--input-pool", "avg", "avg"])):
+                        ("pooledtileviews", smmf + ["--sphere-views", "136", "--input-pool", "avg", "avg"]),
+                        ("pooledmiddleviews", smmf + ["--sphere-views", "136", "--sphere-views-middle-row",
+                                                      "--input-pool", "avg", "avg"])):
         result = run([str(TOOLS / "eval_pano_transfer.py")] + common + extra + ["--output", str(tmp_path / name)])
         assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
     counts = {name: json.loads((tmp_path / name / "metrics.json").read_text())["gate_counts_per_window_row"]
               for name in ("whole", "smmf", "p47", "p47strips", "sliding", "patches", "views", "pooled",
-                           "pooledpatches", "pooledzones", "tileviews", "pooledtileviews")}
+                           "pooledpatches", "pooledzones", "tileviews", "pooledtileviews", "pooledmiddleviews")}
     assert {row: sum(c) for row, c in counts["whole"].items()} == {"whole": 2}
     assert {row: sum(c) for row, c in counts["smmf"].items()} == {"row 0": 14, "row 60": 14, "row 120": 14}
     assert {row: sum(c) for row, c in counts["p47"].items()} == {"row 0 (x0.5)": 14, "row 120 (x0.5)": 14,
@@ -357,8 +359,10 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
     assert {row: sum(c) for row, c in counts["pooledzones"].items()} == {"row 0 (x1)": 14, "row 120 (x1)": 14,
                                                                       "row 60": 14}
     assert counts["pooledpatches"]["row 60"] == counts["pooledzones"]["row 60"] == counts["pooled"]["row 60"]
-    for name in ("tileviews", "pooledtileviews"):  # one view per SMMF window, counted under the window's row
+    for name in ("tileviews", "pooledtileviews", "pooledmiddleviews"):  # one view or tile per SMMF window
         assert {row: sum(c) for row, c in counts[name].items()} == {"row 0": 14, "row 60": 14, "row 120": 14}
+    for row in ("row 0", "row 120"):  # the same pooled ERP tiles in the polar rows
+        assert counts["pooledmiddleviews"][row] == counts["pooled"][row]
 
     refused = run([str(TOOLS / "eval_pano_transfer.py")] + common + ["--polar-strips", "8", "--output",
                                                                       str(tmp_path / "strips")])
