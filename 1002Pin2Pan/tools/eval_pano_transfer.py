@@ -40,7 +40,8 @@ normalisation are the frozen training ones; only the input images change.
   on the sphere, with no roll, in ``eval_pano_crops.py``'s layout and field of view
   (8 at pitch 0, 6 at +-45, 1 at +-80; 62.48 degrees). RGB (bilinear) and the X
   encoded on the whole panorama (nearest) are sampled into each view; each pixel
-  fuses every view that sees it.
+  fuses every view that sees it. With ``--erp-tiles`` there is one view per tile
+  instead, centred on the tile and as wide as it (SMMF's partition on the sphere).
 * ``--erp-tile-sliding-stride S`` places the tiles as CMX's own sliding-window
   evaluation does instead: every S pixels from the top-left corner, the last row and
   column moved back to the panorama edge, no wrap across the seam.
@@ -420,7 +421,7 @@ def sliding_windows(height, width, tile_height, tile_width, stride):
 
 def gate_rows(windows, polar_tiles=None, pole_patches=None, sphere_views=None):
     """The window row of each network input, in the order the predictors feed them (gated REL+ counts)."""
-    if sphere_views is not None:
+    if sphere_views is not None and windows is None:
         return ["pitch {:g}".format(pitch) for _, pitch in sphere_views["layout"]]
     if windows is None:
         return ["whole"]
@@ -718,6 +719,19 @@ def sphere_view_grids(height, width, size, layout=SPHERE_VIEW_LAYOUT, fov_deg=SP
     }
 
 
+def tile_view_layout(height, width, windows, tile_size):
+    """(yaw, pitch) in degrees of a view centred on each tile, and the tile's width in degrees.
+
+    A 2:1 ERP has as many pixels per degree down as across, so a square tile spans the same angle both ways.
+    """
+    tile_height, tile_width = tile_size
+    layout = tuple(
+        ((left + tile_width / 2) / width * 360 - 180, 90 - (top + tile_height / 2) / height * 180)
+        for top, left in windows
+    )
+    return layout, tile_width / width * 360
+
+
 def predict_sphere_views(network, full, views, device, channels=None, exp_sum=False):
     """Each panorama pixel: the mean probabilities (or exp(logits) with ``exp_sum``) of the views that see it."""
     import torch
@@ -1009,13 +1023,15 @@ def main():
         "--sphere-views", type=int, default=None, metavar="SIZE",
         help="instead of one pass, {} SIZE x SIZE pinhole views on the sphere, {:.2f} deg wide, with no roll: "
         "8 at pitch 0, 6 at +-45 and 1 at +-80 (eval_pano_crops.py's layout), cut from the evaluation-size "
-        "panorama; each pixel fuses every view that sees it. 480 is the training crop size".format(
+        "panorama; each pixel fuses every view that sees it. 480 is the training crop size. With --erp-tiles, "
+        "one view per tile instead, centred on the tile and as wide as it (square tiles)".format(
             len(SPHERE_VIEW_LAYOUT), SPHERE_VIEW_FOV_DEG),
     )
     parser.add_argument(
         "--input-pool", nargs=2, default=None, metavar=("RGB", "X"),
-        help="with --erp-tiles, pool RGB and X 2x2 ({}) in front of the network and upsample its logits 2x "
-        "(bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(", ".join(INPUT_POOL_MODES)),
+        help="with --erp-tiles (also with --sphere-views), pool RGB and X 2x2 ({}) in front of the network and "
+        "upsample its logits 2x (bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(
+            ", ".join(INPUT_POOL_MODES)),
     )
     parser.add_argument(
         "--polar-caps", type=int, default=None, metavar="SIZE",
@@ -1160,24 +1176,38 @@ def main():
     if args.sphere_views is not None:
         if args.sphere_views <= 0:
             parser.error("--sphere-views must be positive")
-        if tile_windows is not None or strip_rows is not None or caps is not None or args.infer_scale != 1.0:
-            parser.error("--sphere-views replaces the whole pass at the evaluation size; drop --erp-tiles, "
-                         "--erp-tile-sliding-stride, --polar-strips, --polar-caps and --infer-scale")
-        sphere_views = sphere_view_grids(args.height, args.width, args.sphere_views)
+        if (args.erp_tile_sliding_stride is not None or polar_tiles is not None or pole_patches is not None
+                or strip_rows is not None or caps is not None or args.infer_scale != 1.0):
+            parser.error("--sphere-views replaces the whole pass, or the --erp-tiles windows, at the evaluation "
+                         "size; drop --erp-tile-sliding-stride, --erp-tile-polar-scale, --erp-tile-pole-patches, "
+                         "--polar-strips, --polar-caps and --infer-scale")
+        if tile_windows is None:
+            sphere_views = sphere_view_grids(args.height, args.width, args.sphere_views)
+        else:  # one view per tile, as wide as the tile
+            if args.erp_tile_size[0] * args.width != 2 * args.erp_tile_size[1] * args.height or (
+                    2 * args.erp_tile_size[1] >= args.width):
+                parser.error("--sphere-views with --erp-tiles needs tiles that span the same angle across and "
+                             "down, less than 180 degrees")
+            layout, fov_deg = tile_view_layout(args.height, args.width, tile_windows, args.erp_tile_size)
+            try:
+                sphere_views = sphere_view_grids(args.height, args.width, args.sphere_views, layout, fov_deg)
+            except ValueError as error:
+                parser.error(str(error))
     if args.input_pool is not None:
         if any(mode not in INPUT_POOL_MODES for mode in args.input_pool):
             parser.error("--input-pool modes are {} (bilinear by 0.5 is avg)".format(", ".join(INPUT_POOL_MODES)))
         if (args.erp_tiles is None or args.infer_scale != 1.0 or caps is not None or polar_tiles is not None
                 and (polar_tiles["scale"] != 1 or polar_tiles["strip_wrap_pad"] is not None)):
             parser.error("--input-pool goes in front of --erp-tiles at the evaluation size, also with "
-                         "--erp-tile-pole-patches or --erp-tile-polar-scale 1; drop --infer-scale, --polar-caps, "
-                         "--erp-tile-polar-strips and polar scales below 1")
+                         "--erp-tile-pole-patches, --erp-tile-polar-scale 1 or --sphere-views; drop --infer-scale, "
+                         "--polar-caps, --erp-tile-polar-strips and polar scales below 1")
         lengths = list(args.erp_tile_size) + [v for window in tile_windows for v in window]
         lengths += [] if pole_patches is None else [pole_patches["size"]]
         lengths += [] if polar_tiles is None else list(polar_tiles["middle_rows"])
+        lengths += [] if sphere_views is None else [sphere_views["size"]]
         if any(value % 2 for value in lengths):
-            parser.error("--input-pool needs even tile sizes, tile origins, middle rows and pole patch sizes, "
-                         "so pooling each tile equals cutting it from the pooled panorama")
+            parser.error("--input-pool needs even tile sizes, tile origins, middle rows, pole patch sizes and "
+                         "sphere view sizes, so pooling each tile equals cutting it from the pooled panorama")
 
     import torch
     import torch.nn as nn
@@ -1376,6 +1406,7 @@ def main():
             "layout_yaw_pitch_deg": [list(view) for view in sphere_views["layout"]],
             "views_per_pixel": sphere_views["views_per_pixel"],
             "fusion": "sum of exp(logits)" if args.erp_tile_exp_sum else "mean softmax",
+            "centred_on_erp_tiles": tile_windows is not None,
             "rule": "each pixel fuses every view that sees it, read back bilinear; RGB sampled bilinear, X nearest",
         },
         "input_pool": None if args.input_pool is None else {
@@ -1384,6 +1415,7 @@ def main():
             "factor": 2,
             "network_tile_size": [length // 2 for length in args.erp_tile_size],
             "network_pole_patch_size": None if pole_patches is None else [pole_patches["size"] // 2] * 2,
+            "network_sphere_view_size": None if sphere_views is None else [sphere_views["size"] // 2] * 2,
             "logits": "upsampled 2x (bilinear) to the tile size before fusion",
         },
         "polar_caps": None if caps is None else {

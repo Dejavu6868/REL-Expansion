@@ -574,22 +574,71 @@ def test_sphere_views_reproduce_a_smooth_whole_pass():
     assert torch.allclose(fused, whole.exp(), rtol=0.03)
 
 
+def test_tile_views_are_centred_on_the_tiles_and_as_wide_as_them():
+    height, width, size = 128, 256, 64
+    windows = ev.erp_tile_windows(height, width, 3, 7, 64, 64, 40, -24)  # SMMF-like, wraps the seam
+    layout, fov_deg = ev.tile_view_layout(height, width, windows, (64, 64))
+    assert fov_deg == 90 and [pitch for _, pitch in layout] == [45.0] * 7 + [0.0] * 7 + [-45.0] * 7
+    views = ev.sphere_view_grids(height, width, size, layout, fov_deg)
+    assert views["views_per_pixel"]["min"] >= 2
+    for (top, left), (inside, _) in zip(windows, views["back"]):
+        rows, columns = np.divmod(inside, width)
+        middle = (left + 31) % width  # half a pixel left of the tile's centre line
+        assert np.array_equal(np.sort(rows[columns == middle]), np.arange(top, top + 64))
+        if top == 32:  # pitch 0: rows within +-33 deg (clear of the view's corners) span exactly the tile's columns
+            for row in (40, 63, 87):
+                assert np.array_equal(np.sort(columns[rows == row]), np.sort(np.arange(left, left + 64) % width))
+
+
+def test_pooled_tile_views_reproduce_a_smooth_whole_pass():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width = 128, 256
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    windows = ev.erp_tile_windows(height, width, 3, 7, 64, 64, 40, -24)
+    views = ev.sphere_view_grids(height, width, 64, *ev.tile_view_layout(height, width, windows, (64, 64)))
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    pooled = ev.input_pool_network(PixelwiseNet(), "avg", "avg")
+    fused = ev.predict_sphere_views(pooled, (smooth, smooth), views, "cpu", exp_sum=True)
+    assert torch.allclose(fused, whole.exp(), rtol=0.05)
+
+
 def test_sphere_views_at_the_native_size_pass_the_argument_checks(monkeypatch, tmp_path):
-    output = tmp_path / "output"
-    monkeypatch.setattr(sys, "argv", [
-        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
-        "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
-        "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
-        "--sphere-views", "480", "--erp-tile-exp-sum",
-    ])
-    with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
-        ev.main()
-    assert output.exists()
+    smmf = ["--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
+            "--erp-tile-column-offset", "-652"]
+    for name, extra in (("views22", ["--sphere-views", "480"]),
+                        ("tileviews", smmf + ["--sphere-views", "1080"]),
+                        ("pooledtileviews", smmf + ["--sphere-views", "1080", "--input-pool", "avg", "avg"])):
+        output = tmp_path / name
+        monkeypatch.setattr(sys, "argv", [
+            "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+            "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
+            "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
+            "--erp-tile-exp-sum",
+        ] + extra)
+        with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
+            ev.main()
+        assert output.exists()
 
 
 @pytest.mark.parametrize("extra", [
     ["--sphere-views", "0"],
-    ["--sphere-views", "384", "--erp-tiles", "3", "8"],
+    ["--sphere-views", "384", "--erp-tiles", "3", "8", "--erp-tile-size", "384", "512"],  # not square
+    ["--sphere-views", "384", "--erp-tiles", "1", "4", "--erp-tile-size", "1024", "1024"],  # 180 degrees wide
+    ["--sphere-views", "384", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512", "--erp-tile-polar-scale",
+     "0.5"],
+    ["--sphere-views", "384", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512", "--erp-tile-pole-patches",
+     "384"],
+    ["--sphere-views", "384", "--input-pool", "avg", "avg"],  # the 22-view layout has no pooled mode
+    ["--sphere-views", "385", "--erp-tiles", "3", "8", "--input-pool", "avg", "avg"],  # odd view size
     ["--sphere-views", "384", "--erp-tile-size", "384", "384", "--erp-tile-sliding-stride", "320"],
     ["--sphere-views", "384", "--polar-strips", "32"],
     ["--sphere-views", "384", "--polar-caps", "384"],
