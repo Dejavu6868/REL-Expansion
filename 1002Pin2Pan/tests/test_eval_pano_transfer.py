@@ -640,6 +640,34 @@ def test_middle_row_views_keep_the_polar_tiles():
     assert torch.allclose(fused[:, :, rows], whole.exp()[:, :, rows], rtol=0.05)
 
 
+def test_pole_views_are_the_pole_patches_widened_and_cover_the_sphere_with_the_middle_row():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    patches = ev.pole_patch_grids(128, 256, 64, (32, 96))  # same orientation as the pole patches
+    same = ev.sphere_view_grids(128, 256, 64, ev.POLE_VIEWS, 2 * patches["cap_radius_deg"], require_full=False)
+    assert np.allclose(same["tiles"], patches["tiles"], atol=1e-5)
+    height, width = 256, 512
+    windows = ev.erp_tile_windows(height, width, 3, 7, 136, 136, 90, -54)  # as in the gated end-to-end test
+    layout, fov_deg = ev.tile_view_layout(height, width, [w for w in windows if w[0] == 60], (136, 136))
+    views = ev.sphere_view_grids(height, width, 136, layout + ev.POLE_VIEWS, fov_deg)  # raises if a pixel is unseen
+    assert views["views_per_pixel"]["min"] >= 1 and len(views["layout"]) == 9
+    with pytest.raises(ValueError):  # the pole patches' own width (the cap beyond the middle row) leaves a gap
+        ev.sphere_view_grids(height, width, 136, layout + ev.POLE_VIEWS, 2 * 60 / height * 180)
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    pooled = ev.input_pool_network(PixelwiseNet(), "avg", "avg")
+    fused = ev.predict_sphere_views(pooled, (smooth, smooth), views, "cpu", exp_sum=True)
+    assert torch.allclose(fused, whole.exp(), rtol=0.05)
+
+
 def test_sphere_views_at_the_native_size_pass_the_argument_checks(monkeypatch, tmp_path):
     smmf = ["--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
             "--erp-tile-column-offset", "-652"]
@@ -647,7 +675,9 @@ def test_sphere_views_at_the_native_size_pass_the_argument_checks(monkeypatch, t
                         ("tileviews", smmf + ["--sphere-views", "1080"]),
                         ("pooledtileviews", smmf + ["--sphere-views", "1080", "--input-pool", "avg", "avg"]),
                         ("pooledmiddleviews", smmf + ["--sphere-views", "1080", "--sphere-views-middle-row",
-                                                      "--input-pool", "avg", "avg"])):
+                                                      "--input-pool", "avg", "avg"]),
+                        ("pooledpoleviews", smmf + ["--sphere-views", "1080", "--sphere-views-poles",
+                                                    "--input-pool", "avg", "avg"])):
         output = tmp_path / name
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
@@ -673,6 +703,11 @@ def test_sphere_views_at_the_native_size_pass_the_argument_checks(monkeypatch, t
     ["--sphere-views-middle-row", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512"],
     ["--sphere-views", "384", "--sphere-views-middle-row"],  # the 22-view layout has no tile rows
     ["--sphere-views", "384", "--sphere-views-middle-row", "--erp-tiles", "2", "8", "--erp-tile-size", "512", "512"],
+    ["--sphere-views-poles", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512"],
+    ["--sphere-views", "384", "--sphere-views-poles"],
+    ["--sphere-views", "384", "--erp-tiles", "3", "8", "--erp-tile-size", "512", "512", "--sphere-views-poles",
+     "--sphere-views-middle-row"],
+    ["--sphere-views", "384", "--erp-tiles", "3", "7", "--erp-tile-size", "512", "512", "--sphere-views-poles"],  # gap
     ["--sphere-views", "384", "--erp-tile-size", "384", "384", "--erp-tile-sliding-stride", "320"],
     ["--sphere-views", "384", "--polar-strips", "32"],
     ["--sphere-views", "384", "--polar-caps", "384"],

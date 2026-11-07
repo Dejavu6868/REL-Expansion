@@ -42,7 +42,8 @@ normalisation are the frozen training ones; only the input images change.
   encoded on the whole panorama (nearest) are sampled into each view; each pixel
   fuses every view that sees it. With ``--erp-tiles`` there is one view per tile
   instead, centred on the tile and as wide as it (SMMF's partition on the sphere);
-  ``--sphere-views-middle-row`` turns only the middle tile row into views.
+  ``--sphere-views-middle-row`` turns only the middle tile row into views, and
+  ``--sphere-views-poles`` replaces the top and bottom tile rows by one view per pole.
 * ``--erp-tile-sliding-stride S`` places the tiles as CMX's own sliding-window
   evaluation does instead: every S pixels from the top-left corner, the last row and
   column moved back to the panorama edge, no wrap across the seam.
@@ -123,6 +124,8 @@ POLAR_CAP_FOV_DEG = 67.5
 POLAR_CAP_CENTRE_LONGITUDES_DEG = (-90.0, 90.0)
 # --sphere-views: eval_pano_crops.py's CROP_FOV_DEG (median S2D training field of view) and CROP_LAYOUT,
 # as (yaw, pitch) in degrees; yaw is the ERP longitude of the view centre.
+# --sphere-views-poles: the views straight up and down, oriented as --erp-tile-pole-patches' patches.
+POLE_VIEWS = ((-90.0, 90.0), (-90.0, -90.0))
 SPHERE_VIEW_FOV_DEG = 62.47653165897473
 SPHERE_VIEW_LAYOUT = tuple((float(yaw), 0.0) for yaw in range(0, 360, 45)) + tuple(
     (float(yaw), pitch) for pitch in (45.0, -45.0) for yaw in range(0, 360, 60)
@@ -424,6 +427,9 @@ def gate_rows(windows, polar_tiles=None, pole_patches=None, sphere_views=None):
     """The window row of each network input, in the order the predictors feed them (gated REL+ counts)."""
     if sphere_views is not None and windows is None:
         return ["pitch {:g}".format(pitch) for _, pitch in sphere_views["layout"]]
+    if sphere_views is not None and sphere_views["pole_views"]:  # the middle row's views, then one per pole
+        middle = sorted({top for top, _ in windows})[1]
+        return ["row {}".format(middle)] * (len(sphere_views["layout"]) - 2) + ["north view", "south view"]
     if sphere_views is not None and sphere_views["middle_row"] is not None:  # ERP tiles first, then the views
         middle = sphere_views["middle_row"]
         return ["row {}".format(top) for top, _ in windows if top != middle] + ["row {}".format(middle)] * len(
@@ -1058,6 +1064,11 @@ def main():
         "the top and bottom rows stay ERP tiles, and each pixel fuses every tile and view that sees it",
     )
     parser.add_argument(
+        "--sphere-views-poles", action="store_true",
+        help="with --sphere-views and a 3-row --erp-tiles grid, one view per middle-row tile plus one view straight "
+        "up and one straight down, all as wide as a tile; each pixel fuses every view that sees it",
+    )
+    parser.add_argument(
         "--input-pool", nargs=2, default=None, metavar=("RGB", "X"),
         help="with --erp-tiles (also with --sphere-views), pool RGB and X 2x2 ({}) in front of the network and "
         "upsample its logits 2x (bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(
@@ -1203,8 +1214,8 @@ def main():
             parser.error("--polar-caps samples the evaluation-size panorama; drop --polar-strips and --infer-scale")
         caps = polar_cap_grids(args.height, args.width, args.polar_caps)
     sphere_views = None
-    if args.sphere_views_middle_row and args.sphere_views is None:
-        parser.error("--sphere-views-middle-row needs --sphere-views")
+    if (args.sphere_views_middle_row or args.sphere_views_poles) and args.sphere_views is None:
+        parser.error("--sphere-views-middle-row and --sphere-views-poles need --sphere-views")
     if args.sphere_views is not None:
         if args.sphere_views <= 0:
             parser.error("--sphere-views must be positive")
@@ -1213,25 +1224,33 @@ def main():
             parser.error("--sphere-views replaces the whole pass, or the --erp-tiles windows, at the evaluation "
                          "size; drop --erp-tile-sliding-stride, --erp-tile-polar-scale, --erp-tile-pole-patches, "
                          "--polar-strips, --polar-caps and --infer-scale")
-        if args.sphere_views_middle_row and (args.erp_tiles is None or args.erp_tiles[0] != 3):
-            parser.error("--sphere-views-middle-row needs --erp-tiles with 3 rows")
+        if (args.sphere_views_middle_row or args.sphere_views_poles) and (
+                args.erp_tiles is None or args.erp_tiles[0] != 3):
+            parser.error("--sphere-views-middle-row and --sphere-views-poles need --erp-tiles with 3 rows")
+        if args.sphere_views_middle_row and args.sphere_views_poles:
+            parser.error("--sphere-views-poles replaces the polar tile rows that --sphere-views-middle-row keeps; "
+                         "use one of them")
         if tile_windows is None:
             sphere_views = sphere_view_grids(args.height, args.width, args.sphere_views)
-            sphere_views["middle_row"] = None
+            sphere_views["middle_row"], sphere_views["pole_views"] = None, False
         else:  # one view per tile (or per middle-row tile), as wide as the tile
             if args.erp_tile_size[0] * args.width != 2 * args.erp_tile_size[1] * args.height or (
                     2 * args.erp_tile_size[1] >= args.width):
                 parser.error("--sphere-views with --erp-tiles needs tiles that span the same angle across and "
                              "down, less than 180 degrees")
-            middle = (args.height - args.erp_tile_size[0]) // 2 if args.sphere_views_middle_row else None
-            as_views = [window for window in tile_windows if middle is None or window[0] == middle]
+            centre = (args.height - args.erp_tile_size[0]) // 2  # the middle tile row
+            middle = centre if args.sphere_views_middle_row else None
+            as_views = [window for window in tile_windows
+                        if not (args.sphere_views_middle_row or args.sphere_views_poles) or window[0] == centre]
             layout, fov_deg = tile_view_layout(args.height, args.width, as_views, args.erp_tile_size)
+            if args.sphere_views_poles:
+                layout += POLE_VIEWS
             try:
                 sphere_views = sphere_view_grids(args.height, args.width, args.sphere_views, layout, fov_deg,
                                                  require_full=middle is None)
             except ValueError as error:
                 parser.error(str(error))
-            sphere_views["middle_row"] = middle
+            sphere_views["middle_row"], sphere_views["pole_views"] = middle, args.sphere_views_poles
     if args.input_pool is not None:
         if any(mode not in INPUT_POOL_MODES for mode in args.input_pool):
             parser.error("--input-pool modes are {} (bilinear by 0.5 is avg)".format(", ".join(INPUT_POOL_MODES)))
@@ -1452,6 +1471,7 @@ def main():
             "fusion": "sum of exp(logits)" if args.erp_tile_exp_sum else "mean softmax",
             "centred_on_erp_tiles": tile_windows is not None,
             "middle_tile_row_only": sphere_views["middle_row"] is not None,
+            "pole_views": sphere_views["pole_views"],
             "rule": ("the middle tile row as views, the other tile rows as ERP tiles; each pixel fuses every tile and "
                      "view that sees it" if sphere_views["middle_row"] is not None else
                      "each pixel fuses every view that sees it")
