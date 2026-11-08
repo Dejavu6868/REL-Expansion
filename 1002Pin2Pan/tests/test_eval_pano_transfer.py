@@ -336,8 +336,67 @@ def test_polar_strips_run_each_polar_row_as_one_wrapped_pass(wrap_pad):
     assert not torch.allclose(fused[:, :, ~rows], tiles[:, :, ~rows])  # strips are not the tiles
 
 
+@pytest.mark.parametrize("scale", [0.5, 1])
+def test_polar_squeeze_runs_each_polar_row_as_one_tile_sized_input(scale):
+    torch = pytest.importorskip("torch")
+    F = torch.nn.functional
+
+    class RowMeanNet(torch.nn.Module):  # depends on the whole input width; records its input sizes
+        sizes = []
+
+        def forward(self, rgb, modal_x):
+            self.sizes.append(tuple(rgb.shape[2:]))
+            return rgb + modal_x + rgb.mean(dim=3, keepdim=True)
+
+    torch.manual_seed(0)
+    full = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    polar = full if scale == 1 else (torch.randn(1, 3, 32, 64), torch.randn(1, 3, 32, 64))
+    windows = ev.erp_tile_windows(64, 128, 3, 8, 32, 32)  # rows 0, 16, 32
+    tile = int(32 * scale)
+    net = RowMeanNet()
+    fused = ev.predict_polar_scaled_tiles(net, full, polar, windows, (32, 32), (16, 48), "cpu", None, True,
+                                          squeeze=True)
+    assert net.sizes[:2] == [(tile, tile)] * 2  # one tile-sized input per polar row, then the middle tiles
+
+    def squeezed(row):
+        images = [F.interpolate(image[:, :, row:row + tile], size=(tile, tile), mode="area") for image in polar]
+        logits = F.interpolate(net(*images), size=(tile, polar[0].shape[3]), mode="bilinear", align_corners=False)
+        return logits.exp()
+
+    small = torch.zeros(1, 3, *polar[0].shape[2:])
+    count = torch.zeros(1, 1, *polar[0].shape[2:])
+    for row in (0, polar[0].shape[2] - tile):
+        small[:, :, row:row + tile] += squeezed(row)
+        count[:, :, row:row + tile] += 1
+    expected = F.interpolate(small / count, size=(64, 128), mode="bilinear", align_corners=False)
+    rows = torch.zeros(64, dtype=torch.bool)
+    rows[16:48] = True
+    assert torch.allclose(fused[:, :, ~rows], expected[:, :, ~rows], rtol=1e-5, atol=1e-6)
+    tiles = ev.predict_polar_scaled_tiles(net, full, polar, windows, (32, 32), (16, 48), "cpu", None, True)
+    assert torch.equal(fused[:, :, rows], tiles[:, :, rows])  # the middle row is unchanged
+    assert not torch.allclose(fused[:, :, ~rows], tiles[:, :, ~rows])  # one squeezed input is not the tiles
+
+
+def test_pooled_polar_squeeze_matches_the_pooled_zone_control_on_a_panorama_constant_along_longitude():
+    torch = pytest.importorskip("torch")
+
+    class PixelNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb - 0.5 * modal_x
+
+    torch.manual_seed(0)
+    full = [column.expand(1, 3, 64, 128).clone() for column in (torch.randn(1, 3, 64, 1), torch.randn(1, 3, 64, 1))]
+    windows = ev.erp_tile_windows(64, 128, 3, 8, 32, 32)
+    net = ev.input_pool_network(PixelNet(), "avg", "avg")
+    zones = ev.predict_polar_scaled_tiles(net, full, full, windows, (32, 32), (16, 48), "cpu", None, True)
+    squeeze = ev.predict_polar_scaled_tiles(net, full, full, windows, (32, 32), (16, 48), "cpu", None, True,
+                                            squeeze=True)
+    assert torch.allclose(squeeze, zones, rtol=1e-5, atol=1e-6)  # squeezing a constant row changes nothing
+
+
 def test_smmf_layout_with_polar_scale_passes_the_argument_checks(monkeypatch, tmp_path):
-    for middle in ([], ["--erp-tile-middle-height", "1366"], ["--erp-tile-polar-strips"]):
+    for middle in ([], ["--erp-tile-middle-height", "1366"], ["--erp-tile-polar-strips"],
+                   ["--erp-tile-polar-squeeze"]):
         output = tmp_path / "output{}".format(len(middle))
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
@@ -376,6 +435,8 @@ def test_sliding_layout_passes_the_argument_checks(monkeypatch, tmp_path):
     ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-middle-height", "385"],
     ["--erp-tiles", "3", "8", "--erp-tile-polar-strips"],  # strips need the polar scale
     ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-polar-strips", "--wrap-pad", "3"],
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-squeeze"],  # the squeeze needs the polar scale
+    ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "0.5", "--erp-tile-polar-squeeze", "--erp-tile-polar-strips"],
 ])
 def test_bad_polar_scaled_tiles_are_rejected_before_loading(monkeypatch, tmp_path, extra):
     monkeypatch.setattr(sys, "argv", [
@@ -829,7 +890,8 @@ def test_pooled_pole_patches_and_pooled_zones_share_the_middle_row():
 def test_smmf_layout_with_input_pool_passes_the_argument_checks(monkeypatch, tmp_path):
     for modes, polar in ((("avg", "avg"), []), (("max", "max"), []), (("avg", "nearest"), []),
                          (("avg", "avg"), ["--erp-tile-pole-patches", "1080"]),
-                         (("avg", "avg"), ["--erp-tile-polar-scale", "1"])):
+                         (("avg", "avg"), ["--erp-tile-polar-scale", "1"]),
+                         (("avg", "avg"), ["--erp-tile-polar-scale", "1", "--erp-tile-polar-squeeze"])):
         output = tmp_path / ("output" + "_".join(modes) + "_".join(polar))
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
@@ -850,6 +912,8 @@ def test_smmf_layout_with_input_pool_passes_the_argument_checks(monkeypatch, tmp
     ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--erp-tile-polar-scale", "0.5"],
     ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--erp-tile-pole-patches", "385"],  # odd patch
     ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--erp-tile-polar-scale", "1", "--erp-tile-polar-strips"],
+    ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--erp-tile-polar-scale", "0.5",
+     "--erp-tile-polar-squeeze"],
     ["--erp-tiles", "3", "8", "--erp-tile-polar-scale", "1.5"],
     ["--erp-tiles", "3", "8", "--input-pool", "avg", "avg", "--polar-caps", "384"],
     ["--erp-tiles", "3", "7", "--input-pool", "avg", "avg"],  # columns start at 0, 292, 585 ...: odd
