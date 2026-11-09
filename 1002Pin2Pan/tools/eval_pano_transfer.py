@@ -44,6 +44,17 @@ normalisation are the frozen training ones; only the input images change.
   instead, centred on the tile and as wide as it (SMMF's partition on the sphere);
   ``--sphere-views-middle-row`` turns only the middle tile row into views, and
   ``--sphere-views-poles`` replaces the top and bottom tile rows by one view per pole.
+* ``--erp-gores N`` replaces the whole pass by N equal-area gores: each gore is the
+  sinusoidal projection about its own central meridian (one on longitude 0), cut from
+  the evaluation-size panorama, so every gore pixel covers the solid angle of an
+  equatorial ERP pixel and the pixel pitch is the same across as down everywhere.
+  RGB (bilinear) and the X encoded on the whole panorama (nearest) are sampled into each
+  gore; each pixel fuses every gore that covers it. ``--erp-gore-fill petal`` blanks the
+  pixels beyond half a gore (the gores then tile the sphere); the default ``full`` keeps
+  the panorama content there, so gores overlap towards the poles.
+  ``--erp-gore-hemispheres MARGIN`` cuts each gore at the equator into a north and a
+  south petal reaching MARGIN degrees past it; ``--erp-gore-offset-set`` adds a second
+  set of gores half a gore further round.
 * ``--erp-tile-sliding-stride S`` places the tiles as CMX's own sliding-window
   evaluation does instead: every S pixels from the top-left corner, the last row and
   column moved back to the panorama edge, no wrap across the seam.
@@ -424,8 +435,10 @@ def sliding_windows(height, width, tile_height, tile_width, stride):
     return [(top, left) for top in starts(height, tile_height) for left in starts(width, tile_width)]
 
 
-def gate_rows(windows, polar_tiles=None, pole_patches=None, sphere_views=None):
+def gate_rows(windows, polar_tiles=None, pole_patches=None, sphere_views=None, gores=None):
     """The window row of each network input, in the order the predictors feed them (gated REL+ counts)."""
+    if gores is not None:
+        return list(gores["labels"])
     if sphere_views is not None and windows is None:
         return ["pitch {:g}".format(pitch) for _, pitch in sphere_views["layout"]]
     if sphere_views is not None and sphere_views["pole_views"]:  # the middle row's views, then one per pole
@@ -605,18 +618,23 @@ def polar_cap_grids(height, width, size, fov_deg=POLAR_CAP_FOV_DEG):
 
 
 def sample_cap_tiles(rgb, modal_x, caps, device):
-    """The two cap tiles: RGB bilinear, X nearest so depth edges are not blended."""
+    """The two cap tiles: RGB bilinear, X nearest so depth edges are not blended.
+
+    With ``masks`` (gore petals) the pixels outside the mask are zeroed after sampling.
+    """
     import torch
     import torch.nn.functional as F
 
     grid = torch.as_tensor(caps["tiles"], device=device)
-    return [
+    mask = None if "masks" not in caps else torch.as_tensor(caps["masks"], device=device)[:, None]
+    sampled = [
         F.grid_sample(
             F.pad(image.to(device), (1, 1, 0, 0), mode="circular").expand(len(grid), -1, -1, -1), grid,
             mode=mode, padding_mode="border", align_corners=False,
         )
         for image, mode in ((rgb, "bilinear"), (modal_x, "nearest"))
     ]
+    return sampled if mask is None else [image * mask.to(image.dtype) for image in sampled]
 
 
 def predict_polar_caps(network, rgb, modal_x, caps, device, channels=None):
@@ -767,7 +785,7 @@ def predict_sphere_views(network, full, views, device, channels=None, exp_sum=Fa
     height, width = full[0].shape[2:]
     total = count = None
     for start in range(0, len(views["tiles"]), TILE_BATCH):
-        batch = {"tiles": views["tiles"][start:start + TILE_BATCH]}
+        batch = {key: views[key][start:start + TILE_BATCH] for key in ("tiles", "masks") if key in views}
         logits = predict_with_wrap(network, *sample_cap_tiles(*full, batch, device), 0, device)
         probabilities = logits.exp() if exp_sum else class_probabilities(logits, channels)
         if total is None:
@@ -793,6 +811,118 @@ def predict_tiles_and_views(network, full, windows, tile_size, views, device, ch
     if not bool((count > 0).all()):
         raise ValueError("the tiles and sphere views leave panorama pixels unseen")
     return (tile_total + view_total) / count
+
+
+# --erp-gores: each gore is the sinusoidal (Sanson-Flamsteed, equal-area) projection about its own central
+# meridian, so every gore pixel covers the solid angle of an equatorial ERP pixel. One gore is centred on the
+# ERP's central meridian (longitude 0).
+GORE_FILLS = ("full", "petal")
+GORE_CONTEXT_COLUMNS = 2  # columns past the gore on each side that the network sees but that are never read back
+
+
+def gore_centres(count, offset_set=False):
+    """Central meridians (radians in [-pi, pi)) of ``count`` gores a full turn apart, starting at longitude 0;
+    with ``offset_set`` the set half a gore further is appended."""
+    step = 2 * np.pi / count
+    centres = np.arange(count) * step
+    if offset_set:
+        centres = np.concatenate([centres, centres + step / 2])
+    return (centres + np.pi) % (2 * np.pi) - np.pi
+
+
+def gore_rectangle(height, width, count, hemisphere_margin_rows=None):
+    """(rows, columns) of one gore image: the ERP rows it spans (all of them, or a hemisphere plus the margin)
+    and the smallest even width that holds a gore at the equator, plus the context columns on each side."""
+    columns = -(-width // count)
+    columns += columns % 2 + 2 * GORE_CONTEXT_COLUMNS
+    rows = height if hemisphere_margin_rows is None else height // 2 + hemisphere_margin_rows
+    return rows, columns
+
+
+def gore_grids(height, width, count, hemisphere_margin_rows=None, fill="full", offset_set=False,
+               require_full=True):
+    """``grid_sample`` coordinates between the ERP and equal-area gores.
+
+    Gore pixel (v, u) keeps the latitude of its ERP row and sits at the longitude offset
+    ``(u + 0.5 - columns / 2) / cos(latitude)`` ERP pixels from the gore's central meridian, so a row of the gore
+    reads the ERP row compressed by cos(latitude): every gore pixel covers one equatorial pixel's solid angle,
+    and the pixel pitch is the same across as down everywhere. With ``fill`` "petal" the pixels beyond half a
+    gore (|offset| > pi / count) are blanked (zero after normalisation) and never read back; with "full" they
+    keep the ERP content, so gores overlap towards the poles. The outermost ``GORE_CONTEXT_COLUMNS`` columns on
+    each side are context only and never read back. With ``hemisphere_margin_rows`` each gore is cut
+    at the equator into a north and a south petal, each reaching that many rows past the equator. With
+    ``offset_set`` a second set of gores, half a gore further round, is added. Gores are fed in the order of
+    ``labels``: all north petals (or whole gores), then all south petals.
+    ``tiles`` (gores, rows, columns, 2): where each gore pixel reads the ERP padded by one column on each side
+    (as ``sample_cap_tiles`` expects); ``masks``: the pixels kept; ``back``: per gore, the flat indices of the
+    ERP pixels it covers and where each reads the gore.
+    """
+    if fill not in GORE_FILLS:
+        raise ValueError("gore fill must be one of {}".format(", ".join(GORE_FILLS)))
+    if count < 2:
+        raise ValueError("at least 2 gores are needed")
+    if hemisphere_margin_rows is not None and (height % 2 or not 0 <= hemisphere_margin_rows < height // 2):
+        raise ValueError("hemisphere petals need an even panorama height and a margin below half of it")
+    rows, columns = gore_rectangle(height, width, count, hemisphere_margin_rows)
+    half_gore = np.pi / count
+    px_per_rad = width / (2 * np.pi)
+    centres = gore_centres(count, offset_set)
+    if hemisphere_margin_rows is None:
+        petals = [(0, "gore")]
+    else:
+        petals = [(0, "north petal"), (height - rows, "south petal")]
+    gores = [(centre, start, label) for start, label in petals for centre in centres]
+    erp_longitude = (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi
+    erp_latitude = np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi
+    offsets = (np.arange(columns) + 0.5 - columns / 2) / px_per_rad  # longitude offset times cos(latitude)
+    tiles, masks, back = [], [], []
+    seen = np.zeros(height * width, dtype=np.int64)
+    for centre, start, _ in gores:
+        latitude = erp_latitude[start:start + rows]
+        delta = offsets[None, :] / np.cos(latitude)[:, None]  # (rows, columns), longitude offset per gore pixel
+        longitude = (centre + delta + np.pi) % (2 * np.pi) - np.pi
+        tiles.append(np.stack([
+            longitude / np.pi * width / (width + 2),
+            np.broadcast_to(-latitude[:, None] / (np.pi / 2), delta.shape),
+        ], axis=-1))
+        if fill == "petal":  # keep 3 gore pixels past the petal edge, so neither the bilinear read-back nor a 2x2
+            # input pooling with its 2x upsampling ever mixes a blank pixel into a pixel that is read back
+            masks.append(np.abs(delta) <= half_gore + 3 / (np.cos(latitude)[:, None] * px_per_rad))
+        else:
+            masks.append(np.ones(delta.shape, dtype=bool))
+        delta_back = (erp_longitude[None, :] - centre + np.pi) % (2 * np.pi) - np.pi  # (1, width)
+        x = delta_back * np.cos(latitude)[:, None] * px_per_rad + columns / 2  # (rows, width), gore column
+        covered = (x >= GORE_CONTEXT_COLUMNS) & (x <= columns - GORE_CONTEXT_COLUMNS)
+        if fill == "petal":
+            covered &= np.abs(delta_back) <= half_gore
+        r, c = np.nonzero(covered)
+        flat = (r + start) * width + c
+        back.append((flat, np.stack([x[r, c] / columns * 2 - 1, (r + 0.5) / rows * 2 - 1], axis=-1).astype(
+            np.float32)))
+        seen[flat] += 1
+    if require_full and not seen.all():
+        raise ValueError("the gores leave panorama pixels uncovered")
+    return {
+        "count": count,
+        "offset_set": offset_set,
+        "fill": fill,
+        "centres_deg": [float(np.degrees(centre)) for centre in centres],
+        "rows": rows,
+        "columns": columns,
+        "hemisphere_margin_rows": hemisphere_margin_rows,
+        "labels": [label for _, _, label in gores],
+        "starts": [int(start) for _, start, _ in gores],
+        "tiles": np.stack(tiles).astype(np.float32),
+        "masks": np.stack(masks),
+        "back": back,
+        "gores_per_pixel": {"min": int(seen.min()), "max": int(seen.max()), "mean": float(seen.mean())},
+    }
+
+
+def predict_gores(network, full, gores, device, channels=None, exp_sum=False):
+    """Each panorama pixel: the mean probabilities (or exp(logits) with ``exp_sum``) of the gores covering it,
+    read back bilinear. A petal's blanked pixels are never read back."""
+    return predict_sphere_views(network, full, gores, device, channels, exp_sum)
 
 
 INPUT_POOL_MODES = ("avg", "max", "nearest")
@@ -1085,9 +1215,34 @@ def main():
         "up and one straight down, all as wide as a tile; each pixel fuses every view that sees it",
     )
     parser.add_argument(
+        "--erp-gores", type=int, default=None, metavar="N",
+        help="instead of one pass, N equal-area gores (the sinusoidal projection about each gore's central "
+        "meridian, one of them on longitude 0) cut from the evaluation-size panorama: a gore row is the ERP row "
+        "compressed by cos(latitude), so every gore pixel covers an equatorial pixel's solid angle; each pixel "
+        "fuses every gore that covers it. 7 gores on 2048 x 4096 are 2048 x 590 each (586 plus 2 context columns on "
+        "each side)",
+    )
+    parser.add_argument(
+        "--erp-gore-hemispheres", type=float, default=None, metavar="MARGIN_DEG",
+        help="with --erp-gores, cut each gore at the equator into a north and a south petal, each reaching "
+        "MARGIN_DEG degrees past the equator (SMMF's polar windows reach 4.9); the two petals of a gore are "
+        "separate network inputs",
+    )
+    parser.add_argument(
+        "--erp-gore-fill", choices=GORE_FILLS, default="full",
+        help="with --erp-gores: 'full' (default) keeps the panorama content beyond half a gore, so gores overlap "
+        "towards the poles; 'petal' blanks it (zero after normalisation) and reads nothing back from there, so "
+        "the gores tile the sphere",
+    )
+    parser.add_argument(
+        "--erp-gore-offset-set", action="store_true",
+        help="with --erp-gores, also run a second set of gores whose central meridians sit half a gore further "
+        "round, so every pixel is covered by both sets",
+    )
+    parser.add_argument(
         "--input-pool", nargs=2, default=None, metavar=("RGB", "X"),
-        help="with --erp-tiles (also with --sphere-views), pool RGB and X 2x2 ({}) in front of the network and "
-        "upsample its logits 2x (bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(
+        help="with --erp-tiles (also with --sphere-views) or --erp-gores, pool RGB and X 2x2 ({}) in front of the "
+        "network and upsample its logits 2x (bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(
             ", ".join(INPUT_POOL_MODES)),
     )
     parser.add_argument(
@@ -1148,8 +1303,9 @@ def main():
     if args.erp_tile_column_offset and args.erp_tile_column_stride is None:
         parser.error("--erp-tile-column-offset needs --erp-tile-column-stride")
     if (args.erp_tile_exp_sum and args.erp_tiles is None and args.erp_tile_sliding_stride is None
-            and args.sphere_views is None):
-        parser.error("--erp-tile-exp-sum needs --erp-tiles, --erp-tile-sliding-stride or --sphere-views")
+            and args.sphere_views is None and args.erp_gores is None):
+        parser.error("--erp-tile-exp-sum needs --erp-tiles, --erp-tile-sliding-stride, --sphere-views or "
+                     "--erp-gores")
     if args.erp_tile_sliding_stride is not None:
         if args.erp_tiles is not None:
             parser.error("--erp-tile-sliding-stride places the tiles itself; drop --erp-tiles")
@@ -1270,21 +1426,49 @@ def main():
             except ValueError as error:
                 parser.error(str(error))
             sphere_views["middle_row"], sphere_views["pole_views"] = middle, args.sphere_views_poles
+    gores = None
+    if args.erp_gores is None and (args.erp_gore_hemispheres is not None or args.erp_gore_offset_set
+                                   or args.erp_gore_fill != "full"):
+        parser.error("--erp-gore-hemispheres, --erp-gore-fill and --erp-gore-offset-set need --erp-gores")
+    if args.erp_gores is not None:
+        if args.erp_gores < 2:
+            parser.error("--erp-gores needs at least 2 gores")
+        if (args.erp_tiles is not None or args.erp_tile_sliding_stride is not None or sphere_views is not None
+                or strip_rows is not None or caps is not None or args.infer_scale != 1.0):
+            parser.error("--erp-gores replaces the whole pass at the evaluation size; drop --erp-tiles, "
+                         "--erp-tile-sliding-stride, --sphere-views, --polar-strips, --polar-caps and --infer-scale")
+        margin_rows = None
+        if args.erp_gore_hemispheres is not None:
+            if not 0 <= args.erp_gore_hemispheres < 90:
+                parser.error("--erp-gore-hemispheres must be at least 0 and below 90 degrees")
+            if args.height % 2:
+                parser.error("--erp-gore-hemispheres needs an even --height")
+            margin_rows = int(round(args.erp_gore_hemispheres / 180 * args.height))
+        try:
+            gores = gore_grids(args.height, args.width, args.erp_gores, margin_rows, args.erp_gore_fill,
+                               args.erp_gore_offset_set)
+        except ValueError as error:
+            parser.error(str(error))
     if args.input_pool is not None:
         if any(mode not in INPUT_POOL_MODES for mode in args.input_pool):
             parser.error("--input-pool modes are {} (bilinear by 0.5 is avg)".format(", ".join(INPUT_POOL_MODES)))
-        if (args.erp_tiles is None or args.infer_scale != 1.0 or caps is not None or polar_tiles is not None
+        if (args.erp_tiles is None and gores is None or args.infer_scale != 1.0 or caps is not None
+                or polar_tiles is not None
                 and (polar_tiles["scale"] != 1 or polar_tiles["strip_wrap_pad"] is not None)):
             parser.error("--input-pool goes in front of --erp-tiles at the evaluation size, also with "
-                         "--erp-tile-pole-patches, --erp-tile-polar-scale 1 or --sphere-views; drop --infer-scale, "
-                         "--polar-caps, --erp-tile-polar-strips and polar scales below 1")
-        lengths = list(args.erp_tile_size) + [v for window in tile_windows for v in window]
+                         "--erp-tile-pole-patches, --erp-tile-polar-scale 1 or --sphere-views, or in front of "
+                         "--erp-gores; drop --infer-scale, --polar-caps, --erp-tile-polar-strips and polar scales "
+                         "below 1")
+        lengths = [] if tile_windows is None else list(args.erp_tile_size) + [v for window in tile_windows
+                                                                                 for v in window]
         lengths += [] if pole_patches is None else [pole_patches["size"]]
         lengths += [] if polar_tiles is None else list(polar_tiles["middle_rows"])
         lengths += [] if sphere_views is None else [sphere_views["size"]]
+        lengths += [] if gores is None else [gores["rows"], gores["columns"]]
         if any(value % 2 for value in lengths):
-            parser.error("--input-pool needs even tile sizes, tile origins, middle rows, pole patch sizes and "
-                         "sphere view sizes, so pooling each tile equals cutting it from the pooled panorama")
+            parser.error("--input-pool needs even tile sizes, tile origins, middle rows, pole patch sizes, "
+                         "sphere view sizes and gore sizes, so pooling each input equals cutting it from the "
+                         "pooled panorama")
 
     import torch
     import torch.nn as nn
@@ -1325,7 +1509,7 @@ def main():
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
-    rows = gate_rows(tile_windows, polar_tiles, pole_patches, sphere_views)
+    rows = gate_rows(tile_windows, polar_tiles, pole_patches, sphere_views, gores)
     gate_counts = {row: [0] * gr.BRANCHES for row in rows} if gated else None
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
@@ -1344,6 +1528,8 @@ def main():
             )
         elif sphere_views is not None:  # only the argmax is used below
             logits = predict_sphere_views(network, inputs, sphere_views, device, channels, args.erp_tile_exp_sum)
+        elif gores is not None:  # only the argmax is used below
+            logits = predict_gores(network, inputs, gores, device, channels, args.erp_tile_exp_sum)
         elif pole_patches is not None:  # only the argmax is used below
             logits = predict_pole_patches(
                 network, inputs, tile_windows, args.erp_tile_size, pole_patches["middle_rows"], pole_patches,
@@ -1502,13 +1688,35 @@ def main():
                      "each pixel fuses every view that sees it")
                     + ", read back bilinear; RGB sampled bilinear, X nearest",
         },
+        "erp_gores": None if gores is None else {
+            "count": gores["count"],
+            "offset_set": gores["offset_set"],
+            "projection": "sinusoidal (Sanson-Flamsteed, equal-area) about each gore's central meridian",
+            "centre_longitudes_deg": gores["centres_deg"],
+            "fill": gores["fill"],
+            "hemispheres": None if gores["hemisphere_margin_rows"] is None else {
+                "margin_deg": args.erp_gore_hemispheres,
+                "margin_rows": gores["hemisphere_margin_rows"],
+            },
+            "gore_size": [gores["rows"], gores["columns"]],
+            "context_columns_each_side": GORE_CONTEXT_COLUMNS,
+            "gore_row_starts": gores["starts"],
+            "network_inputs": len(gores["labels"]),
+            "px_per_deg": [args.height / 180, args.width / 360],
+            "gores_per_pixel": gores["gores_per_pixel"],
+            "fusion": "sum of exp(logits)" if args.erp_tile_exp_sum else "mean softmax",
+            "rule": "each pixel fuses every gore that covers it, read back bilinear; RGB sampled bilinear, "
+                    "X nearest" + ("; pixels beyond half a gore are blanked and never read back"
+                                   if gores["fill"] == "petal" else ""),
+        },
         "input_pool": None if args.input_pool is None else {
             "rgb": args.input_pool[0],
             "x": args.input_pool[1],
             "factor": 2,
-            "network_tile_size": [length // 2 for length in args.erp_tile_size],
+            "network_tile_size": None if tile_windows is None else [length // 2 for length in args.erp_tile_size],
             "network_pole_patch_size": None if pole_patches is None else [pole_patches["size"] // 2] * 2,
             "network_sphere_view_size": None if sphere_views is None else [sphere_views["size"] // 2] * 2,
+            "network_gore_size": None if gores is None else [gores["rows"] // 2, gores["columns"] // 2],
             "logits": "upsampled 2x (bilinear) to the tile size before fusion",
         },
         "polar_caps": None if caps is None else {
