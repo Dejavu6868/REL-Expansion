@@ -255,6 +255,8 @@ def test_gate_rows_follow_the_predictors_feed_order():
     assert ev.gate_rows(windows, {"scale": 0.5}) == ["row 0 (x0.5)"] * 7 + ["row 968 (x0.5)"] * 7 + ["row 484"] * 7
     assert ev.gate_rows(windows, {"scale": 0.5, "strip_wrap_pad": 128}) == [
         "row 0 (x0.5 strip)", "row 968 (x0.5 strip)"] + ["row 484"] * 7
+    assert ev.gate_rows(windows, {"scale": 1, "strip_wrap_pad": None, "squeeze": True}) == [
+        "row 0 (x1 squeezed)", "row 968 (x1 squeezed)"] + ["row 484"] * 7
 
 
 def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
@@ -331,6 +333,8 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
                         ("pooled", smmf + ["--input-pool", "avg", "avg"]),
                         ("pooledpatches", smmf + ["--erp-tile-pole-patches", "136", "--input-pool", "avg", "avg"]),
                         ("pooledzones", smmf + ["--erp-tile-polar-scale", "1", "--input-pool", "avg", "avg"]),
+                        ("pooledsqueeze", smmf + ["--erp-tile-polar-scale", "1", "--erp-tile-polar-squeeze",
+                                                  "--input-pool", "avg", "avg"]),
                         ("tileviews", smmf + ["--sphere-views", "136"]),
                         ("pooledtileviews", smmf + ["--sphere-views", "136", "--input-pool", "avg", "avg"]),
                         ("pooledmiddleviews", smmf + ["--sphere-views", "136", "--sphere-views-middle-row",
@@ -344,7 +348,7 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
         assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
     counts = {name: json.loads((tmp_path / name / "metrics.json").read_text())["gate_counts_per_window_row"]
               for name in ("whole", "smmf", "p47", "p47strips", "sliding", "patches", "views", "pooled",
-                           "pooledpatches", "pooledzones", "tileviews", "pooledtileviews", "pooledmiddleviews",
+                           "pooledpatches", "pooledzones", "pooledsqueeze", "tileviews", "pooledtileviews", "pooledmiddleviews",
                            "pooledpoleviews", "gores", "pooledpetals")}
     assert {row: sum(c) for row, c in counts["whole"].items()} == {"whole": 2}
     assert {row: sum(c) for row, c in counts["smmf"].items()} == {"row 0": 14, "row 60": 14, "row 120": 14}
@@ -365,6 +369,9 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
     assert {row: sum(c) for row, c in counts["pooledzones"].items()} == {"row 0 (x1)": 14, "row 120 (x1)": 14,
                                                                       "row 60": 14}
     assert counts["pooledpatches"]["row 60"] == counts["pooledzones"]["row 60"] == counts["pooled"]["row 60"]
+    assert {row: sum(c) for row, c in counts["pooledsqueeze"].items()} == {"row 0 (x1 squeezed)": 2,
+                                                                        "row 120 (x1 squeezed)": 2, "row 60": 14}
+    assert counts["pooledsqueeze"]["row 60"] == counts["pooledzones"]["row 60"]
     for name in ("tileviews", "pooledtileviews", "pooledmiddleviews"):  # one view or tile per SMMF window
         assert {row: sum(c) for row, c in counts[name].items()} == {"row 0": 14, "row 60": 14, "row 120": 14}
     for row in ("row 0", "row 120"):  # the same pooled ERP tiles in the polar rows
