@@ -336,13 +336,16 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
                         ("pooledmiddleviews", smmf + ["--sphere-views", "136", "--sphere-views-middle-row",
                                                       "--input-pool", "avg", "avg"]),
                         ("pooledpoleviews", smmf + ["--sphere-views", "136", "--sphere-views-poles",
-                                                    "--input-pool", "avg", "avg"])):
+                                                    "--input-pool", "avg", "avg"]),
+                        ("gores", ["--erp-gores", "3", "--erp-tile-exp-sum"]),  # 256 x 176 gores
+                        ("pooledpetals", ["--erp-gores", "3", "--erp-gore-hemispheres", "10", "--erp-gore-fill",
+                                          "petal", "--input-pool", "avg", "avg", "--erp-tile-exp-sum"])):
         result = run([str(TOOLS / "eval_pano_transfer.py")] + common + extra + ["--output", str(tmp_path / name)])
         assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
     counts = {name: json.loads((tmp_path / name / "metrics.json").read_text())["gate_counts_per_window_row"]
               for name in ("whole", "smmf", "p47", "p47strips", "sliding", "patches", "views", "pooled",
                            "pooledpatches", "pooledzones", "tileviews", "pooledtileviews", "pooledmiddleviews",
-                           "pooledpoleviews")}
+                           "pooledpoleviews", "gores", "pooledpetals")}
     assert {row: sum(c) for row, c in counts["whole"].items()} == {"whole": 2}
     assert {row: sum(c) for row, c in counts["smmf"].items()} == {"row 0": 14, "row 60": 14, "row 120": 14}
     assert {row: sum(c) for row, c in counts["p47"].items()} == {"row 0 (x0.5)": 14, "row 120 (x0.5)": 14,
@@ -368,6 +371,10 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
         assert counts["pooledmiddleviews"][row] == counts["pooled"][row]
     assert {row: sum(c) for row, c in counts["pooledpoleviews"].items()} == {"row 60": 14, "north view": 2,
                                                                           "south view": 2}
+    assert {row: sum(c) for row, c in counts["gores"].items()} == {"gore": 6}
+    assert {row: sum(c) for row, c in counts["pooledpetals"].items()} == {"north petal": 6, "south petal": 6}
+    petals = json.loads((tmp_path / "pooledpetals" / "metrics.json").read_text())
+    assert petals["erp_gores"]["gore_size"] == [142, 176] and petals["input_pool"]["network_gore_size"] == [71, 88]
 
     refused = run([str(TOOLS / "eval_pano_transfer.py")] + common + ["--polar-strips", "8", "--output",
                                                                       str(tmp_path / "strips")])
