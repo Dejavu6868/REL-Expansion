@@ -54,7 +54,9 @@ normalisation are the frozen training ones; only the input images change.
   the panorama content there, so gores overlap towards the poles.
   ``--erp-gore-hemispheres MARGIN`` cuts each gore at the equator into a north and a
   south petal reaching MARGIN degrees past it; ``--erp-gore-offset-set`` adds a second
-  set of gores half a gore further round.
+  set of gores half a gore further round; ``--erp-gore-columns COLUMNS`` (fill ``full``
+  only) makes every gore image wider than a gore at the equator, so neighbouring gores
+  overlap there as well.
 * ``--erp-tile-sliding-stride S`` places the tiles as CMX's own sliding-window
   evaluation does instead: every S pixels from the top-left corner, the last row and
   column moved back to the panorama edge, no wrap across the seam.
@@ -870,17 +872,23 @@ def gore_centres(count, offset_set=False):
     return (centres + np.pi) % (2 * np.pi) - np.pi
 
 
-def gore_rectangle(height, width, count, hemisphere_margin_rows=None):
+def gore_rectangle(height, width, count, hemisphere_margin_rows=None, columns=None):
     """(rows, columns) of one gore image: the ERP rows it spans (all of them, or a hemisphere plus the margin)
-    and the smallest even width that holds a gore at the equator, plus the context columns on each side."""
-    columns = -(-width // count)
-    columns += columns % 2 + 2 * GORE_CONTEXT_COLUMNS
+    and the smallest even width that holds a gore at the equator, plus the context columns on each side.
+    ``columns`` asks for a wider image than that, context columns included."""
+    smallest = -(-width // count)
+    smallest += smallest % 2 + 2 * GORE_CONTEXT_COLUMNS
+    if columns is None:
+        columns = smallest
+    elif not smallest <= columns <= width:
+        raise ValueError("gore columns must be between {} (a gore at the equator plus its context columns) and "
+                         "the panorama width".format(smallest))
     rows = height if hemisphere_margin_rows is None else height // 2 + hemisphere_margin_rows
     return rows, columns
 
 
 def gore_grids(height, width, count, hemisphere_margin_rows=None, fill="full", offset_set=False,
-               require_full=True):
+               require_full=True, columns=None):
     """``grid_sample`` coordinates between the ERP and equal-area gores.
 
     Gore pixel (v, u) keeps the latitude of its ERP row and sits at the longitude offset
@@ -891,8 +899,10 @@ def gore_grids(height, width, count, hemisphere_margin_rows=None, fill="full", o
     keep the ERP content, so gores overlap towards the poles. The outermost ``GORE_CONTEXT_COLUMNS`` columns on
     each side are context only and never read back. With ``hemisphere_margin_rows`` each gore is cut
     at the equator into a north and a south petal, each reaching that many rows past the equator. With
-    ``offset_set`` a second set of gores, half a gore further round, is added. Gores are fed in the order of
-    ``labels``: all north petals (or whole gores), then all south petals.
+    ``offset_set`` a second set of gores, half a gore further round, is added. With ``columns`` (fill "full"
+    only) every gore image is that wide instead of the smallest width that holds a gore at the equator: it shows
+    more longitude at every latitude, so neighbouring gores overlap at the equator as well. Gores are fed in the
+    order of ``labels``: all north petals (or whole gores), then all south petals.
     ``tiles`` (gores, rows, columns, 2): where each gore pixel reads the ERP padded by one column on each side
     (as ``sample_cap_tiles`` expects); ``masks``: the pixels kept; ``back``: per gore, the flat indices of the
     ERP pixels it covers and where each reads the gore.
@@ -903,7 +913,9 @@ def gore_grids(height, width, count, hemisphere_margin_rows=None, fill="full", o
         raise ValueError("at least 2 gores are needed")
     if hemisphere_margin_rows is not None and (height % 2 or not 0 <= hemisphere_margin_rows < height // 2):
         raise ValueError("hemisphere petals need an even panorama height and a margin below half of it")
-    rows, columns = gore_rectangle(height, width, count, hemisphere_margin_rows)
+    if columns is not None and fill == "petal":
+        raise ValueError("wider gores need the fill 'full': 'petal' blanks everything beyond half a gore")
+    rows, columns = gore_rectangle(height, width, count, hemisphere_margin_rows, columns)
     half_gore = np.pi / count
     px_per_rad = width / (2 * np.pi)
     centres = gore_centres(count, offset_set)
@@ -1280,6 +1292,13 @@ def main():
         "round, so every pixel is covered by both sets",
     )
     parser.add_argument(
+        "--erp-gore-columns", type=int, default=None, metavar="COLUMNS",
+        help="with --erp-gores and the fill 'full', make every gore image COLUMNS wide (context columns included) "
+        "instead of the smallest width that holds a gore at the equator (590 for 7 gores on 4096): a wider gore "
+        "shows more longitude at every latitude, so neighbouring gores overlap at the equator as well; 826 shows "
+        "72.6 degrees there instead of 51.9",
+    )
+    parser.add_argument(
         "--input-pool", nargs=2, default=None, metavar=("RGB", "X"),
         help="with --erp-tiles (also with --sphere-views) or --erp-gores, pool RGB and X 2x2 ({}) in front of the "
         "network and upsample its logits 2x (bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(
@@ -1475,8 +1494,9 @@ def main():
             sphere_views["middle_row"], sphere_views["pole_views"] = middle, args.sphere_views_poles
     gores = None
     if args.erp_gores is None and (args.erp_gore_hemispheres is not None or args.erp_gore_offset_set
-                                   or args.erp_gore_fill != "full"):
-        parser.error("--erp-gore-hemispheres, --erp-gore-fill and --erp-gore-offset-set need --erp-gores")
+                                   or args.erp_gore_fill != "full" or args.erp_gore_columns is not None):
+        parser.error("--erp-gore-hemispheres, --erp-gore-fill, --erp-gore-offset-set and --erp-gore-columns need "
+                     "--erp-gores")
     if args.erp_gores is not None:
         if args.erp_gores < 2:
             parser.error("--erp-gores needs at least 2 gores")
@@ -1493,7 +1513,7 @@ def main():
             margin_rows = int(round(args.erp_gore_hemispheres / 180 * args.height))
         try:
             gores = gore_grids(args.height, args.width, args.erp_gores, margin_rows, args.erp_gore_fill,
-                               args.erp_gore_offset_set)
+                               args.erp_gore_offset_set, columns=args.erp_gore_columns)
         except ValueError as error:
             parser.error(str(error))
     black_cut = None
@@ -1777,6 +1797,7 @@ def main():
                 "margin_rows": gores["hemisphere_margin_rows"],
             },
             "gore_size": [gores["rows"], gores["columns"]],
+            "smallest_columns": gore_rectangle(args.height, args.width, gores["count"])[1],
             "context_columns_each_side": GORE_CONTEXT_COLUMNS,
             "gore_row_starts": gores["starts"],
             "network_inputs": len(gores["labels"]),
