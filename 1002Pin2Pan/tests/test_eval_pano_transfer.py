@@ -1228,7 +1228,8 @@ def test_gores_are_equal_area_and_read_back_their_own_pixels():
         step = np.diff(np.unwrap(longitude[0, row]))
         assert np.allclose(step, 2 * np.pi / (width * np.cos(erp_latitude[row])), rtol=1e-5)
     assert longitude[0, 64, 20] < 0 < longitude[0, 64, 21]  # the central meridian splits the two middle columns
-    for kwargs in ({}, {"fill": "petal"}, {"hemisphere_margin_rows": 8, "offset_set": True}):
+    for kwargs in ({}, {"fill": "petal"}, {"hemisphere_margin_rows": 8, "offset_set": True},
+                   {"hemisphere_margin_rows": 8, "columns": 58}):
         grids = ev.gore_grids(height, width, 7, **kwargs)
         for tile, (inside, where) in zip(grids["tiles"], grids["back"]):  # each covered pixel reads its own ray
             assert np.abs(where).max() <= 1
@@ -1251,6 +1252,22 @@ def test_gores_are_equal_area_and_read_back_their_own_pixels():
     assert len(halves["centres_deg"]) == 14 and abs(halves["centres_deg"][7] - 180 / 7) < 1e-9
     assert ev.gate_rows(None, gores=halves) == halves["labels"]
     assert ev.gore_rectangle(2048, 4096, 7) == (2048, 590) and ev.gore_rectangle(2048, 4096, 7, 114) == (1138, 590)
+    assert ev.gore_rectangle(2048, 4096, 7, 114, 826) == (1138, 826)
+    narrow, wide = (ev.gore_grids(height, width, 7, hemisphere_margin_rows=8, columns=columns) for columns in (None, 58))
+    assert wide["tiles"].shape == (14, 72, 58, 2) and wide["masks"].all() and wide["labels"] == narrow["labels"]
+    assert np.allclose(wide["tiles"][:, :, 8:-8], narrow["tiles"])  # the same gore with 8 more columns on each side
+    equator = np.arange(72 - 8 - 1, 72 - 8 + 1)[:, None] * width + np.arange(width)  # the 2 rows at the equator
+    seen = [np.bincount(np.concatenate([flat for flat, _ in grids["back"][:7]]), minlength=height * width)[equator]
+            for grids in (narrow, wide)]  # north petals only
+    assert all(counts.min() == 1 and counts.max() == 2 for counts in seen)
+    for counts, columns in zip(seen, (42, 58)):  # the columns read back, over a 36.6-column gore: 1.04 and 1.48,
+        assert abs(counts.mean() - (columns - 4) / (width / 7)) < 0.02  # so neighbours now overlap at the equator
+    with pytest.raises(ValueError):
+        ev.gore_grids(height, width, 7, columns=40)  # narrower than a gore at the equator
+    with pytest.raises(ValueError):
+        ev.gore_grids(height, width, 7, columns=width + 2)
+    with pytest.raises(ValueError):
+        ev.gore_grids(height, width, 7, fill="petal", columns=58)
     with pytest.raises(ValueError):
         ev.gore_grids(height, width, 1)
     with pytest.raises(ValueError):
@@ -1273,7 +1290,8 @@ def test_gores_reproduce_a_smooth_whole_pass():
     )
     smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
     whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
-    for kwargs in ({}, {"fill": "petal"}, {"hemisphere_margin_rows": 8}, {"offset_set": True, "fill": "petal"}):
+    for kwargs in ({}, {"fill": "petal"}, {"hemisphere_margin_rows": 8}, {"offset_set": True, "fill": "petal"},
+                   {"hemisphere_margin_rows": 8, "columns": 58}):
         gores = ev.gore_grids(height, width, 7, **kwargs)
         for channels in (None, [0, 2]):
             fused = ev.predict_gores(PixelwiseNet(), (smooth, smooth), gores, "cpu", channels)
@@ -1281,8 +1299,8 @@ def test_gores_reproduce_a_smooth_whole_pass():
             assert torch.allclose(fused, ev.class_probabilities(whole, channels), atol=0.02)
         fused = ev.predict_gores(PixelwiseNet(), (smooth, smooth), gores, "cpu", exp_sum=True)
         assert torch.allclose(fused, whole.exp(), rtol=0.05)
-    pooled = ev.input_pool_network(PixelwiseNet(), "avg", "avg")  # even gore sizes: 128 x 42 and 72 x 42
-    for kwargs in ({}, {"hemisphere_margin_rows": 8, "fill": "petal"}):
+    pooled = ev.input_pool_network(PixelwiseNet(), "avg", "avg")  # even gore sizes: 128 x 42, 72 x 42 and 72 x 58
+    for kwargs in ({}, {"hemisphere_margin_rows": 8, "fill": "petal"}, {"hemisphere_margin_rows": 8, "columns": 58}):
         fused = ev.predict_gores(pooled, (smooth, smooth), ev.gore_grids(height, width, 7, **kwargs), "cpu",
                                  exp_sum=True)
         assert torch.allclose(fused[:, :, 8:-8], whole.exp()[:, :, 8:-8], rtol=0.05)
@@ -1294,7 +1312,11 @@ def test_gore_runs_pass_the_argument_checks(monkeypatch, tmp_path):
                         ("petals", ["--erp-gores", "7", "--erp-gore-hemispheres", "10", "--erp-gore-fill", "petal"]),
                         ("pooledgores", ["--erp-gores", "7", "--input-pool", "avg", "avg"]),
                         ("pooledoffsetpetals", ["--erp-gores", "7", "--erp-gore-hemispheres", "11.25",  # 64 rows
-                                                "--erp-gore-offset-set", "--input-pool", "avg", "avg"])):
+                                                "--erp-gore-offset-set", "--input-pool", "avg", "avg"]),
+                        ("pooledtallpetals", ["--erp-gores", "7", "--erp-gore-hemispheres", "47.46",  # 270 rows
+                                              "--input-pool", "avg", "avg"]),
+                        ("pooledwidepetals", ["--erp-gores", "7", "--erp-gore-hemispheres", "11.25",
+                                              "--erp-gore-columns", "416", "--input-pool", "avg", "avg"])):
         output = tmp_path / name
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
@@ -1322,6 +1344,11 @@ def test_gore_runs_pass_the_argument_checks(monkeypatch, tmp_path):
     ["--erp-gores", "7", "--erp-gore-hemispheres", "10", "--height", "1023", "--width", "2046"],
     ["--erp-gores", "7", "--erp-gore-hemispheres", "0.1", "--height", "1028", "--width", "2056", "--input-pool",
      "avg", "avg"],  # petals of 515 rows cannot be pooled
+    ["--erp-gore-columns", "416"],
+    ["--erp-gores", "7", "--erp-gore-columns", "296"],  # a gore at the equator needs 298 on 2048
+    ["--erp-gores", "7", "--erp-gore-columns", "2050"],
+    ["--erp-gores", "7", "--erp-gore-columns", "416", "--erp-gore-fill", "petal"],
+    ["--erp-gores", "7", "--erp-gore-columns", "417", "--input-pool", "avg", "avg"],  # odd widths cannot be pooled
 ])
 def test_bad_gores_are_rejected_before_loading(monkeypatch, tmp_path, extra):
     monkeypatch.setattr(sys, "argv", [
