@@ -75,6 +75,10 @@ normalisation are the frozen training ones; only the input images change.
 * ``--ignore-black-rgb`` drops labelled pixels whose native RGB is (0, 0, 0)
   from scoring, as Trans4PASS does; prediction is unchanged.
 
+* ``--erp-tile-black-cut TOP BOTTOM`` (with ``--erp-tiles`` and ``--ignore-black-rgb``) starts the first
+  tile row at row TOP and ends the last at row BOTTOM, so the tiles skip the black RGB caps. Rows outside
+  get no prediction; every labelled pixel there must be black RGB (checked per panorama).
+
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
   ``check_hha_cache.py`` report whose status is MATCH (or NEAR_MATCH with
@@ -508,6 +512,42 @@ def predict_erp_tiles(network, rgb, modal_x, windows, tile_size, device, channel
     if not bool((count > 0).all()):
         raise ValueError("the tile grid leaves panorama pixels uncovered")
     return total / count
+
+
+def predict_black_cut_tiles(network, rgb, modal_x, windows, tile_size, cut, device, channels=None, exp_sum=False):
+    """``predict_erp_tiles`` with the first tile row starting at row ``cut[0]`` and the last ending at ``cut[1]``.
+
+    Each tile row runs as its own group. Rows outside ``cut`` get no tile and come back as zeros; they must hold
+    only pixels that are not scored (the black RGB caps under --ignore-black-rgb).
+    """
+    import torch
+
+    height, width = rgb.shape[2:]
+    tops = sorted({top for top, _ in windows})
+    total = count = None
+    for top in tops:
+        start = max(top, cut[0]) if top == tops[0] else top
+        end = min(top + tile_size[0], cut[1]) if top == tops[-1] else top + tile_size[0]
+        row_total, row_count = predict_erp_tiles(
+            network, rgb[:, :, start:end], modal_x[:, :, start:end], [(0, left) for row, left in windows if row == top],
+            (end - start, tile_size[1]), device, channels, exp_sum, return_sums=True,
+        )
+        if total is None:
+            total = torch.zeros((1, row_total.shape[1], height, width), device=device)
+            count = torch.zeros((1, 1, height, width), device=device)
+        total[:, :, start:end] += row_total
+        count[:, :, start:end] += row_count
+    if not bool((count[:, :, cut[0]:cut[1]] > 0).all()):
+        raise ValueError("the cut tile grid leaves pixels inside the cut uncovered")
+    return total / count.clamp(min=1)
+
+
+def check_black_cut_unscored(label, cut, sample_name):
+    """Every pixel outside rows ``cut`` must be unscored (255) once black RGB is ignored."""
+    outside = np.concatenate([label[:cut[0]].ravel(), label[cut[1]:].ravel()])
+    scored = int((outside != 255).sum())
+    if scored:
+        raise ValueError("{}: {} labelled pixels outside the black cut are not black RGB".format(sample_name, scored))
 
 
 def predict_polar_scaled_tiles(network, full, polar, windows, tile_size, middle_rows, device, channels=None,
@@ -1272,6 +1312,13 @@ def main():
         "--ignore-black-rgb", action="store_true",
         help="score without labelled pixels whose native RGB is black, as Trans4PASS does",
     )
+    parser.add_argument(
+        "--erp-tile-black-cut", type=int, nargs=2, default=None, metavar=("TOP", "BOTTOM"),
+        help="with --erp-tiles and --ignore-black-rgb, start the first tile row at row TOP and end the last at row "
+        "BOTTOM (evaluation size), so the tiles skip the black RGB caps; rows outside get no prediction and every "
+        "labelled pixel there must be black RGB. 248 1800 keeps every valid pixel of Stanford2D3D's 2048 x 4096 "
+        "panoramas (black beyond +-62.8..66.3 deg)",
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
         parser.error("--limit must be positive; omit it for full evaluation")
@@ -1449,6 +1496,21 @@ def main():
                                args.erp_gore_offset_set)
         except ValueError as error:
             parser.error(str(error))
+    black_cut = None
+    if args.erp_tile_black_cut is not None:
+        if (args.erp_tiles is None or args.erp_tiles[0] < 2 or polar_tiles is not None or pole_patches is not None
+                or sphere_views is not None or gores is not None or caps is not None or args.infer_scale != 1.0):
+            parser.error("--erp-tile-black-cut needs plain --erp-tiles with at least 2 rows at the evaluation size; "
+                         "drop --erp-tile-polar-scale, --erp-tile-pole-patches, --sphere-views, --erp-gores, "
+                         "--polar-caps and --infer-scale")
+        if not args.ignore_black_rgb:
+            parser.error("--erp-tile-black-cut leaves rows without a prediction; add --ignore-black-rgb")
+        tops = sorted({top for top, _ in tile_windows})
+        top_cut, bottom_cut = args.erp_tile_black_cut
+        if not (0 < top_cut < tops[0] + args.erp_tile_size[0] and tops[-1] < bottom_cut < args.height
+                and top_cut < bottom_cut):
+            parser.error("--erp-tile-black-cut must cut inside the first tile row (TOP) and the last (BOTTOM)")
+        black_cut = (top_cut, bottom_cut)
     if args.input_pool is not None:
         if any(mode not in INPUT_POOL_MODES for mode in args.input_pool):
             parser.error("--input-pool modes are {} (bilinear by 0.5 is avg)".format(", ".join(INPUT_POOL_MODES)))
@@ -1465,6 +1527,7 @@ def main():
         lengths += [] if polar_tiles is None else list(polar_tiles["middle_rows"])
         lengths += [] if sphere_views is None else [sphere_views["size"]]
         lengths += [] if gores is None else [gores["rows"], gores["columns"]]
+        lengths += [] if black_cut is None else list(black_cut)
         if any(value % 2 for value in lengths):
             parser.error("--input-pool needs even tile sizes, tile origins, middle rows, pole patch sizes, "
                          "sphere view sizes and gore sizes, so pooling each input equals cutting it from the "
@@ -1518,6 +1581,8 @@ def main():
         )
         if args.ignore_black_rgb:
             label[black_rgb_mask(sample["rgb"], (args.height, args.width))] = 255
+        if black_cut is not None:
+            check_black_cut_unscored(label, black_cut, sample["sample_id"])
         inputs = [
             frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (rgb, modal_x)
         ]
@@ -1545,6 +1610,10 @@ def main():
             logits = predict_polar_scaled_tiles(
                 network, inputs, polar_inputs, tile_windows, args.erp_tile_size, polar_tiles["middle_rows"],
                 device, channels, args.erp_tile_exp_sum, polar_tiles["strip_wrap_pad"], polar_tiles["squeeze"],
+            )
+        elif black_cut is not None:  # mean probabilities inside the cut; only their argmax is used below
+            logits = predict_black_cut_tiles(
+                network, *inputs, tile_windows, args.erp_tile_size, black_cut, device, channels, args.erp_tile_exp_sum
             )
         elif tile_windows is not None:  # mean probabilities; only their argmax is used below
             logits = predict_erp_tiles(
@@ -1616,6 +1685,15 @@ def main():
         "eval_size": [args.height, args.width],
         "wrap_pad": args.wrap_pad,
         "ignore_black_rgb": args.ignore_black_rgb,
+        "black_cut": None if black_cut is None else {
+            "rows": list(black_cut),
+            "latitudes_deg": [90 - row / args.height * 180 for row in black_cut],
+            "first_row_tile_size": [min(tile_windows[0][0] + args.erp_tile_size[0], black_cut[1]) - black_cut[0],
+                                    args.erp_tile_size[1]],
+            "last_row_tile_size": [black_cut[1] - max(tile_windows[-1][0], black_cut[0]), args.erp_tile_size[1]],
+            "rule": "first tile row starts at rows[0], last ends at rows[1]; rows outside get no prediction and every "
+                    "labelled pixel there must be black RGB (checked per panorama); each tile row runs as its own group",
+        },
         "infer_scale": args.infer_scale,
         "infer_size": list(infer_size),
         "infer_wrap_pad": infer_wrap_pad,

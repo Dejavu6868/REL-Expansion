@@ -387,6 +387,27 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
                                                                       str(tmp_path / "strips")])
     assert refused.returncode != 0 and "whole pass or ERP tiles" in refused.stderr
 
+    # black cut: 2 x 7 with the first row starting at row 8 and the last ending at row 248, on a copy of the
+    # panoramas whose RGB is black outside those rows; on the originals (no black RGB) the run must refuse
+    cut = ["--erp-tiles", "2", "7", "--erp-tile-size", "136", "136", "--erp-tile-column-stride", "90",
+           "--erp-tile-column-offset", "-54", "--erp-tile-exp-sum", "--ignore-black-rgb", "--erp-tile-black-cut",
+           "8", "248"]
+    import shutil
+    shutil.copytree(tmp_path / "s2d", tmp_path / "s2d_black")
+    for path in (tmp_path / "s2d_black" / "area_5a" / "pano" / "rgb").glob("*_rgb.png"):
+        image = cv2.imread(str(path))
+        image[:8] = image[248:] = 0
+        cv2.imwrite(str(path), image)
+    black = [value if value != str(tmp_path / "s2d") else str(tmp_path / "s2d_black") for value in common]
+    result = run([str(TOOLS / "eval_pano_transfer.py")] + black + cut + ["--output", str(tmp_path / "blackcut")])
+    assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
+    metrics = json.loads((tmp_path / "blackcut" / "metrics.json").read_text())
+    assert {row: sum(c) for row, c in metrics["gate_counts_per_window_row"].items()} == {"row 0": 14, "row 120": 14}
+    assert metrics["black_cut"]["rows"] == [8, 248] and metrics["black_cut"]["first_row_tile_size"] == [128, 136]
+    assert metrics["black_cut"]["last_row_tile_size"] == [128, 136] and metrics["ignore_black_rgb"] is True
+    refused = run([str(TOOLS / "eval_pano_transfer.py")] + common + cut + ["--output", str(tmp_path / "nocut")])
+    assert refused.returncode != 0 and "outside the black cut are not black RGB" in refused.stderr
+
 
 def write_launcher(path, network):
     """Run train_gated_relplus.py at world size 1 with the server-side data reports stubbed.

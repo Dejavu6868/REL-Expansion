@@ -394,6 +394,100 @@ def test_pooled_polar_squeeze_matches_the_pooled_zone_control_on_a_panorama_cons
     assert torch.allclose(squeeze, zones, rtol=1e-5, atol=1e-6)  # squeezing a constant row changes nothing
 
 
+@pytest.mark.parametrize("pool", [False, True])
+def test_black_cut_tiles_start_and_end_inside_the_first_and_last_tile_rows(pool):
+    torch = pytest.importorskip("torch")
+    F = torch.nn.functional
+
+    class PixelNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return rgb - 0.5 * modal_x
+
+    class ColumnMeanNet(torch.nn.Module):  # depends on every row of the tile, so the cut changes the first/last rows
+        sizes = []
+
+        def forward(self, rgb, modal_x):
+            self.sizes.append(tuple(rgb.shape[2:]))
+            return rgb + modal_x + rgb.mean(dim=2, keepdim=True)
+
+    torch.manual_seed(0)
+    rgb, modal_x = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    windows = ev.erp_tile_windows(64, 128, 2, 4, 36, 32)  # rows 0 and 28, columns 0, 32, 64, 96
+    cut = (6, 58)
+    wrap = (lambda net: ev.input_pool_network(net, "avg", "avg")) if pool else (lambda net: net)
+    pixel = ev.predict_black_cut_tiles(wrap(PixelNet()), rgb, modal_x, windows, (36, 32), cut, "cpu", None, True)
+    whole = ev.predict_erp_tiles(wrap(PixelNet()), rgb, modal_x, windows, (36, 32), "cpu", None, True)
+    if not pool:  # a pixelwise net gives the same map wherever a pixel is cut from
+        assert torch.allclose(pixel[:, :, 6:58], whole[:, :, 6:58], rtol=1e-5, atol=1e-6)
+    assert torch.equal(pixel[:, :, :6], torch.zeros_like(pixel[:, :, :6]))
+    assert torch.equal(pixel[:, :, 58:], torch.zeros_like(pixel[:, :, 58:]))
+
+    net = ColumnMeanNet()
+    fused = ev.predict_black_cut_tiles(net, rgb, modal_x, windows, (36, 32), cut, "cpu", None, True)
+    assert net.sizes == [(30, 32), (30, 32)]  # rows 6..36 and 28..58, each tile row its own group
+    total, count = torch.zeros(1, 3, 64, 128), torch.zeros(1, 1, 64, 128)
+    for start, end in ((6, 36), (28, 58)):
+        for left in (0, 32, 64, 96):
+            area = (slice(None), slice(None), slice(start, end), slice(left, left + 32))
+            total[area] += net(rgb[area], modal_x[area]).exp()
+            count[area] += 1
+    assert torch.allclose(fused[:, :, 6:58], (total / count)[:, :, 6:58], rtol=1e-5, atol=1e-6)
+
+
+def test_black_cut_rows_must_hold_only_unscored_pixels():
+    label = np.full((8, 4), 3, dtype=np.uint8)
+    label[:2] = label[6:] = 255
+    ev.check_black_cut_unscored(label, (2, 6), "ok")
+    label[7, 1] = 4
+    with pytest.raises(ValueError, match="1 labelled pixels outside the black cut"):
+        ev.check_black_cut_unscored(label, (2, 6), "area_5a/x")
+
+
+def test_black_cut_layouts_pass_the_argument_checks(monkeypatch, tmp_path):
+    for rows in ("2", "3"):
+        output = tmp_path / ("output" + rows)
+        monkeypatch.setattr(sys, "argv", [
+            "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+            "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
+            "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
+            "--erp-tiles", rows, "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
+            "--erp-tile-column-offset", "-652", "--erp-tile-exp-sum", "--input-pool", "avg", "avg",
+            "--ignore-black-rgb", "--erp-tile-black-cut", "248", "1800",
+        ])
+        with pytest.raises(Exception):  # gets past the parser (SystemExit is not an Exception) to the config
+            ev.main()
+        assert output.exists()
+
+
+NATIVE_2X7 = ["--height", "2048", "--width", "4096", "--erp-tiles", "2", "7", "--erp-tile-size", "1080", "1080",
+              "--erp-tile-column-stride", "720", "--erp-tile-column-offset", "-652", "--erp-tile-exp-sum"]
+
+
+@pytest.mark.parametrize("extra", [
+    NATIVE_2X7 + ["--erp-tile-black-cut", "248", "1800"],  # no --ignore-black-rgb
+    ["--height", "2048", "--width", "4096", "--ignore-black-rgb", "--erp-tile-black-cut", "248", "1800"],  # no tiles
+    NATIVE_2X7 + ["--ignore-black-rgb", "--erp-tile-black-cut", "0", "1800"],
+    NATIVE_2X7 + ["--ignore-black-rgb", "--erp-tile-black-cut", "1080", "1800"],  # past the first row's end
+    NATIVE_2X7 + ["--ignore-black-rgb", "--erp-tile-black-cut", "248", "968"],  # not past the last row's start
+    NATIVE_2X7 + ["--ignore-black-rgb", "--erp-tile-black-cut", "248", "2048"],
+    NATIVE_2X7 + ["--ignore-black-rgb", "--erp-tile-black-cut", "247", "1800", "--input-pool", "avg", "avg"],
+    NATIVE_2X7 + ["--ignore-black-rgb", "--erp-tile-black-cut", "248", "1800", "--infer-scale", "0.5"],
+    ["--height", "2048", "--width", "4096", "--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080",
+     "--erp-tile-column-stride", "720", "--erp-tile-column-offset", "-652", "--erp-tile-polar-scale", "1",
+     "--ignore-black-rgb", "--erp-tile-black-cut", "248", "1800"],
+])
+def test_bad_black_cuts_are_rejected_before_loading(monkeypatch, tmp_path, extra):
+    monkeypatch.setattr(sys, "argv", [
+        "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
+        "--semantic-labels", "unused.json", "--config", "unused.json",
+        "--checkpoint", "unused.pth", "--output", str(tmp_path / "output"),
+    ] + extra)
+    with pytest.raises(SystemExit) as error:
+        ev.main()
+    assert error.value.code == 2
+    assert not (tmp_path / "output").exists()
+
+
 def test_smmf_layout_with_polar_scale_passes_the_argument_checks(monkeypatch, tmp_path):
     for middle in ([], ["--erp-tile-middle-height", "1366"], ["--erp-tile-polar-strips"],
                    ["--erp-tile-polar-squeeze"]):
