@@ -403,6 +403,7 @@ def predict_polar_strips(network, full, polar, rows, wrap_pad, polar_wrap_pad, d
 def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, column_stride=None, column_offset=0):
     """(top, left) of each tile: rows span the height exactly, column i starts at ``floor(i * width / columns)``.
 
+    Row r starts at ``r * (height - tile_height) / (rows - 1)``, rounded when that stride is not whole.
     With ``column_stride``, column i starts at ``column_offset + i * column_stride`` wrapped by the width instead.
     """
     if rows < 1 or columns < 1:
@@ -410,11 +411,12 @@ def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, colu
     if rows == 1:
         if tile_height != height:
             raise ValueError("one tile row must be as tall as the panorama")
-        row_stride = 0
+        tops = [0]
     else:
-        row_stride, remainder = divmod(height - tile_height, rows - 1)
-        if remainder or not 0 < row_stride <= tile_height:
-            raise ValueError("tile rows must cover the height with a whole, positive stride")
+        span = height - tile_height
+        if not 0 < span <= (rows - 1) * tile_height:
+            raise ValueError("tile rows must cover the height with a positive stride")
+        tops = [(2 * row * span + rows - 1) // (2 * (rows - 1)) for row in range(rows)]
     if column_stride is None:
         if not -(-width // columns) <= tile_width <= width:
             raise ValueError("tile columns must cover the width")
@@ -423,7 +425,7 @@ def erp_tile_windows(height, width, rows, columns, tile_height, tile_width, colu
         if not 0 < column_stride <= tile_width <= width or (columns - 1) * column_stride + tile_width < width:
             raise ValueError("tile columns must cover the width")
         lefts = [(column_offset + column * column_stride) % width for column in range(columns)]
-    return [(row * row_stride, left) for row in range(rows) for left in lefts]
+    return [(top, left) for top in tops for left in lefts]
 
 
 def sliding_windows(height, width, tile_height, tile_width, stride):

@@ -167,6 +167,16 @@ def test_erp_tile_windows_cover_the_panorama_and_reject_bad_grids():
     for top, left in windows:
         count[top:top + 576, np.arange(left, left + 576) % 3072] += 1
     assert count.min() >= 1
+    # SMMF's layout at half the window size on the native panorama: 540 windows, column stride 360 and cyclic pad
+    # 326 (half of 720 and 652); 7 rows cover the height at stride 251.33 (half of 484 is 242), rounded
+    windows = ev.erp_tile_windows(2048, 4096, 7, 12, 540, 540, 360, -326)
+    assert len(windows) == 84
+    assert sorted({top for top, _ in windows}) == [0, 251, 503, 754, 1005, 1257, 1508]
+    assert [left for top, left in windows if top == 0] == [3770] + list(range(34, 3635, 360))
+    count = np.zeros((2048, 4096), dtype=int)
+    for top, left in windows:
+        count[top:top + 540, np.arange(left, left + 540) % 4096] += 1
+    assert count.min() >= 1 and np.array_equal(count, count[::-1])  # symmetric about the equator
     for stride in (1081, 500):  # wider than a tile; 7 x 500 columns leave a gap
         with pytest.raises(ValueError):
             ev.erp_tile_windows(2048, 4096, 3, 7, 1080, 1080, stride)
