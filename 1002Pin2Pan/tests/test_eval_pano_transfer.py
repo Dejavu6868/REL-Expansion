@@ -444,6 +444,32 @@ def test_black_cut_tiles_start_and_end_inside_the_first_and_last_tile_rows(pool)
     assert torch.allclose(fused[:, :, 6:58], (total / count)[:, :, 6:58], rtol=1e-5, atol=1e-6)
 
 
+def test_black_cut_takes_one_full_height_tile_row():
+    torch = pytest.importorskip("torch")
+
+    class ColumnMeanNet(torch.nn.Module):
+        sizes = []
+
+        def forward(self, rgb, modal_x):
+            self.sizes.append(tuple(rgb.shape[2:]))
+            return rgb + modal_x + rgb.mean(dim=2, keepdim=True)
+
+    torch.manual_seed(0)
+    rgb, modal_x = torch.randn(1, 3, 64, 128), torch.randn(1, 3, 64, 128)
+    windows = ev.erp_tile_windows(64, 128, 1, 4, 64, 48, 32)  # one row of full-height tiles, columns overlap by 16
+    net = ColumnMeanNet()
+    fused = ev.predict_black_cut_tiles(net, rgb, modal_x, windows, (64, 48), (6, 58), "cpu", None, True)
+    assert net.sizes == [(52, 48)]  # the one row is cut at both ends
+    total, count = torch.zeros(1, 3, 64, 128), torch.zeros(1, 1, 64, 128)
+    for _, left in windows:
+        cols = torch.arange(left, left + 48) % 128
+        total[:, :, 6:58, cols] += net(rgb[:, :, 6:58][..., cols], modal_x[:, :, 6:58][..., cols]).exp()
+        count[:, :, 6:58, cols] += 1
+    assert torch.allclose(fused[:, :, 6:58], (total / count)[:, :, 6:58], rtol=1e-5, atol=1e-6)
+    assert torch.equal(fused[:, :, :6], torch.zeros_like(fused[:, :, :6]))
+    assert torch.equal(fused[:, :, 58:], torch.zeros_like(fused[:, :, 58:]))
+
+
 def test_black_cut_rows_must_hold_only_unscored_pixels():
     label = np.full((8, 4), 3, dtype=np.uint8)
     label[:2] = label[6:] = 255
@@ -454,13 +480,13 @@ def test_black_cut_rows_must_hold_only_unscored_pixels():
 
 
 def test_black_cut_layouts_pass_the_argument_checks(monkeypatch, tmp_path):
-    for rows in ("2", "3"):
+    for rows, tile_height in (("1", "2048"), ("2", "1080"), ("3", "1080")):  # 1 row: full-height sectors
         output = tmp_path / ("output" + rows)
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
             "--semantic-labels", "unused.json", "--config", str(tmp_path / "missing.json"),
             "--checkpoint", "unused.pth", "--output", str(output), "--height", "2048", "--width", "4096",
-            "--erp-tiles", rows, "7", "--erp-tile-size", "1080", "1080", "--erp-tile-column-stride", "720",
+            "--erp-tiles", rows, "7", "--erp-tile-size", tile_height, "1080", "--erp-tile-column-stride", "720",
             "--erp-tile-column-offset", "-652", "--erp-tile-exp-sum", "--input-pool", "avg", "avg",
             "--ignore-black-rgb", "--erp-tile-black-cut", "248", "1800",
         ])

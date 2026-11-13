@@ -411,6 +411,15 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
     assert {row: sum(c) for row, c in metrics["gate_counts_per_window_row"].items()} == {"row 0": 14, "row 120": 14}
     assert metrics["black_cut"]["rows"] == [8, 248] and metrics["black_cut"]["first_row_tile_size"] == [128, 136]
     assert metrics["black_cut"]["last_row_tile_size"] == [128, 136] and metrics["ignore_black_rgb"] is True
+    # sectors: one row of 7 full-height tiles, pooled, cut to the same rows
+    sectors = ["--erp-tiles", "1", "7", "--erp-tile-size", "256", "136", "--erp-tile-column-stride", "90",
+               "--erp-tile-column-offset", "-54", "--erp-tile-exp-sum", "--input-pool", "avg", "avg",
+               "--ignore-black-rgb", "--erp-tile-black-cut", "8", "248"]
+    result = run([str(TOOLS / "eval_pano_transfer.py")] + black + sectors + ["--output", str(tmp_path / "sectorcut")])
+    assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
+    metrics = json.loads((tmp_path / "sectorcut" / "metrics.json").read_text())
+    assert {row: sum(c) for row, c in metrics["gate_counts_per_window_row"].items()} == {"row 0": 14}
+    assert metrics["black_cut"]["first_row_tile_size"] == metrics["black_cut"]["last_row_tile_size"] == [240, 136]
     refused = run([str(TOOLS / "eval_pano_transfer.py")] + common + cut + ["--output", str(tmp_path / "nocut")])
     assert refused.returncode != 0 and "outside the black cut are not black RGB" in refused.stderr
 

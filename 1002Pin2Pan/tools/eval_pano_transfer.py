@@ -1520,9 +1520,9 @@ def main():
             parser.error(str(error))
     black_cut = None
     if args.erp_tile_black_cut is not None:
-        if (args.erp_tiles is None or args.erp_tiles[0] < 2 or polar_tiles is not None or pole_patches is not None
+        if (args.erp_tiles is None or polar_tiles is not None or pole_patches is not None
                 or sphere_views is not None or gores is not None or caps is not None or args.infer_scale != 1.0):
-            parser.error("--erp-tile-black-cut needs plain --erp-tiles with at least 2 rows at the evaluation size; "
+            parser.error("--erp-tile-black-cut needs plain --erp-tiles at the evaluation size; "
                          "drop --erp-tile-polar-scale, --erp-tile-pole-patches, --sphere-views, --erp-gores, "
                          "--polar-caps and --infer-scale")
         if not args.ignore_black_rgb:
