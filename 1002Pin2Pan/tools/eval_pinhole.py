@@ -7,7 +7,8 @@ epoch-200 checkpoints. This tool runs the same frozen full-test evaluator
 arm) on a resolved arm config JSON and any checkpoint: seed runs, REL+ 3.x runs and
 adapted checkpoints from ``train_pin2pan.py``. An RGB-only checkpoint
 (``train_rgb_only.py``) is built with ``rgb_only.model_class()`` and evaluated on the
-HHA arm's inputs, which its network ignores.
+HHA arm's inputs, which its network ignores. A gated REL+ checkpoint
+(``train_gated_relplus.py``) is built with ``gated_relplus.model_class()``.
 
 ``--eight-class-predictions`` restricts the per-pixel argmax to the 8 SPan8 classes, as
 ``eval_pano_transfer.py --eight-class-predictions`` does on panoramas. Without it the
@@ -32,6 +33,7 @@ from pathlib import Path
 
 import numpy as np
 
+import gated_relplus as gr
 import relplus_variant as rv
 import rgb_only as ro
 from eval_pano_transfer import (
@@ -168,11 +170,11 @@ def main():
         adapter = use_hha_adapter(args.source_root, frozen, core)
     if args.eight_class_predictions:
         core.evaluate_prepared_sample = eight_class_evaluate(core, channels)
-    if ro.is_rgb_only(config):
+    if ro.is_rgb_only(config) or gr.is_gated(config):
         # The frozen evaluator imports EncoderDecoder from models.builder. Patching the real
         # module would break the frozen __init__, whose super() call looks the name up there.
         view = types.ModuleType("models.builder")
-        view.EncoderDecoder = ro.model_class()
+        view.EncoderDecoder = ro.model_class() if ro.is_rgb_only(config) else gr.model_class()
         sys.modules["models.builder"] = view
     marker = rv.read_marker(Path(config.x_root_folder).parent) if config.x_mode == "rel_plus_v2_1" else None
 
