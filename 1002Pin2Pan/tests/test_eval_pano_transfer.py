@@ -499,6 +499,10 @@ NATIVE_2X7 = ["--height", "2048", "--width", "4096", "--erp-tiles", "2", "7", "-
               "--erp-tile-column-stride", "720", "--erp-tile-column-offset", "-652", "--erp-tile-exp-sum"]
 
 
+NATIVE_GORES = ["--height", "2048", "--width", "4096", "--erp-gores", "7", "--erp-gore-hemispheres", "10",
+                "--erp-tile-exp-sum"]
+
+
 @pytest.mark.parametrize("extra", [
     NATIVE_2X7 + ["--erp-tile-black-cut", "248", "1800"],  # no --ignore-black-rgb
     ["--height", "2048", "--width", "4096", "--ignore-black-rgb", "--erp-tile-black-cut", "248", "1800"],  # no tiles
@@ -511,6 +515,9 @@ NATIVE_2X7 = ["--height", "2048", "--width", "4096", "--erp-tiles", "2", "7", "-
     ["--height", "2048", "--width", "4096", "--erp-tiles", "3", "7", "--erp-tile-size", "1080", "1080",
      "--erp-tile-column-stride", "720", "--erp-tile-column-offset", "-652", "--erp-tile-polar-scale", "1",
      "--ignore-black-rgb", "--erp-tile-black-cut", "248", "1800"],
+    NATIVE_GORES + ["--erp-tile-black-cut", "248", "1800"],  # no --ignore-black-rgb
+    NATIVE_GORES + ["--ignore-black-rgb", "--erp-tile-black-cut", "248", "1802"],  # petals of unequal height
+    NATIVE_GORES + ["--ignore-black-rgb", "--erp-tile-black-cut", "247", "1801", "--input-pool", "avg", "avg"],
 ])
 def test_bad_black_cuts_are_rejected_before_loading(monkeypatch, tmp_path, extra):
     monkeypatch.setattr(sys, "argv", [
@@ -1343,6 +1350,41 @@ def test_gores_reproduce_a_smooth_whole_pass():
         assert torch.allclose(fused, whole.exp(), rtol=0.15)  # 38-column gores: a pooled pixel at 84 deg spans 60 deg
 
 
+def test_gore_black_cut_crops_every_gore_image_to_the_kept_rows():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        sizes = []
+
+        def forward(self, rgb, modal_x):
+            self.sizes.append(tuple(rgb.shape[2:]))
+            return 4 * rgb + modal_x
+
+    height, width = 128, 256
+    whole = ev.gore_grids(height, width, 7, hemisphere_margin_rows=8)  # petals of 72 rows: 0..72 and 56..128
+    cut = ev.gore_grids(height, width, 7, hemisphere_margin_rows=8, black_cut=(16, 112))
+    assert cut["tiles"].shape == (14, 56, 42, 2) and cut["starts"] == [16] * 7 + [56] * 7
+    assert cut["labels"] == whole["labels"] and cut["black_cut"] == (16, 112) and whole["black_cut"] is None
+    assert np.array_equal(cut["tiles"][:7], whole["tiles"][:7, 16:])  # the same petals without their black rows
+    assert np.array_equal(cut["tiles"][7:], whole["tiles"][7:, :56])
+    covered = np.concatenate([flat for flat, _ in cut["back"]]) // width
+    assert covered.min() == 16 and covered.max() == 111 and cut["gores_per_pixel"]["min"] >= 1
+    assert ev.gore_grids(height, width, 7, black_cut=(16, 112))["tiles"].shape == (7, 96, 42, 2)  # whole gores
+    torch.manual_seed(0)
+    full = (0.2 * torch.randn(1, 3, height, width), 0.2 * torch.randn(1, 3, height, width))
+    net = PixelwiseNet()
+    for exp_sum in (False, True):
+        reference = ev.predict_gores(net, full, whole, "cpu", exp_sum=exp_sum)
+        del net.sizes[:]
+        fused = ev.predict_gores(net, full, cut, "cpu", exp_sum=exp_sum)
+        assert set(net.sizes) == {(56, 42)}  # the read-back rows are float32, hence the tolerance
+        assert torch.allclose(fused[:, :, 16:112], reference[:, :, 16:112], rtol=1e-3, atol=1e-4)
+        assert not fused[:, :, :16].any() and not fused[:, :, 112:].any()  # no prediction outside the cut
+    for bad in ((16, 120), (80, 112), (16, 129), (112, 16)):  # unequal petals, an empty petal, outside, reversed
+        with pytest.raises(ValueError):
+            ev.gore_grids(height, width, 7, hemisphere_margin_rows=8, black_cut=bad)
+
+
 def test_gore_runs_pass_the_argument_checks(monkeypatch, tmp_path):
     for name, extra in (("gores", ["--erp-gores", "7"]),
                         ("petals", ["--erp-gores", "7", "--erp-gore-hemispheres", "10", "--erp-gore-fill", "petal"]),
@@ -1352,7 +1394,10 @@ def test_gore_runs_pass_the_argument_checks(monkeypatch, tmp_path):
                         ("pooledtallpetals", ["--erp-gores", "7", "--erp-gore-hemispheres", "47.46",  # 270 rows
                                               "--input-pool", "avg", "avg"]),
                         ("pooledwidepetals", ["--erp-gores", "7", "--erp-gore-hemispheres", "11.25",
-                                              "--erp-gore-columns", "416", "--input-pool", "avg", "avg"])):
+                                              "--erp-gore-columns", "416", "--input-pool", "avg", "avg"]),
+                        ("pooledcutpetals", ["--erp-gores", "7", "--erp-gore-hemispheres", "11.25",  # 452 rows
+                                             "--input-pool", "avg", "avg", "--ignore-black-rgb",
+                                             "--erp-tile-black-cut", "124", "900"])):
         output = tmp_path / name
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),

@@ -420,6 +420,16 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
     metrics = json.loads((tmp_path / "sectorcut" / "metrics.json").read_text())
     assert {row: sum(c) for row, c in metrics["gate_counts_per_window_row"].items()} == {"row 0": 14}
     assert metrics["black_cut"]["first_row_tile_size"] == metrics["black_cut"]["last_row_tile_size"] == [240, 136]
+    # gore petals, pooled, cut to the same rows: 134 of their 142 rows are left
+    petals = ["--erp-gores", "3", "--erp-gore-hemispheres", "10", "--erp-tile-exp-sum", "--input-pool", "avg", "avg",
+              "--ignore-black-rgb", "--erp-tile-black-cut", "8", "248"]
+    result = run([str(TOOLS / "eval_pano_transfer.py")] + black + petals + ["--output", str(tmp_path / "petalcut")])
+    assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
+    metrics = json.loads((tmp_path / "petalcut" / "metrics.json").read_text())
+    assert {row: sum(c) for row, c in metrics["gate_counts_per_window_row"].items()} == {"north petal": 6,
+                                                                                         "south petal": 6}
+    assert metrics["erp_gores"]["gore_size"] == [134, 176] and metrics["input_pool"]["network_gore_size"] == [67, 88]
+    assert metrics["erp_gores"]["gore_row_starts"] == [8] * 3 + [114] * 3 and metrics["black_cut"]["rows"] == [8, 248]
     refused = run([str(TOOLS / "eval_pano_transfer.py")] + common + cut + ["--output", str(tmp_path / "nocut")])
     assert refused.returncode != 0 and "outside the black cut are not black RGB" in refused.stderr
 
