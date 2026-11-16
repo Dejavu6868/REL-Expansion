@@ -79,7 +79,8 @@ normalisation are the frozen training ones; only the input images change.
 
 * ``--erp-tile-black-cut TOP BOTTOM`` (with ``--erp-tiles`` and ``--ignore-black-rgb``) starts the first
   tile row at row TOP and ends the last at row BOTTOM, so the tiles skip the black RGB caps. Rows outside
-  get no prediction; every labelled pixel there must be black RGB (checked per panorama).
+  get no prediction; every labelled pixel there must be black RGB (checked per panorama). With
+  ``--erp-gores`` every gore image keeps only rows TOP..BOTTOM.
 
 * The HHA arm's X input is ``hha.erp_hha`` (Depth2HHA definitions on ERP
   geometry, range instead of z-depth for disparity). It runs only with a
@@ -890,7 +891,7 @@ def gore_rectangle(height, width, count, hemisphere_margin_rows=None, columns=No
 
 
 def gore_grids(height, width, count, hemisphere_margin_rows=None, fill="full", offset_set=False,
-               require_full=True, columns=None):
+               require_full=True, columns=None, black_cut=None):
     """``grid_sample`` coordinates between the ERP and equal-area gores.
 
     Gore pixel (v, u) keeps the latitude of its ERP row and sits at the longitude offset
@@ -904,7 +905,8 @@ def gore_grids(height, width, count, hemisphere_margin_rows=None, fill="full", o
     ``offset_set`` a second set of gores, half a gore further round, is added. With ``columns`` (fill "full"
     only) every gore image is that wide instead of the smallest width that holds a gore at the equator: it shows
     more longitude at every latitude, so neighbouring gores overlap at the equator as well. Gores are fed in the
-    order of ``labels``: all north petals (or whole gores), then all south petals.
+    order of ``labels``: all north petals (or whole gores), then all south petals. With ``black_cut`` (top, bottom)
+    every gore image keeps only the ERP rows top..bottom, so rows outside are covered by no gore.
     ``tiles`` (gores, rows, columns, 2): where each gore pixel reads the ERP padded by one column on each side
     (as ``sample_cap_tiles`` expects); ``masks``: the pixels kept; ``back``: per gore, the flat indices of the
     ERP pixels it covers and where each reads the gore.
@@ -925,6 +927,15 @@ def gore_grids(height, width, count, hemisphere_margin_rows=None, fill="full", o
         petals = [(0, "gore")]
     else:
         petals = [(0, "north petal"), (height - rows, "south petal")]
+    if black_cut is not None:
+        top, bottom = black_cut
+        spans = [(max(start, top), min(start + rows, bottom)) for start, _ in petals]
+        kept_rows = {end - begin for begin, end in spans}
+        if not 0 <= top < bottom <= height or len(kept_rows) != 1 or min(kept_rows) <= 0:
+            raise ValueError("the black cut must leave every gore image the same, positive number of rows "
+                             "(TOP rows off the top, as many off the bottom)")
+        petals = [(begin, label) for (begin, _), (_, label) in zip(spans, petals)]
+        rows = kept_rows.pop()
     gores = [(centre, start, label) for start, label in petals for centre in centres]
     erp_longitude = (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi
     erp_latitude = np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi
@@ -954,7 +965,8 @@ def gore_grids(height, width, count, hemisphere_margin_rows=None, fill="full", o
         back.append((flat, np.stack([x[r, c] / columns * 2 - 1, (r + 0.5) / rows * 2 - 1], axis=-1).astype(
             np.float32)))
         seen[flat] += 1
-    if require_full and not seen.all():
+    kept = slice(None) if black_cut is None else slice(black_cut[0] * width, black_cut[1] * width)
+    if require_full and not seen[kept].all():
         raise ValueError("the gores leave panorama pixels uncovered")
     return {
         "count": count,
@@ -964,19 +976,25 @@ def gore_grids(height, width, count, hemisphere_margin_rows=None, fill="full", o
         "rows": rows,
         "columns": columns,
         "hemisphere_margin_rows": hemisphere_margin_rows,
+        "black_cut": None if black_cut is None else tuple(black_cut),
         "labels": [label for _, _, label in gores],
         "starts": [int(start) for _, start, _ in gores],
         "tiles": np.stack(tiles).astype(np.float32),
         "masks": np.stack(masks),
         "back": back,
-        "gores_per_pixel": {"min": int(seen.min()), "max": int(seen.max()), "mean": float(seen.mean())},
+        "gores_per_pixel": {"min": int(seen[kept].min()), "max": int(seen[kept].max()),
+                            "mean": float(seen[kept].mean())},
     }
 
 
 def predict_gores(network, full, gores, device, channels=None, exp_sum=False):
     """Each panorama pixel: the mean probabilities (or exp(logits) with ``exp_sum``) of the gores covering it,
-    read back bilinear. A petal's blanked pixels are never read back."""
-    return predict_sphere_views(network, full, gores, device, channels, exp_sum)
+    read back bilinear. A petal's blanked pixels are never read back. Rows outside a black cut get no gore and
+    come back as zeros; they must hold only pixels that are not scored."""
+    if gores.get("black_cut") is None:
+        return predict_sphere_views(network, full, gores, device, channels, exp_sum)
+    total, count = predict_sphere_views(network, full, gores, device, channels, exp_sum, return_sums=True)
+    return total / count.clamp(min=1)
 
 
 INPUT_POOL_MODES = ("avg", "max", "nearest")
@@ -1337,8 +1355,8 @@ def main():
         "--erp-tile-black-cut", type=int, nargs=2, default=None, metavar=("TOP", "BOTTOM"),
         help="with --erp-tiles and --ignore-black-rgb, start the first tile row at row TOP and end the last at row "
         "BOTTOM (evaluation size), so the tiles skip the black RGB caps; rows outside get no prediction and every "
-        "labelled pixel there must be black RGB. 248 1800 keeps every valid pixel of Stanford2D3D's 2048 x 4096 "
-        "panoramas (black beyond +-62.8..66.3 deg)",
+        "labelled pixel there must be black RGB. With --erp-gores every gore image keeps only rows TOP..BOTTOM. "
+        "248 1800 keeps every valid pixel of Stanford2D3D's 2048 x 4096 panoramas (black beyond +-62.8..66.3 deg)",
     )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
@@ -1515,23 +1533,25 @@ def main():
             margin_rows = int(round(args.erp_gore_hemispheres / 180 * args.height))
         try:
             gores = gore_grids(args.height, args.width, args.erp_gores, margin_rows, args.erp_gore_fill,
-                               args.erp_gore_offset_set, columns=args.erp_gore_columns)
+                               args.erp_gore_offset_set, columns=args.erp_gore_columns,
+                               black_cut=args.erp_tile_black_cut)
         except ValueError as error:
             parser.error(str(error))
     black_cut = None
     if args.erp_tile_black_cut is not None:
-        if (args.erp_tiles is None or polar_tiles is not None or pole_patches is not None
-                or sphere_views is not None or gores is not None or caps is not None or args.infer_scale != 1.0):
-            parser.error("--erp-tile-black-cut needs plain --erp-tiles at the evaluation size; "
-                         "drop --erp-tile-polar-scale, --erp-tile-pole-patches, --sphere-views, --erp-gores, "
+        if gores is None and (args.erp_tiles is None or polar_tiles is not None or pole_patches is not None
+                              or sphere_views is not None or caps is not None or args.infer_scale != 1.0):
+            parser.error("--erp-tile-black-cut needs plain --erp-tiles or --erp-gores at the evaluation size; "
+                         "drop --erp-tile-polar-scale, --erp-tile-pole-patches, --sphere-views, "
                          "--polar-caps and --infer-scale")
         if not args.ignore_black_rgb:
             parser.error("--erp-tile-black-cut leaves rows without a prediction; add --ignore-black-rgb")
-        tops = sorted({top for top, _ in tile_windows})
         top_cut, bottom_cut = args.erp_tile_black_cut
-        if not (0 < top_cut < tops[0] + args.erp_tile_size[0] and tops[-1] < bottom_cut < args.height
-                and top_cut < bottom_cut):
-            parser.error("--erp-tile-black-cut must cut inside the first tile row (TOP) and the last (BOTTOM)")
+        if gores is None:
+            tops = sorted({top for top, _ in tile_windows})
+            if not (0 < top_cut < tops[0] + args.erp_tile_size[0] and tops[-1] < bottom_cut < args.height
+                    and top_cut < bottom_cut):
+                parser.error("--erp-tile-black-cut must cut inside the first tile row (TOP) and the last (BOTTOM)")
         black_cut = (top_cut, bottom_cut)
     if args.input_pool is not None:
         if any(mode not in INPUT_POOL_MODES for mode in args.input_pool):
@@ -1708,6 +1728,11 @@ def main():
         "wrap_pad": args.wrap_pad,
         "ignore_black_rgb": args.ignore_black_rgb,
         "black_cut": None if black_cut is None else {
+            "rows": list(black_cut),
+            "latitudes_deg": [90 - row / args.height * 180 for row in black_cut],
+            "rule": "every gore image keeps only rows[0]..rows[1]; rows outside get no prediction and every labelled "
+                    "pixel there must be black RGB (checked per panorama)",
+        } if gores is not None else {
             "rows": list(black_cut),
             "latitudes_deg": [90 - row / args.height * 180 for row in black_cut],
             "first_row_tile_size": [min(tile_windows[0][0] + args.erp_tile_size[0], black_cut[1]) - black_cut[0],
