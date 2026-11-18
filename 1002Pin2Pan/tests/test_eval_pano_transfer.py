@@ -82,6 +82,43 @@ def test_infer_scale_resizes_inputs_but_not_labels(tmp_path):
     assert label.shape == (32, 64)
 
 
+def test_x_cache_computes_the_relplus_encoding_once(tmp_path):
+    import cv2
+    from test_cross_projection_synthetic import render_erp_raw_depth
+
+    sample = {kind: tmp_path / (kind + ".png") for kind in ("rgb", "depth", "semantic")}
+    sample["sample_id"] = "area_5a/camera_1"
+    assert cv2.imwrite(str(sample["rgb"]), np.full((64, 128, 3), 100, dtype=np.uint8))
+    assert cv2.imwrite(str(sample["depth"]), render_erp_raw_depth(64, 128))
+    assert cv2.imwrite(str(sample["semantic"]), np.zeros((64, 128, 3), dtype=np.uint8))
+    frozen = dict(ev.import_frozen(ev.DEFAULT_SOURCE_ROOT))
+    encode, calls = frozen["getREL"], []
+    frozen["getREL"] = lambda depth: calls.append(depth.shape) or encode(depth)
+    lookup = np.array([0], dtype=np.uint8)
+
+    def load(size, cache):
+        return ev.load_sample(sample, size, lookup, frozen, "rel_plus_v2_1", x_cache=cache)[1]
+
+    plain = load((40, 80), None)
+    cache = ev.open_x_cache(tmp_path / "cache", "rel_plus_v2_1", "v3_1new")
+    first = load((40, 80), cache)
+    assert (cache["hits"], cache["misses"]) == (0, 1) and len(calls) == 2
+    assert (tmp_path / "cache" / "40x80" / "area_5a" / "camera_1.png").is_file()
+    assert [path.name for path in (tmp_path / "cache" / "40x80" / "area_5a").iterdir()] == ["camera_1.png"]
+    again = ev.open_x_cache(tmp_path / "cache", "rel_plus_v2_1", "v3_1new")  # another run on the same folder
+    second = load((40, 80), again)
+    assert (again["hits"], again["misses"]) == (1, 0) and len(calls) == 2  # read, not computed
+    assert plain.dtype == np.uint8 and np.array_equal(first, plain) and np.array_equal(second, plain)
+    other = load((32, 64), again)  # another size is another encoding
+    assert (again["hits"], again["misses"]) == (1, 1) and other.shape == (32, 64, 3)
+    assert (tmp_path / "cache" / "32x64" / "area_5a" / "camera_1.png").is_file()
+    with pytest.raises(ValueError, match="another encoding"):
+        ev.open_x_cache(tmp_path / "cache", "rel_plus_v2_1", "v2_1")
+    for x_mode, variant in (("hha_frozen_cache", None), (None, "v3_1new")):  # HHA and RGB-only runs
+        with pytest.raises(ValueError, match="REL\\+ encoding only"):
+            ev.open_x_cache(tmp_path / "other", x_mode, variant)
+
+
 @pytest.mark.parametrize("margin, middle, polar", [(0, 704, 96), (32, 768, 128), (64, 832, 128)])
 def test_polar_strip_rows_follow_the_band_rule(margin, middle, polar):
     rows = ev.polar_strip_rows(1024, margin)
