@@ -1385,6 +1385,60 @@ def test_gore_black_cut_crops_every_gore_image_to_the_kept_rows():
             ev.gore_grids(height, width, 7, hemisphere_margin_rows=8, black_cut=bad)
 
 
+def test_gore_stitch_rules_weight_the_read_back():
+    torch = pytest.importorskip("torch")
+
+    class PixelwiseNet(torch.nn.Module):
+        def forward(self, rgb, modal_x):
+            return 4 * rgb + modal_x
+
+    height, width = 128, 256
+    gores = ev.gore_grids(height, width, 7, hemisphere_margin_rows=8, black_cut=(16, 112))  # petals 16..72, 56..112
+    rules = ["all", "gore", "gore-cut", "centre:0.5", "edge:0.25"]
+    weights = {rule: ev.gore_stitch_weights(gores, height, width, rule) for rule in rules}
+    flat = np.concatenate([inside for inside, _ in gores["back"]])
+    x = np.abs(np.concatenate([where[:, 0] for _, where in gores["back"]]))
+
+    def joined(rule):
+        return np.concatenate(weights[rule])
+
+    def per_pixel(values):
+        return np.bincount(flat, weights=values, minlength=height * width).reshape(height, width)[16:112]
+
+    assert (joined("all") == 1).all()
+    assert set(np.unique(joined("gore"))) == set(np.unique(joined("gore-cut"))) == {0.0, 1.0}
+    assert (per_pixel(joined("gore-cut")) == 1).all()  # one prediction per pixel
+    own = per_pixel(joined("gore"))  # the own gore's north and south petal, where both reach: rows 56..72
+    assert (own[40:56] == 2).all() and (own[:40] == 1).all() and (own[56:] == 1).all()
+    centre, edge = joined("centre:0.5"), joined("edge:0.25")
+    assert np.allclose(centre, np.exp(-2 * x.astype(np.float64) ** 2)) and centre.max() > 0.99
+    assert (edge[joined("gore") == 1] == 1).all() and (edge[joined("gore") == 0] < 1).all() and edge.min() > 0
+    assert per_pixel(edge).min() >= 1 and per_pixel(edge).max() > 2  # the neighbours count too, towards the poles
+
+    longitude, latitude = np.meshgrid(
+        (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi,
+        np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi,
+    )
+    smooth = torch.as_tensor(ev.unit_directions(longitude, latitude), dtype=torch.float32).permute(2, 0, 1)[None]
+    whole = ev.predict_with_wrap(PixelwiseNet(), smooth, smooth, 0, "cpu")
+    for exp_sum in (False, True):
+        stitched = ev.predict_gore_stitches(PixelwiseNet(), (smooth, smooth), gores, list(weights.values()), "cpu",
+                                            exp_sum=exp_sum)
+        assert stitched.shape == (5, 3, height, width)
+        total, _ = ev.predict_sphere_views(PixelwiseNet(), (smooth, smooth), gores, "cpu", exp_sum=exp_sum,
+                                           return_sums=True)
+        assert torch.equal(stitched[0], total[0])  # "all" is the run without the option
+        assert not stitched[:, :, :16].any() and not stitched[:, :, 112:].any()  # no prediction outside the cut
+        expected = (whole.exp() if exp_sum else ev.class_probabilities(whole))[0, :, 16:112]
+        for rule, scores in zip(rules, stitched):  # the petals agree on a smooth field, so every rule returns it
+            mean = scores[:, 16:112] / torch.as_tensor(per_pixel(joined(rule)), dtype=torch.float32)
+            assert torch.allclose(mean, expected, rtol=0.05, atol=0.02), rule
+    for bad in ("lens", "centre", "centre:0", "centre:wide", "edge:-1", "gore:1",
+                "centre:0.001"):  # the last one underflows to 0 away from the central meridian
+        with pytest.raises(ValueError):
+            ev.gore_stitch_weights(gores, height, width, bad)
+
+
 def test_gore_runs_pass_the_argument_checks(monkeypatch, tmp_path):
     for name, extra in (("gores", ["--erp-gores", "7"]),
                         ("petals", ["--erp-gores", "7", "--erp-gore-hemispheres", "10", "--erp-gore-fill", "petal"]),
@@ -1397,7 +1451,12 @@ def test_gore_runs_pass_the_argument_checks(monkeypatch, tmp_path):
                                               "--erp-gore-columns", "416", "--input-pool", "avg", "avg"]),
                         ("pooledcutpetals", ["--erp-gores", "7", "--erp-gore-hemispheres", "11.25",  # 452 rows
                                              "--input-pool", "avg", "avg", "--ignore-black-rgb",
-                                             "--erp-tile-black-cut", "124", "900"])):
+                                             "--erp-tile-black-cut", "124", "900"]),
+                        ("stitchedcutpetals", ["--erp-gores", "7", "--erp-gore-hemispheres", "11.25",
+                                               "--input-pool", "avg", "avg", "--ignore-black-rgb",
+                                               "--erp-tile-black-cut", "124", "900", "--erp-gore-stitch", "all",
+                                               "gore", "gore-cut", "centre:0.25", "centre:0.5", "centre:1",
+                                               "edge:0.1", "edge:0.25"])):
         output = tmp_path / name
         monkeypatch.setattr(sys, "argv", [
             "eval_pano_transfer.py", "--stanford-root", str(tmp_path),
@@ -1430,6 +1489,10 @@ def test_gore_runs_pass_the_argument_checks(monkeypatch, tmp_path):
     ["--erp-gores", "7", "--erp-gore-columns", "2050"],
     ["--erp-gores", "7", "--erp-gore-columns", "416", "--erp-gore-fill", "petal"],
     ["--erp-gores", "7", "--erp-gore-columns", "417", "--input-pool", "avg", "avg"],  # odd widths cannot be pooled
+    ["--erp-gore-stitch", "all"],
+    ["--erp-gores", "7", "--erp-gore-stitch", "all", "all"],
+    ["--erp-gores", "7", "--erp-gore-stitch", "all", "lens"],
+    ["--erp-gores", "7", "--erp-gore-stitch", "centre:0"],
 ])
 def test_bad_gores_are_rejected_before_loading(monkeypatch, tmp_path, extra):
     monkeypatch.setattr(sys, "argv", [

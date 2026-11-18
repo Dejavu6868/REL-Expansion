@@ -997,6 +997,88 @@ def predict_gores(network, full, gores, device, channels=None, exp_sum=False):
     return total / count.clamp(min=1)
 
 
+GORE_STITCH_RULES = "all, gore, gore-cut, centre:S, edge:S"
+
+
+def gore_stitch_weights(gores, height, width, rule):
+    """One weight per read-back pixel of every gore, in the order of ``gores["back"]``, for one stitch rule.
+
+    A panorama pixel takes the class with the largest weighted sum over the gores that cover it. x is the pixel's
+    distance from the gore's central meridian in the gore image, as a fraction of half the image width, and e the
+    x of the gore's own edge (half a gore of longitude) at that latitude:
+    "all": 1 everywhere, as ``predict_gores``; "gore": 1 up to the edge and 0 beyond, so a pixel is read only
+    from the gore it belongs to (a north and a south petal still fuse where both reach past the equator);
+    "gore-cut": "gore", and only inside the petal's own hemisphere, so one prediction per pixel;
+    "centre:S": exp(-(x / S)^2 / 2); "edge:S": 1 up to the edge, exp(-((x - e) / S)^2 / 2) beyond it.
+    """
+    name, _, value = rule.partition(":")
+    if name in ("centre", "edge"):
+        try:
+            sigma = float(value)
+        except ValueError:
+            sigma = float("nan")
+        if not (np.isfinite(sigma) and sigma > 0):
+            raise ValueError("stitch rule {} needs a positive width, as in {}:0.5".format(rule, name))
+    elif rule not in ("all", "gore", "gore-cut"):
+        raise ValueError("stitch rules are {}; got {}".format(GORE_STITCH_RULES, rule))
+    erp_longitude = (np.arange(width) + 0.5) / width * 2 * np.pi - np.pi
+    erp_latitude = np.pi / 2 - (np.arange(height) + 0.5) / height * np.pi
+    half_gore = np.pi / gores["count"]
+    centres = np.radians(gores["centres_deg"])
+    weights = []
+    seen = np.zeros(height * width, dtype=bool)
+    for index, ((flat, where), label) in enumerate(zip(gores["back"], gores["labels"])):
+        row, column = np.divmod(flat, width)
+        x = np.abs(where[:, 0].astype(np.float64))
+        if name == "all":
+            weight = np.ones(len(flat))
+        elif name == "centre":
+            weight = np.exp(-0.5 * (x / sigma) ** 2)
+        elif name == "edge":
+            edge = half_gore * np.cos(erp_latitude[row]) * width / (np.pi * gores["columns"])
+            weight = np.exp(-0.5 * (np.clip(x - edge, 0, None) / sigma) ** 2)
+        else:  # from the ERP longitudes, not the float32 read-back coordinates: no pixel falls between two gores
+            delta = (erp_longitude[column] - centres[index % len(centres)] + np.pi) % (2 * np.pi) - np.pi
+            weight = np.abs(delta) <= half_gore + 1e-9
+            if name == "gore-cut" and label != "gore":
+                weight &= (row < height // 2) == (label == "north petal")
+        weights.append(weight.astype(np.float32))
+        seen[flat[weights[-1] > 0]] = True
+    kept = slice(None) if gores["black_cut"] is None else slice(gores["black_cut"][0] * width,
+                                                                gores["black_cut"][1] * width)
+    if not seen[kept].all():
+        raise ValueError("stitch rule {} leaves panorama pixels without a prediction".format(rule))
+    return weights
+
+
+def predict_gore_stitches(network, full, gores, weights, device, channels=None, exp_sum=False):
+    """``predict_gores`` under several stitch rules from one pass of the network.
+
+    ``weights[rule][gore]`` comes from ``gore_stitch_weights``. Returns (rules, classes, height, width): per rule
+    the weighted sum of the probabilities (or exp(logits) with ``exp_sum``) read back from every gore. It is not
+    normalised, so only its argmax means anything; pixels that no gore covers come back as zeros.
+    """
+    import torch
+    import torch.nn.functional as F
+
+    height, width = full[0].shape[2:]
+    total = None
+    for start in range(0, len(gores["tiles"]), TILE_BATCH):
+        batch = {key: gores[key][start:start + TILE_BATCH] for key in ("tiles", "masks")}
+        logits = predict_with_wrap(network, *sample_cap_tiles(*full, batch, device), 0, device)
+        probabilities = logits.exp() if exp_sum else class_probabilities(logits, channels)
+        if total is None:
+            total = torch.zeros((len(weights), probabilities.shape[1], height * width), device=device)
+        for gore, view in enumerate(probabilities, start=start):
+            inside, where = gores["back"][gore]
+            inside = torch.as_tensor(inside, device=device)
+            sampled = F.grid_sample(view[None], torch.as_tensor(where, device=device)[None, None],
+                                    mode="bilinear", padding_mode="border", align_corners=False)[0, :, 0]
+            for rule, per_gore in enumerate(weights):
+                total[rule].index_add_(1, inside, sampled * torch.as_tensor(per_gore[gore], device=device))
+    return total.reshape(len(weights), -1, height, width)
+
+
 INPUT_POOL_MODES = ("avg", "max", "nearest")
 
 
@@ -1319,6 +1401,15 @@ def main():
         "72.6 degrees there instead of 51.9",
     )
     parser.add_argument(
+        "--erp-gore-stitch", nargs="+", default=None, metavar="RULE",
+        help="with --erp-gores, score these stitch rules from the same network outputs ({}): 'all' fuses every "
+        "gore that covers a pixel with equal weight (the default run), 'gore' reads a pixel only from the gore it "
+        "belongs to, 'gore-cut' also only from the petal of its own hemisphere, 'centre:S' weights each gore by "
+        "exp(-(x / S)^2 / 2) with x the distance from its central meridian as a fraction of half the gore image, "
+        "'edge:S' weights 1 inside the own gore and falls off like that beyond its edge. The first rule gives the "
+        "run's own metrics; every rule's band confusions go to stitch_band_confusion.npy".format(GORE_STITCH_RULES),
+    )
+    parser.add_argument(
         "--input-pool", nargs=2, default=None, metavar=("RGB", "X"),
         help="with --erp-tiles (also with --sphere-views) or --erp-gores, pool RGB and X 2x2 ({}) in front of the "
         "network and upsample its logits 2x (bilinear) behind it; bilinear resizing by 0.5 is the same as avg".format(
@@ -1513,10 +1604,12 @@ def main():
                 parser.error(str(error))
             sphere_views["middle_row"], sphere_views["pole_views"] = middle, args.sphere_views_poles
     gores = None
+    stitch_weights = None
     if args.erp_gores is None and (args.erp_gore_hemispheres is not None or args.erp_gore_offset_set
-                                   or args.erp_gore_fill != "full" or args.erp_gore_columns is not None):
-        parser.error("--erp-gore-hemispheres, --erp-gore-fill, --erp-gore-offset-set and --erp-gore-columns need "
-                     "--erp-gores")
+                                   or args.erp_gore_fill != "full" or args.erp_gore_columns is not None
+                                   or args.erp_gore_stitch is not None):
+        parser.error("--erp-gore-hemispheres, --erp-gore-fill, --erp-gore-offset-set, --erp-gore-columns and "
+                     "--erp-gore-stitch need --erp-gores")
     if args.erp_gores is not None:
         if args.erp_gores < 2:
             parser.error("--erp-gores needs at least 2 gores")
@@ -1535,6 +1628,11 @@ def main():
             gores = gore_grids(args.height, args.width, args.erp_gores, margin_rows, args.erp_gore_fill,
                                args.erp_gore_offset_set, columns=args.erp_gore_columns,
                                black_cut=args.erp_tile_black_cut)
+            if args.erp_gore_stitch is not None:
+                if len(set(args.erp_gore_stitch)) != len(args.erp_gore_stitch):
+                    raise ValueError("--erp-gore-stitch rules must be unique")
+                stitch_weights = [gore_stitch_weights(gores, args.height, args.width, rule)
+                                  for rule in args.erp_gore_stitch]
         except ValueError as error:
             parser.error(str(error))
     black_cut = None
@@ -1614,6 +1712,8 @@ def main():
     started = time.time()
     confusion = np.zeros((config.num_classes, config.num_classes), dtype=np.int64)
     band_confusion = np.zeros((len(ELEVATION_BAND_EDGES_DEG) - 1,) + confusion.shape, dtype=np.int64)
+    stitch_confusion = None if stitch_weights is None else np.zeros(
+        (len(stitch_weights),) + band_confusion.shape, dtype=np.int64)
     rows = gate_rows(tile_windows, polar_tiles, pole_patches, sphere_views, gores)
     gate_counts = {row: [0] * gr.BRANCHES for row in rows} if gated else None
     for index, sample in enumerate(samples, start=1):
@@ -1635,6 +1735,10 @@ def main():
             )
         elif sphere_views is not None:  # only the argmax is used below
             logits = predict_sphere_views(network, inputs, sphere_views, device, channels, args.erp_tile_exp_sum)
+        elif stitch_weights is not None:  # one score map per stitch rule; the first is this run's prediction
+            stitched = predict_gore_stitches(network, inputs, gores, stitch_weights, device, channels,
+                                             args.erp_tile_exp_sum)
+            logits = stitched[:1]
         elif gores is not None:  # only the argmax is used below
             logits = predict_gores(network, inputs, gores, device, channels, args.erp_tile_exp_sum)
         elif pole_patches is not None:  # only the argmax is used below
@@ -1695,9 +1799,14 @@ def main():
         prediction = predict_classes(logits, channels)[0].cpu().numpy().astype(np.uint8)
         hist, _, _ = frozen["hist_info"](config.num_classes, prediction, label)
         confusion += hist.astype(np.int64)
-        band_confusion += elevation_band_confusions(
-            config.num_classes, prediction, label, frozen["hist_info"]
-        )
+        bands = elevation_band_confusions(config.num_classes, prediction, label, frozen["hist_info"])
+        band_confusion += bands
+        if stitch_weights is not None:
+            stitch_confusion[0] += bands
+            for rule in range(1, len(stitch_weights)):
+                stitch_confusion[rule] += elevation_band_confusions(
+                    config.num_classes, predict_classes(stitched[rule:rule + 1], channels)[0].cpu().numpy().astype(
+                        np.uint8), label, frozen["hist_info"])
         if index % 20 == 0 or index == len(samples):
             print("{}/{} panoramas".format(index, len(samples)), flush=True)
 
@@ -1834,6 +1943,16 @@ def main():
             "rule": "each pixel fuses every gore that covers it, read back bilinear; RGB sampled bilinear, "
                     "X nearest" + ("; pixels beyond half a gore are blanked and never read back"
                                    if gores["fill"] == "petal" else ""),
+            "stitch": None if stitch_weights is None else {
+                "rules": args.erp_gore_stitch,
+                "run_metrics_from": args.erp_gore_stitch[0],
+                "definition": "each pixel takes the class with the largest weighted sum over the gores covering it; "
+                              "weights as in gore_stitch_weights",
+                "band_confusion_file": "stitch_band_confusion.npy: one elevation_band_confusion.npy per rule, in "
+                                       "the order of rules",
+                "metrics": {rule: frozen["metrics_from_confusion"](bands.sum(axis=0))
+                            for rule, bands in zip(args.erp_gore_stitch, stitch_confusion)},
+            },
         },
         "input_pool": None if args.input_pool is None else {
             "rgb": args.input_pool[0],
@@ -1865,6 +1984,8 @@ def main():
         "".join(sample["sample_id"] + "\n" for sample in samples), encoding="utf-8"
     )
     np.savetxt(args.output / "confusion_matrix.csv", confusion, fmt="%d", delimiter=",")
+    if stitch_weights is not None:
+        np.save(args.output / "stitch_band_confusion.npy", stitch_confusion)
     with (args.output / "per_class_iou.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(["class_id", "class_name", "IoU_percent"])
