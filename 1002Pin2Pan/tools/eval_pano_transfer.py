@@ -1873,6 +1873,9 @@ def main():
                 stitch_confusion[rule] += elevation_band_confusions(
                     config.num_classes, predict_classes(stitched[rule:rule + 1], channels)[0].cpu().numpy().astype(
                         np.uint8), label, frozen["hist_info"])
+            del logits, stitched  # Release this panorama's scores before allocating the next panorama.
+            if device.type == "cuda":
+                torch.cuda.empty_cache()
         if index % 20 == 0 or index == len(samples):
             print("{}/{} panoramas".format(index, len(samples)), flush=True)
 
