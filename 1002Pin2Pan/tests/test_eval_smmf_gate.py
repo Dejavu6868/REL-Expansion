@@ -113,6 +113,23 @@ def test_fused_scores_take_each_row_from_its_zone(middle_height):
         assert count[0].tolist() == np.bincount(np.arange(columns) % 5, minlength=5).tolist()
 
 
+def test_fused_scores_stay_at_the_scaled_size():
+    plan = eg.zone_plan(64, 128, [0, 16, 32], 20, 2 / 3, whole_scale=0.5, crop=(32, 32))
+    config = types.SimpleNamespace()
+    gate_log = []
+    counts = [np.zeros((len(z["rows"]), 5), dtype=np.int64) for z in plan]
+    segmentor = FakeSegmentor(config, plan, gate_log)
+    image = np.zeros((64, 128, 3), dtype=np.uint8)
+    lat = np.zeros((64, 128))
+    fused = eg.fused_scores(segmentor, config, plan, image, image.copy(), lat, "cpu", gate_log, counts, (32, 64))
+    assert fused.shape == (32, 64, 3) and (fused == 1).all()
+    assert counts[0].sum() == len(plan[0]["rows"]) * len(plan[0]["columns"])
+
+    two_zones = eg.zone_plan(64, 128, [0, 16, 32], 20, 2 / 3, polar_scale=0.5, crop=(32, 32))
+    with pytest.raises(ValueError):
+        eg.fused_scores(segmentor, config, two_zones, image, image.copy(), lat, "cpu", gate_log, counts, (32, 64))
+
+
 def stub_module(name, **attributes):
     module = types.ModuleType(name)
     module.__dict__.update(attributes)
@@ -209,6 +226,51 @@ def test_original_smmf_fusion_composes_the_zones(smmf, monkeypatch, middle_heigh
         expected[z["keep"]] = score[z["keep"]]
     np.testing.assert_allclose(fused, expected, rtol=1e-5)
     assert [c.sum() for c in counts] == [len(z["rows"]) * len(z["columns"]) for z in plan]
+
+
+def test_original_smmf_fusion_at_the_scaled_size(smmf, monkeypatch):
+    """--score-at-scale: the original fusion's own scores, before its resize back to the panorama."""
+    torch = pytest.importorskip("torch")
+    monkeypatch.setattr(torch.Tensor, "cuda", lambda self, *args, **kwargs: self)
+    weights = np.random.default_rng(1).normal(size=(6, 13))
+
+    def logits(rgb, modal_x):  # pixelwise, (h, w, 13)
+        return np.concatenate([rgb, modal_x], axis=2) @ weights
+
+    gate_log = []
+
+    def network(segmentor, input_data, input_modal_x, lat, device):
+        gate_log.append(0)
+        chw = logits(input_data.transpose(1, 2, 0), input_modal_x.transpose(1, 2, 0))
+        return torch.from_numpy(np.exp(chw).transpose(2, 0, 1).astype(np.float32))
+
+    config = smmf["config"]
+    eg.configure(config, 2 / 3)
+    segmentor = smmf["Evaluator"].__new__(smmf["Evaluator"])
+    segmentor.class_num = 13
+    segmentor.norm_mean = segmentor.norm_mean_x = config.norm_mean
+    segmentor.norm_std = segmentor.norm_std_x = config.norm_std
+    monkeypatch.setattr(smmf["Evaluator"], "val_func_process_rgbX", network)
+
+    (z,) = plan = eg.zone_plan(64, 128, [0, 16, 32], 20, 2 / 3, whole_scale=0.5, crop=(32, 32))
+    rng = np.random.default_rng(2)
+    image = rng.integers(0, 256, (64, 128, 3), dtype=np.uint8)
+    modal_x = rng.integers(0, 256, (64, 128, 3), dtype=np.uint8)
+    lat = np.cos(np.linspace(-1.5, 1.5, 64))[:, None].repeat(128, 1)
+    counts = [np.zeros((len(z["rows"]), 5), dtype=np.int64)]
+    small = eg.fused_scores(segmentor, config, plan, image, modal_x, lat, "cpu", gate_log, counts, (32, 64))
+    native = eg.fused_scores(segmentor, config, plan, image, modal_x, lat, "cpu", gate_log, counts)
+
+    rgb, x = (cv2.resize(a, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_LINEAR) for a in (image, modal_x))
+    count = np.zeros((32, 64))
+    for row in z["rows"]:
+        for column in z["columns"]:
+            count[row:row + 16, (column + np.arange(16)) % 64] += 1
+    expected = (count[:, :, None] * np.exp(logits(normalized(rgb), normalized(x)))).astype(np.float32)
+    np.testing.assert_allclose(small, expected, rtol=1e-5)
+    # the default path is the same map resized back to the panorama
+    np.testing.assert_allclose(native, cv2.resize(small, (128, 64), interpolation=cv2.INTER_LINEAR), rtol=1e-5)
+    assert counts[0].sum() == 2 * len(z["rows"]) * len(z["columns"])
 
 
 def test_original_model_matches_the_checkpoint_keys(smmf, tmp_path, monkeypatch):
