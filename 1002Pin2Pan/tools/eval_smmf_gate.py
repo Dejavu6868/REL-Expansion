@@ -14,6 +14,9 @@ once per zone, and scores the result.
   prediction only outside the middle row. The middle row runs native and is the only source
   inside it. ``--middle-height H`` makes the middle windows H rows tall, centred.
 * ``--whole-scale S``: every row on the panorama resized by S (the control).
+* ``--score-at-scale`` (with ``--whole-scale``): the fused scores stay at the resized size and are
+  compared with labels resized to it (INTER_NEAREST), instead of being resized back to 2048x4096.
+  Same windows and fusion, less work per panorama; the fast test for screening checkpoints.
 
 ``--x-root`` reads X from another folder of the same layout, e.g. the REL+ v3.1new cache of
 ``build_supervised_pano_cache.py`` (its v3_1new marker is required); pass the new checkpoint's
@@ -169,9 +172,9 @@ def row_runs(mask):
     return edges.reshape(-1, 2).tolist()
 
 
-def zone_scores(segmentor, config, zone_spec, image, modal_x, lat, device):
-    """One call of the original SMMF fusion; exp(logit) sums at the panorama size."""
-    height, width = image.shape[:2]
+def zone_scores(segmentor, config, zone_spec, image, modal_x, lat, device, output_size=None):
+    """One call of the original SMMF fusion; exp(logit) sums at the panorama size, or at ``output_size``."""
+    height, width = output_size or image.shape[:2]
     scale = zone_spec["scale"]
     if scale != 1:
         image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
@@ -185,18 +188,25 @@ def zone_scores(segmentor, config, zone_spec, image, modal_x, lat, device):
     )
 
 
-def fused_scores(segmentor, config, plan, image, modal_x, lat, device, gate_log, gate_counts):
-    """Each panorama row from its own zone; gate choices counted per zone and window row."""
+def fused_scores(segmentor, config, plan, image, modal_x, lat, device, gate_log, gate_counts, output_size=None):
+    """Each panorama row from its own zone; gate choices counted per zone and window row.
+
+    With ``output_size`` the plan's single zone is returned at that size.
+    """
+    if output_size is not None and len(plan) != 1:
+        raise ValueError("output_size needs a one-zone plan")
     fused = None
     for zone_spec, counts in zip(plan, gate_counts):
         gate_log.clear()
-        scores = zone_scores(segmentor, config, zone_spec, image, modal_x, lat, device)
+        scores = zone_scores(segmentor, config, zone_spec, image, modal_x, lat, device, output_size)
         columns = len(zone_spec["columns"])
         if len(gate_log) != len(zone_spec["rows"]) * columns:
             raise RuntimeError("{} zone ran {} windows, expected {}".format(
                 zone_spec["name"], len(gate_log), len(zone_spec["rows"]) * columns))
         for index, choice in enumerate(gate_log):
             counts[index // columns, choice] += 1
+        if output_size is not None:
+            return scores
         if fused is None:
             fused = np.zeros_like(scores)
         keep = zone_spec["keep"]
@@ -271,6 +281,8 @@ def main():
     parser.add_argument("--polar-scale", type=float, default=None)
     parser.add_argument("--middle-height", type=int, default=None)
     parser.add_argument("--whole-scale", type=float, default=None)
+    parser.add_argument("--score-at-scale", action="store_true",
+                        help="with --whole-scale: score at the resized size, labels resized INTER_NEAREST")
     parser.add_argument("--limit", type=int, default=None, help="smoke runs only")
     parser.add_argument("--device", default="cuda:0")
     args = parser.parse_args()
@@ -283,8 +295,11 @@ def main():
         if marker is None or marker["variant"] != "v3_1new":
             parser.error("--x-root {} has no v3_1new marker in its parent".format(args.x_root))
 
+    if args.score_at_scale and not args.whole_scale:
+        parser.error("--score-at-scale needs --whole-scale")
     plan = zone_plan(2048, 4096, args.rows, args.pad, args.stride_rate, args.polar_scale,
                      args.middle_height, args.whole_scale)
+    score_size = tuple(plan[0]["input_size"]) if args.score_at_scale else None
     output = args.output
     if output.exists() and any(output.iterdir()):
         raise FileExistsError("{} is not empty; refusing to overwrite".format(output))
@@ -326,7 +341,9 @@ def main():
             if sample["data"].shape[:2] != (2048, 4096) or label.shape != (2048, 4096):
                 raise ValueError("{} is not 2048x4096".format(sample["fn"]))
             scores = fused_scores(segmentor, config, plan, sample["data"], sample["modal_x"], sample["lat"],
-                                  args.device, gate_log, gate_counts)
+                                  args.device, gate_log, gate_counts, score_size)
+            if score_size is not None:
+                label = cv2.resize(label, score_size[::-1], interpolation=cv2.INTER_NEAREST)
             for key, prediction in (("13", scores.argmax(2)), ("8pred", eight[scores[:, :, eight].argmax(2)])):
                 confusion = elevation_band_confusions(config.num_classes, prediction, label, smmf["hist_info"])
                 bands[key] = confusion if bands[key] is None else bands[key] + confusion
@@ -355,6 +372,7 @@ def main():
         "panoramas": len(names),
         "first_panoramas": names[:3],
         "panorama_size": [2048, 4096],
+        "score_size": list(score_size or (2048, 4096)),
         "zones": [
             {
                 "name": z["name"], "scale": z["scale"], "input_size": z["input_size"], "window_size": list(z["crop"]),
