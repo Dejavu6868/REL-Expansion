@@ -448,6 +448,28 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
     assert len({int(rule.sum()) for rule in bands}) == 1  # every rule scores the same pixels
     refused = run([str(TOOLS / "eval_pano_transfer.py")] + common + cut + ["--output", str(tmp_path / "nocut")])
     assert refused.returncode != 0 and "outside the black cut are not black RGB" in refused.stderr
+    # the same run with the REL+ encoding cached: computed and written the first time, the same scores
+    cached = petals + ["--x-cache", str(tmp_path / "xcache")]
+    result = run([str(TOOLS / "eval_pano_transfer.py")] + black + cached + ["--output", str(tmp_path / "petalcache")])
+    assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
+    first = json.loads((tmp_path / "petalcache" / "metrics.json").read_text())
+    assert first["x_cache"]["encodings_read"] == 0 and first["x_cache"]["encodings_computed_and_written"] == 2
+    assert first["metrics"] == metrics["metrics"] and first["elevation_bands"] == metrics["elevation_bands"]
+    assert metrics["x_cache"] is None and metrics["decoder_fold"] is None and first["decoder_fold"] is None
+    assert sorted(path.name for path in (tmp_path / "xcache" / "256x512" / "area_5a").iterdir()) == ["c.png", "d.png"]
+    # read from the cache, and the decoder folded: the same class everywhere the original decoder was also run
+    result = run([str(TOOLS / "eval_pano_transfer.py")] + black + cached + ["--fold-decoder", "--output",
+                                                                            str(tmp_path / "petalfold")])
+    assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
+    folded = json.loads((tmp_path / "petalfold" / "metrics.json").read_text())
+    assert folded["x_cache"]["encodings_read"] == 2 and folded["x_cache"]["encodings_computed_and_written"] == 0
+    check = folded["decoder_fold"]["check_against_the_original_decoder"]
+    assert check["network_inputs_compared"] == 12 and check["positions_with_another_class"] == 0  # 2 x 6 petals
+    assert check["largest_logit_difference"] < 1e-4 < check["largest_logit"]
+    assert folded["gate_counts_per_window_row"] == metrics["gate_counts_per_window_row"]
+    moved = np.abs(np.loadtxt(tmp_path / "petalfold" / "confusion_matrix.csv", delimiter=",")
+                   - np.loadtxt(tmp_path / "petalcut" / "confusion_matrix.csv", delimiter=",")).sum() / 2
+    assert moved <= 5  # of 2 x 240 x 512 pixels: only exact ties may flip
 
 
 def write_launcher(path, network):

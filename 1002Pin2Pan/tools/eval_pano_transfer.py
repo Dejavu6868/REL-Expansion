@@ -105,6 +105,7 @@ import argparse
 import csv
 import functools
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -112,6 +113,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+import decoder_fold
 import relplus_variant as rv
 import gated_relplus as gr
 import rgb_only as ro
@@ -262,8 +264,37 @@ def write_elevation_bands(output, band_confusion, metrics_from_confusion, class_
     return summary
 
 
-def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None, label_size=None):
-    """RGB and X at ``size``; labels at ``label_size`` (default ``size``)."""
+def open_x_cache(root, x_mode, relplus_variant):
+    """A folder that keeps each panorama's REL+ encoding, so it is computed once and read afterwards.
+
+    ``encoding.json`` in the folder names the encoding; a folder written for another one is refused. The cache
+    does not notice a depth file that changed after it was encoded.
+    """
+    if x_mode != "rel_plus_v2_1" or relplus_variant is None:
+        raise ValueError("--x-cache keeps the REL+ encoding only")
+    encoding = {
+        "x_mode": x_mode,
+        "relplus_variant": relplus_variant,
+        "encoding": rv.describe(relplus_variant),
+        "rule": "ERP getREL on the depth nearest-resized to the folder's size; uint8, stored as lossless PNG",
+    }
+    root.mkdir(parents=True, exist_ok=True)
+    marker = root / "encoding.json"
+    if not marker.is_file():
+        temporary = root / "encoding.{}.tmp".format(os.getpid())
+        temporary.write_text(json.dumps(encoding, indent=2) + "\n", encoding="utf-8")
+        os.replace(temporary, marker)
+    if json.loads(marker.read_text(encoding="utf-8")) != encoding:
+        raise ValueError("{} holds another encoding than this run's ({})".format(root, encoding["encoding"]))
+    return {"root": root, "hits": 0, "misses": 0}
+
+
+def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None, label_size=None, x_cache=None):
+    """RGB and X at ``size``; labels at ``label_size`` (default ``size``).
+
+    With ``x_cache`` (from ``open_x_cache``) the REL+ encoding is read from the cache when it is there and
+    written to it otherwise.
+    """
     height, width = size
     rgb = frozen["open_image"](str(sample["rgb"]), frozen["rgb_flag"])
     if rgb.ndim != 3 or rgb.shape[2] != 3:
@@ -276,8 +307,25 @@ def load_sample(sample, size, lookup, frozen, x_mode, hha_recipe=None, label_siz
     if x_mode is None:  # RGB-only network: X is ignored
         modal_x = np.zeros_like(rgb)
     elif x_mode == "rel_plus_v2_1":
-        resized = cv2.resize(raw_depth, (width, height), interpolation=cv2.INTER_NEAREST)
-        modal_x = frozen["getREL"](decode_erp_depth(resized))
+        cached = None if x_cache is None else (
+            x_cache["root"] / "{}x{}".format(height, width) / (sample["sample_id"] + ".png"))
+        modal_x = None if cached is None or not cached.is_file() else cv2.imread(str(cached), cv2.IMREAD_COLOR)
+        if modal_x is not None:
+            if modal_x.shape != rgb.shape:
+                raise ValueError("{} is not a {} x {} encoding".format(cached, height, width))
+            x_cache["hits"] += 1
+        else:
+            resized = cv2.resize(raw_depth, (width, height), interpolation=cv2.INTER_NEAREST)
+            modal_x = frozen["getREL"](decode_erp_depth(resized))
+            if cached is not None:
+                if modal_x.dtype != np.uint8 or modal_x.shape != rgb.shape:
+                    raise ValueError("the REL+ encoding is not a uint8 image of the RGB's size; it cannot be cached")
+                cached.parent.mkdir(parents=True, exist_ok=True)
+                temporary = cached.with_name("{}.{}.tmp.png".format(cached.stem, os.getpid()))
+                if not cv2.imwrite(str(temporary), modal_x):  # imread returns the channels in the order written
+                    raise OSError("could not write {}".format(temporary))
+                os.replace(temporary, cached)  # other runs filling the same cache never see a partial file
+                x_cache["misses"] += 1
     elif x_mode == "hha_frozen_cache":
         import hha
 
@@ -1288,6 +1336,19 @@ def main():
         "(same result; for inputs whose score matrix does not fit); 0 keeps the frozen forward",
     )
     parser.add_argument(
+        "--fold-decoder", action="store_true",
+        help="run the MLP decoder's 1 x 1 fuse convolution on each feature map before the upsampling instead of "
+        "on their concatenation after it (decoder_fold.py): the same function up to float rounding, 65,536 fewer "
+        "multiply-adds per input pixel. The first {} network inputs also run the original decoder; the comparison "
+        "is written to metrics.json".format(decoder_fold.CHECK_INPUTS),
+    )
+    parser.add_argument(
+        "--x-cache", type=Path, default=None, metavar="DIR",
+        help="keep each panorama's REL+ encoding in DIR (lossless PNG, one folder per size): computed on first "
+        "use, read afterwards. The encoding is the same either way; runs may share DIR and fill it at the same "
+        "time",
+    )
+    parser.add_argument(
         "--polar-strips", type=int, default=None, metavar="MARGIN",
         help="three passes instead of one: +60..-60 deg at the evaluation size, the two polar "
         "bands at x{} size, each with MARGIN context rows past +-60 deg".format(POLAR_STRIP_SCALE),
@@ -1692,6 +1753,8 @@ def main():
         hha_recipe = hha_cache_recipe(
             args.hha_cache_report, config.x_root_folder, args.accept_hha_near_match
         )
+    x_cache = None if args.x_cache is None else open_x_cache(
+        args.x_cache, None if rgb_only else config.x_mode, relplus_variant)
     lookup = label_lookup(args.semantic_labels)
     samples = list_panoramas(args.stanford_root, args.areas)[: args.limit]
 
@@ -1701,6 +1764,7 @@ def main():
     epoch = frozen["load_checkpoint_once"](
         network, args.checkpoint, expected_epoch=args.expected_epoch
     )
+    folded_decoder = decoder_fold.fold_decoder(network) if args.fold_decoder else None
     chunked_attention_modules = 0
     if args.attention_chunk_mb:
         chunked_attention_modules = chunk_attention(network, args.attention_chunk_mb)
@@ -1719,7 +1783,7 @@ def main():
     for index, sample in enumerate(samples, start=1):
         rgb, modal_x, label = load_sample(
             sample, infer_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
-            label_size=(args.height, args.width),
+            label_size=(args.height, args.width), x_cache=x_cache,
         )
         if args.ignore_black_rgb:
             label[black_rgb_mask(sample["rgb"], (args.height, args.width))] = 255
@@ -1749,6 +1813,7 @@ def main():
         elif polar_tiles is not None:  # mean probabilities; only their argmax is used below
             polar_rgb, polar_x, _ = load_sample(
                 sample, polar_tiles["size"], lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
+                x_cache=x_cache,
             )
             polar_inputs = [
                 frozen["normalized_bchw"](image, config.norm_mean, config.norm_std) for image in (polar_rgb, polar_x)
@@ -1776,6 +1841,7 @@ def main():
         else:
             polar_rgb, polar_x, _ = load_sample(
                 sample, polar_size, lookup, frozen, None if rgb_only else config.x_mode, hha_recipe,
+                x_cache=x_cache,
             )
             polar_inputs = [
                 frozen["normalized_bchw"](image, config.norm_mean, config.norm_std)
@@ -1830,6 +1896,15 @@ def main():
             )
         ),
         "relplus_variant": relplus_variant,
+        "x_cache": None if x_cache is None else {
+            "folder": str(x_cache["root"]),
+            "encodings_read": x_cache["hits"],
+            "encodings_computed_and_written": x_cache["misses"],
+        },
+        "decoder_fold": None if folded_decoder is None else {
+            "rule": "the 1 x 1 fuse convolution runs on each feature map before the upsampling (decoder_fold.py)",
+            "check_against_the_original_decoder": folded_decoder.check,
+        },
         "hha_cache_report": None if hha_recipe is None else str(args.hha_cache_report),
         "hha_recipe": hha_recipe,
         "areas": args.areas,
