@@ -430,6 +430,22 @@ def test_trains_and_evaluates_end_to_end(frozen, monkeypatch, tmp_path):
                                                                                          "south petal": 6}
     assert metrics["erp_gores"]["gore_size"] == [134, 176] and metrics["input_pool"]["network_gore_size"] == [67, 88]
     assert metrics["erp_gores"]["gore_row_starts"] == [8] * 3 + [114] * 3 and metrics["black_cut"]["rows"] == [8, 248]
+    assert metrics["erp_gores"]["stitch"] is None and not (tmp_path / "petalcut" / "stitch_band_confusion.npy").exists()
+    # the same run scored under five stitch rules: the first, "all", is the run above
+    rules = ["all", "gore", "gore-cut", "centre:0.5", "edge:0.25"]
+    result = run([str(TOOLS / "eval_pano_transfer.py")] + black + petals + ["--erp-gore-stitch"] + rules
+                 + ["--output", str(tmp_path / "petalstitch")])
+    assert result.returncode == 0, result.stdout[-3000:] + result.stderr[-3000:]
+    stitched = json.loads((tmp_path / "petalstitch" / "metrics.json").read_text())
+    assert stitched["metrics"] == metrics["metrics"] and stitched["elevation_bands"] == metrics["elevation_bands"]
+    assert stitched["gate_counts_per_window_row"] == metrics["gate_counts_per_window_row"]
+    assert stitched["erp_gores"]["stitch"]["rules"] == rules
+    assert stitched["erp_gores"]["stitch"]["metrics"]["all"] == metrics["metrics"]
+    bands = np.load(tmp_path / "petalstitch" / "stitch_band_confusion.npy")
+    assert bands.shape[:2] == (5, 6) and bands.shape[2] == bands.shape[3]
+    assert np.array_equal(bands[0], np.load(tmp_path / "petalstitch" / "elevation_band_confusion.npy"))
+    assert np.array_equal(bands[0], np.load(tmp_path / "petalcut" / "elevation_band_confusion.npy"))
+    assert len({int(rule.sum()) for rule in bands}) == 1  # every rule scores the same pixels
     refused = run([str(TOOLS / "eval_pano_transfer.py")] + common + cut + ["--output", str(tmp_path / "nocut")])
     assert refused.returncode != 0 and "outside the black cut are not black RGB" in refused.stderr
 
